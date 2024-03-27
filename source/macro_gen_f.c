@@ -387,6 +387,8 @@ get_matom_f (mode)
  *
  **********************************************************/
 
+#define PURE_ABSORPTION 1
+
 double
 get_matom_f_accelerate (mode)
      int mode;
@@ -483,10 +485,14 @@ get_matom_f_accelerate (mode)
       for (i = 0; i < nlevels_macro; i++)
       {
         level_emit_doub[i] = f_matom_emit_accelerate (xplasma, i, geo.sfmin, geo.sfmax);
+        if (PURE_ABSORPTION)
+          level_emit_doub[i] = 0.0;
       }
 
       /* do the same for k-packets */
       kpkt_emit_doub = f_kpkt_emit_accelerate (xplasma, geo.sfmin, geo.sfmax);
+      if (PURE_ABSORPTION)
+        kpkt_emit_doub = 0.0;
 
       /* Now use the matrix to calculate the fraction of the absorbed energy that comes out in a given level */
       for (i = 0; i < nlevels_macro; i++)
