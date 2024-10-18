@@ -161,8 +161,8 @@ disk_init (rmin, rmax, m, mdot, freqmin, freqmax, ioniz_or_extract, ftot)
     }
     else if (spectype == SPECTYPE_BB_FCOL)
     {
-      fcol = disk_colour_correction(t);
-      emit = emittance_bb (freqmin, freqmax, fcol * t) / pow(fcol, 4.0);
+      fcol = disk_colour_correction (t);
+      emit = emittance_bb (freqmin, freqmax, fcol * t) / pow (fcol, 4.0);
     }
     else
     {
@@ -220,8 +220,8 @@ disk_init (rmin, rmax, m, mdot, freqmin, freqmax, ioniz_or_extract, ftot)
     }
     else if (spectype == SPECTYPE_BB_FCOL)
     {
-      fcol = disk_colour_correction(t);
-      emit = emittance_bb (freqmin, freqmax, fcol * t) / pow(fcol, 4.0);
+      fcol = disk_colour_correction (t);
+      emit = emittance_bb (freqmin, freqmax, fcol * t) / pow (fcol, 4.0);
     }
     else
     {
@@ -356,11 +356,70 @@ qdisk_init (rmin, rmax, m, mdot)
 
 /**********************************************************/
 /**
+ * @brief      Reinitialize portions a structure (qdisk) for recording information about 
+ *      photons/energy impinging
+ * 	on the disk.
+ *
+ * @return     Always return zero
+ *
+ *
+ * ###Notes###
+ *
+ * The structure qdisk records information about how many photons hit the disk
+ * and what the impact of these photons would be if these
+ * photons are used to modify the temperatures structure
+ * of the disk
+ *
+ * This routine records information about the 
+ * photons which were emitted from the disk 
+ * and zeros various arrays that will record information
+ * about photons that will hit the disk
+ * 
+ *
+ **********************************************************/
+
+int
+qdisk_reinit (p)
+     PhotPtr p;
+{
+  int nphot, i, n;
+  double rho;
+  struct photon pp;
+  for (n = 0; n < NRINGS; n++)
+  {
+    qdisk.emit[n] = qdisk.nhit[n] = qdisk.heat[n] = qdisk.nphot[n] = qdisk.w[n] = qdisk.ave_freq[n] = 0;
+  }
+
+  for (nphot = 0; nphot < NPHOT; nphot++)
+  {
+    stuff_phot (&p[nphot], &pp);
+    if (pp.origin_orig == PTYPE_DISK)
+    {
+      rho = sqrt (pp.x[0] * pp.x[0] + pp.x[1] * pp.x[1]);
+
+      i = 0;
+      while (rho > qdisk.r[i] && i < NRINGS - 1)
+        i++;
+      i--;                      /* So that the heating refers to the heating between i and i+1 */
+
+      qdisk.emit[i] += pp.w;
+      qdisk.nphot[i] += 1;
+
+
+    }
+  }
+
+  return (0);
+}
+
+
+/**********************************************************/
+/**
  * @brief      Save the information in the qdisk structure to a file
  *
  * @param [in] char *  diskfile   Name of the file whihc is writteen
- * @param [in] double  ztot   The total luminosity of the disk as
- *                      calculate over multiple cycles
+ * @param [in] int  ichoice   A switch that just says whether the weighted
+ *       frequency has been converted to a real frequency (0 = No, 1=Yes)
  * @return     Always returns 0
  *
  * The routine reformats the data about disk heating which has
@@ -368,55 +427,91 @@ qdisk_init (rmin, rmax, m, mdot)
  *
  * ###Notes###
  *
- * The data concerning heating by the disk is built up during
- * a the ionization cycles
  *
  * The file that is produced should be readable as an astropy
  * table
  *
+ * Here is a definition of the columnts
+ *
+ * * r            the radius of the wirng
+ * * v            the velocity of the ring
+ * * zdisk        the zheight ot the rign
+ * * t_disk       the temperature derived from viscous heating or the input grid
+ * * g            the log of the gravity
+ * * emit         the luminosity of photons emitted by the ring in this cycle
+ * * nemit        the number photons emitted by the ring in this cycle
+ * * heat         the total luminosity of photons that hit the ring
+ * * nhit         the number of photon bundles hitting a ring
+ * * ehit/emit    the ratio of the energy of photons that hit the ring/to those
+ *              to those that are emitted by the ring
+ * * t_heat       the temperature calculated from the energy of the
+ *              photons hitting a ring
+ * * t_freq       The temperature calculated from the weighted frequency of 
+ *              photons hitting the ring
+ * * W_freq       Assuming t_freq for the temperature, this gives ther
+ *              ratio of the energy flux to LTE
+ * * t_rerad      The temperature required to radiate away both the
+ *              the viscous heating and the heating from photons
+ *              in the next cycle
+* 
  **********************************************************/
 
 int
-qdisk_save (diskfile, ztot)
+qdisk_save (diskfile, ichoice)
      char *diskfile;
-     double ztot;
+     int ichoice;
 {
   FILE *qptr;
   int n;
   double area, theat, ttot;
+  double ratio[NRINGS];
   qptr = fopen (diskfile, "w");
   fprintf (qptr,
-           "         r          v      zdisk    t_disk         g      heat  nhit nhit/emit    t_heat  t_irrad    W_irrad     t_tot\n");
-//  fprintf (qptr,
-//           "---------- ---------- ---------- --------- --------- --------- ----- --------- --------- --------- --------- ---------\n");
+           "         r          v      zdisk    t_disk         g       emit      nemit      heat       nhit ehit/emit    t_heat    t_freq     W_freq   t_rerad\n");
 
   for (n = 0; n < NRINGS; n++)
   {
     if (n < NRINGS - 1)
     {
+      // The factor of 2 comes from the fact that the disk has two sides
       area = (2. * PI * (qdisk.r[n + 1] * qdisk.r[n + 1] - qdisk.r[n] * qdisk.r[n]));
     }
     else
     {
       area = 0;
     }
-    theat = qdisk.heat[n] / area;
-    theat = pow (theat / STEFAN_BOLTZMANN, 0.25);
-    //theat is temperature if no internal energy production
     if (qdisk.nhit[n] > 0)
     {
 
-      qdisk.ave_freq[n] /= qdisk.heat[n];
+      /* During photon transport ave_freq is actually the w x frequency */
+      if (ichoice == 0)
+        qdisk.ave_freq[n] /= qdisk.heat[n];
+
       qdisk.t_hit[n] = PLANCK * qdisk.ave_freq[n] / (BOLTZMANN * 3.832);
       //Basic conversion from freq to T
       qdisk.w[n] = qdisk.heat[n] / (4. * PI * STEFAN_BOLTZMANN * area * qdisk.t_hit[n] * qdisk.t_hit[n] * qdisk.t_hit[n] * qdisk.t_hit[n]);
+      ratio[n] = 99.;
+      if (qdisk.emit[n] > 0.0)
+        ratio[n] = qdisk.heat[n] / qdisk.emit[n];
+      theat = qdisk.heat[n] / area;
+      theat = pow (theat / STEFAN_BOLTZMANN, 0.25);
+      //theat is temperature if no internal energy production
+
+    }
+    else
+    {
+      qdisk.ave_freq[n] = 0.0;
+      qdisk.t_hit[n] = 0.0;
+      qdisk.w[n] = 0.0;
+      ratio[n] = 0.0;
+      theat = 0;
     }
     ttot = pow (qdisk.t[n], 4) + pow (theat, 4);
     ttot = pow (ttot, 0.25);
     fprintf (qptr,
-             "%9.4e %9.4e %0.4e %8.3e %8.3e %8.3e %5d %8.3e %8.3e %8.3e %8.3e %8.3e\n",
+             "%9.4e %9.4e %0.4e %8.3e %8.3e  %8.3e %10d %8.3e %10d %8.3e %8.3e %8.3e %10.3e %8.3e\n",
              qdisk.r[n], qdisk.v[n], zdisk (qdisk.r[n]), qdisk.t[n], qdisk.g[n],
-             qdisk.heat[n], qdisk.nhit[n], qdisk.heat[n] * NRINGS / ztot, theat, qdisk.t_hit[n], qdisk.w[n], ttot);
+             qdisk.emit[n], qdisk.nphot[n], qdisk.heat[n], qdisk.nhit[n], ratio[n], theat, qdisk.t_hit[n], qdisk.w[n], ttot);
   }
 
   fclose (qptr);

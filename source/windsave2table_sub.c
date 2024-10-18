@@ -498,10 +498,10 @@ create_heat_table (ndom, rootname)
   strcpy (column_name[25], "heat_shock");
 
   c[26] = get_one (ndom, "heat_lines_macro");
-  strcpy (column_name[26], "heat_lines_macro");
+  strcpy (column_name[26], "ht_ln_macro");
 
   c[27] = get_one (ndom, "heat_photo_macro");
-  strcpy (column_name[27], "heat_photo_macro");
+  strcpy (column_name[27], "ht_ph_macro");
 
   /* This should be the maximum number above +1 */
   ncols = 28;

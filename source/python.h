@@ -755,12 +755,13 @@ struct xdisk
   double t[NRINGS];             /**< The temperature at the middle of the annulus */
   double g[NRINGS];             /**< The gravity at the middle of the annulus */
   double v[NRINGS];             /**< The velocity at the middle of the annulus */
+  double emit[NRINGS];          /**< The radiative energy of the photons emitted from the disk */
   double heat[NRINGS];          /**< The total energy flux of photons hitting each annulus */
   double ave_freq[NRINGS];      /**< The flux weighted average of frequency of photons hitting each annulus */
-  double w[NRINGS];             /**< The radiative weight of the photons that hit the disk */
-  double t_hit[NRINGS];         /**< The effective T of photons hitting the disk */
-  int nphot[NRINGS];            /**< The number of photons created in each annulus */
-  int nhit[NRINGS];             /**< The number of photons which hit each annulus */
+  double w[NRINGS];             /**< The weight relative to a BB of the photons that hit the disk */
+  double t_hit[NRINGS];         /**< The effective T of photons hitting the disk, based on the average frequency */
+  int nphot[NRINGS];        /**< The number of disk photons created in each annulus */
+  int nhit[NRINGS];         /**< The number of photons which hit each annulus */
 };
 extern struct xdisk disk, qdisk;   /**<  disk defines zones in the disk which in a specified frequency band emit equal amounts
                                    of radiation. disk gets reinitialized whenever the frequency interval of interest
@@ -1222,8 +1223,7 @@ extern int size_Jbar_est, size_gamma_est, size_alpha_est;
 #define IONMODE_ML93 3          /**<  Lucy Mazzali */
 #define IONMODE_MATRIX_BB 8     /**<  matrix solver BB model */
 #define IONMODE_MATRIX_SPECTRALMODEL 9  /**< matrix solver spectral model based on power laws */
-#define IONMODE_MATRIX_ESTIMATORS 10    /**<  matrix solver spectral model based on power laws
-                                          */
+#define IONMODE_MATRIX_ESTIMATORS 10    /**<  matrix solver spectral model based on power laws */
 
 // and the corresponding modes in nebular_concentrations
 #define NEBULARMODE_TR 0        /**< LTE using t_r */
@@ -1236,6 +1236,11 @@ extern int size_Jbar_est, size_gamma_est, size_alpha_est;
 #define NEBULARMODE_MATRIX_BB 8 /**<  matrix solver BB model */
 #define NEBULARMODE_MATRIX_SPECTRALMODEL 9      /**< matrix solver spectral model */
 #define NEBULARMODE_MATRIX_ESTIMATORS 10        /**<  matrix solver spectral model */
+
+#define NEBULARMODE_MATRIX_MULTISHOT   11    /**<  matrix solver spectral model based on power laws which
+                                          * updates T_e multiple times before arriving at a final
+                                          * solution 
+                                          */
 
 // modes for the wind_luminosity routine
 #define MODE_OBSERVER_FRAME_TIME 0
@@ -1735,11 +1740,12 @@ extern int xxxbound;
  * for each input variable.  At present, this is only
  * used for the selection of spec_types
  */
+#define MAX_RDPAR_CHOICES 20 
 
 typedef struct rdpar_choices
 {
-  char choices[10][LINELENGTH];
-  int vals[10];
+  char choices[MAX_RDPAR_CHOICES][LINELENGTH];
+  int vals[MAX_RDPAR_CHOICES];
   int n;
 } dummy_choices, *ChoicePtr;
 

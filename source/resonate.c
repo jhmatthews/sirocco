@@ -662,9 +662,7 @@ kbf_need (freq_min, freq_max)
         }
 
         tau_test = phot_top[n].x[0] * density * SMAX_FRAC * length (one->xcen);
-
-
-        if (tau_test > 1.e-6 || phot_top[n].macro_info == TRUE)
+        if (tau_test > 1.e-6 || phot_top[n].macro_info == TRUE || n == ion[nion].ntop_ground || ion[nion].phot_info == 0)
         {
           /* Store the bf transition and increment nuse */
           xplasma->kbf_use[nuse] = n;

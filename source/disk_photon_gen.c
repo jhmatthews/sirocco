@@ -189,7 +189,7 @@ photo_gen_disk (p, weight, f1, f2, spectype, istart, nphot)
     }
     else if (spectype == SPECTYPE_BB_FCOL)
     {
-      fcol = disk_colour_correction(disk.t[nring]);
+      fcol = disk_colour_correction (disk.t[nring]);
       p[i].freq = planck (fcol * disk.t[nring], freqmin, freqmax);
     }
     else if (spectype == SPECTYPE_UNIFORM)

@@ -147,7 +147,7 @@ LDFLAGS+= -L$(LIB) -lm -lgsl -lgslcblas $(CUDA_LIBS)
 #Note that version should be a single string without spaces.
 
 
-VERSION = 88c
+VERSION = 88f
 
 
 
@@ -264,6 +264,7 @@ rhf_objects = rad_hydro_files.o $(python_objects)
 modify_wind_objects = modify_wind.o $(python_objects)
 inspect_wind_objects = inspect_wind.o $(python_objects)
 py_optd_obj = py_optd.o py_optd_output.o py_optd_trans.o py_optd_util.o py_optd_extern_init.o $(python_objects)
+windsave2fits_objects = windsave2fits.o $(python_objects)
 
 run_indent:
 	../py_progs/run_indent.py -all_no_headers
@@ -278,6 +279,12 @@ windsave2table: startup $(table_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(table_objects) $(CUDA_OBJECTS) $(LDFLAGS) -o windsave2table
 	cp $@ $(BIN)
 	mv $@ $(BIN)/windsave2table$(VERSION)
+	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
+
+windsave2fits: startup $(windsave2fits_objects) $(CUDA_OBJECTS)
+	$(CC) $(CFLAGS) $(windsave2fits_objects) $(CUDA_OBJECTS) $(LDFLAGS) -lcfitsio -o windsave2fits 
+	cp $@ $(BIN)
+	mv $@ $(BIN)/windsave2fits$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 rad_hydro_files: startup $(rhf_objects) $(CUDA_OBJECTS)

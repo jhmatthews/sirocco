@@ -154,13 +154,13 @@ parse_command_line (argc, argv)
         Log ("Using special relativity for Doppler shifts, etc., and including co-moving frame effects.\n");
         j = i;
       }
-      else if (strcmp (argv[i], "-srclassic") == 0)
+      else if (strcmp (argv[i], "-sr_doppler_only") == 0)
       {
         rel_mode = REL_MODE_SR_FREQ;
         Log ("Using full special relativity only for Doppler shifts, etc., and not considering co-moving frame effects.");
         j = i;
       }
-      else if (strcmp (argv[i], "-classic") == 0)
+      else if (strcmp (argv[i], "-nonrel") == 0)
       {
         rel_mode = REL_MODE_LINEAR;
         Log ("Using only old approach with linear Doppler shifts, etc. and not considering co-moving frame effects.\n");
@@ -352,7 +352,7 @@ help ()
 \n\
 This program simulates radiative transfer in a (biconical) CV, YSO, quasar, TDE or (spherical) stellar wind \n\
 \n\
-Usage:  py [-h] [-r] [-t time_max] [-v n] [--dry-run] [-i] [--version] [--rseed] [-p n_steps] [-classic] [-srclassic] xxx  or simply py \n\
+Usage:  py [-h] [-r] [-t time_max] [-v n] [--dry-run] [-i] [--version] [--rseed] [-p n_steps] [-nonrel] [-sr_doppler_only] xxx  or simply py \n\
 \n\
 where xxx is the rootname or full name of a parameter file, e. g. test.pf \n\
 \n\
@@ -387,9 +387,9 @@ These are largely diagnostic or for special cases. These include\n\
                         Range is in powers of 10, the difference beween the number of photons in the first cycle \n\
                         compared to the last. If range is missing, range is assumed to be 1, in which case the  \n\
                         number of photons will in the first cycle will be one order of magniude less than in the last cycle \n\
- -classic               Use Python in its classic configuration, with linear Doppler shifts, etc., and where co-moving frame\n\
+ -nonrel                Use Python in its old non-relativistic configuration, with linear Doppler shifts, etc., and where co-moving frame\n\
                         effects are not taken into account.\n\
- -srclassic             Use Python with full special relativity for Doppler shifts, etc., but do not include any co-moving frame\n\
+ -sr_doppler_only       Use Python with full special relativity for Doppler shifts, etc., but do not include any co-moving frame\n\
                         effects.\n\
  -ignore_partial_cells  Ignore wind cells that are only partially filled by the wind (This is now the default)  \n\
  -include_partial_cells Include wind cells that are only partially filled by the wind   \n\

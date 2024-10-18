@@ -986,11 +986,11 @@ reduce_simple_estimators (void)
   ion_helper2 = calloc (sizeof (double), NPLASMA * nions);
   inner_ion_helper = calloc (sizeof (double), NPLASMA * n_inner_tot);
   inner_ion_helper2 = calloc (sizeof (double), NPLASMA * n_inner_tot);
-  /* JM -- added routine to average the qdisk quantities. The 2 is because
-     we only have two doubles to worry about (heat and ave_freq) and
+  /* Routine to average the qdisk quantities. The 3 is because
+     we have three doubles to worry about (emit, heat and ave_freq) and
      two integers (nhit and nphot) */
-  qdisk_helper = calloc (sizeof (double), NRINGS * 2);
-  qdisk_helper2 = calloc (sizeof (double), NRINGS * 2);
+  qdisk_helper = calloc (sizeof (double), NRINGS * 3);
+  qdisk_helper2 = calloc (sizeof (double), NRINGS * 3);
 
   flux_helper = calloc (sizeof (double), NPLASMA * NFLUX_ANGLES * 3);
   flux_helper2 = calloc (sizeof (double), NPLASMA * NFLUX_ANGLES * 3);
@@ -1068,6 +1068,7 @@ reduce_simple_estimators (void)
   {
     qdisk_helper[mpi_i] = qdisk.heat[mpi_i] / np_mpi_global;
     qdisk_helper[mpi_i + NRINGS] = qdisk.ave_freq[mpi_i] / np_mpi_global;
+    qdisk_helper[mpi_i + 2 * NRINGS] = qdisk.emit[mpi_i] / np_mpi_global;
   }
 
 
@@ -1080,7 +1081,7 @@ reduce_simple_estimators (void)
   MPI_Allreduce (flux_helper, flux_helper2, NPLASMA * 3 * NFLUX_ANGLES, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce (ion_helper, ion_helper2, NPLASMA * nions, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce (inner_ion_helper, inner_ion_helper2, NPLASMA * n_inner_tot, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-  MPI_Allreduce (qdisk_helper, qdisk_helper2, 2 * NRINGS, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce (qdisk_helper, qdisk_helper2, 3 * NRINGS, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
   /* Unpacking stuff */
   for (mpi_i = 0; mpi_i < NPLASMA; mpi_i++)
@@ -1157,6 +1158,7 @@ reduce_simple_estimators (void)
   {
     qdisk.heat[mpi_i] = qdisk_helper2[mpi_i];
     qdisk.ave_freq[mpi_i] = qdisk_helper2[mpi_i + NRINGS];
+    qdisk.emit[mpi_i] = qdisk_helper2[mpi_i + 2 * NRINGS];
   }
 
   /* now we've done all the doubles so we can free their helper arrays */

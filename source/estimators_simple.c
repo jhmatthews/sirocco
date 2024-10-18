@@ -16,6 +16,7 @@
 
 #include "atomic.h"
 #include "python.h"
+#include <gsl/gsl_integration.h>
 
 
 /**********************************************************/
@@ -471,6 +472,83 @@ update_force_estimators (xplasma, p, phot_mid, ds, w_ave, ndom, z, frac_ff, frac
 }
 
 
+typedef struct
+{
+  double T;                     // Temperature in Kelvin
+} planck_params;
+
+// Planck spectral radiance function
+double
+planck_spectral_radiance (double nu, void *params)
+{
+  planck_params *p = (planck_params *) params;
+  double T = p->T;
+  double exponent = PLANCK * nu / (BOLTZMANN * T);
+  return (2 * PLANCK * pow (nu, 3) / pow (VLIGHT, 2)) / (exp (exponent) - 1);
+}
+
+// Function to calculate nu * J(nu)
+double
+nu_times_radiance (double nu, void *params)
+{
+  return nu * planck_spectral_radiance (nu, params);
+}
+
+// Function to calculate mean frequency over a specified range
+double
+mean_frequency_nu_range (double T, double nu_min, double nu_max)
+{
+  gsl_integration_workspace *w = gsl_integration_workspace_alloc (1000);
+
+  double numerator, denominator, error;
+  planck_params params = { T };
+
+  gsl_function F;
+  F.function = &nu_times_radiance;
+  F.params = &params;
+
+  gsl_integration_qags (&F, nu_min, nu_max, 0, 1e-7, 1000, w, &numerator, &error);
+
+  F.function = &planck_spectral_radiance;
+
+  gsl_integration_qags (&F, nu_min, nu_max, 0, 1e-7, 1000, w, &denominator, &error);
+
+  gsl_integration_workspace_free (w);
+
+  return numerator / denominator;
+}
+
+// Function to estimate temperature given a mean frequency and a frequency range
+double
+estimate_temperature_from_mean_frequency (double mean_nu_target, double nu_min, double nu_max, double initial_guess)
+{
+  double T_guess = initial_guess;
+  double tol = 1e-6;            // Convergence tolerance
+  int max_iter = 100;           // Maximum number of iterations
+  double mean_nu;
+
+
+  for (int i = 0; i < max_iter; i++)
+  {
+    // Calculate the mean frequency for the current temperature guess
+    mean_nu = mean_frequency_nu_range (T_guess, nu_min, nu_max);
+
+    // Adjust the temperature guess
+    double T_new = T_guess * (mean_nu_target / mean_nu);
+
+    // Check for convergence
+    if (fabs (T_new - T_guess) < tol)
+    {
+      return T_new;
+    }
+
+    T_guess = T_new;
+  }
+
+  return T_guess;               // Return the estimated temperature
+}
+
+
 /**********************************************************/
 /**
  * @brief Normalise simple estimators and cell spectra
@@ -495,6 +573,10 @@ update_force_estimators (xplasma, p, phot_mid, ds, w_ave, ndom, z, frac_ff, frac
  * an observer frame quantity and so is notmralized differently
  *
  **********************************************************/
+
+/* switch to choose how to calculate T_r. This could be made to depend on the ionization mode
+   if desired, or it may be that TRUE is the desired behaviour long-term */
+#define BAND_CORRECTED_TRAD FALSE
 
 int
 normalise_simple_estimators (xplasma)
@@ -527,7 +609,19 @@ normalise_simple_estimators (xplasma)
     xplasma->j_scatt /= (4. * PI * invariant_volume_time);
 
     xplasma->t_r_old = xplasma->t_r;    // Store the previous t_r in t_r_old immediately before recalculating
-    radiation_temperature = xplasma->t_r = PLANCK * xplasma->ave_freq / (BOLTZMANN * 3.832);
+
+    /* the method of calculation of the band corrected radiation temperature depends on 
+       the flag BAND_CORRECTED_TRAD -- see issue #1097 */
+    if (BAND_CORRECTED_TRAD == FALSE)
+    {
+      radiation_temperature = xplasma->t_r = PLANCK * xplasma->ave_freq / (BOLTZMANN * 3.832);
+    }
+    else 
+    {
+      radiation_temperature = xplasma->t_r =
+        estimate_temperature_from_mean_frequency (xplasma->ave_freq, xband.f1[0], xband.f2[xband.nbands - 1], radiation_temperature);
+    }
+
     xplasma->w =
       PI * xplasma->j / (STEFAN_BOLTZMANN * radiation_temperature * radiation_temperature * radiation_temperature * radiation_temperature);
 

@@ -345,7 +345,7 @@ print_help (void)
     "A utility program to analyse the optical depth in a Python model.\n\n"
     "usage: py_optical_depth [-h] [-d ndom] [-p tau_stop] [-cion nion] \n"
     "                        [-freq_min min] [-freq_max max] [-i i1 i2 ...]\n"
-    "                        [--classic] [--smax frac] [--no-es] [--version]\n"
+    "                        [--nonrel] [--smax frac] [--no-es] [--version]\n"
     "                        root\n\n"
     "This program can be used in multiple ways. By default, the integrated continuum\n"
     "optical depth along the defined observer lines of sight for the model are returned.\n"
@@ -360,8 +360,8 @@ print_help (void)
     "-freq_min min    The lower frequency boundary for optical depth spectra\n"
     "-freq_max max    The upper frequency boundary for optical depth spectra\n"
     "-i i1 i2 i3 ...  Calculate the optical depth for the given space seperated list of sight lines\n"
-    "--classic        Use linear frequency transforms, to be used when Python was run\n"
-    "                 in classic mode\n"
+    "--nonrel         Use linear frequency transforms, to be used when Python was run\n"
+    "                 in non-relativistic mode\n"
     "--smax frac      Set the maximum fraction a photon can move in terms of cell distances\n"
     "--no-es          Do not include opacity contributions from electron scattering\n"
     "--version        Print the version information and exit.\n";
@@ -426,7 +426,7 @@ get_arguments (int argc, char *argv[])
       print_help ();
       exit (EXIT_SUCCESS);
     }
-    else if (!strcmp (argv[i], "--classic"))    //NOTE: use linear frequency transforms
+    else if (!strcmp (argv[i], "--nonrel"))    //NOTE: use linear frequency transforms
     {
       printf ("Using linear approximations for Doppler shifts\n");
       rel_mode = REL_MODE_LINEAR;

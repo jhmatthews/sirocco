@@ -22,7 +22,7 @@ standard_cmds = np.array(["1", "n","t", "r","v","1","2","3","-1",\
 ion_standard_variables = ["ionh1", "ionhe1", "ionhe2", "ionc4", "ionc5"]
 
 description_dict = {
-    "xx": "left-hand lower cell corner x-coordinate, cm", 
+    "x": "left-hand lower cell corner x-coordinate, cm", 
     "z": "left-hand lower cell corner z-coordinate, cm", 
     "xcen": "cell centre x-coordinate, cm", 
     "zcen": "cell centre z-coordinate, cm", 

@@ -159,6 +159,10 @@ define_phot (p, f1, f2, nphot_tot, ioniz_or_extract, iwind, freq_sampling)
 
         iphot_start += xband.nphot[n];
       }
+      else
+      {
+        Error ("photon_gen: No photons for band %d\n", n);
+      }
 
     }
 

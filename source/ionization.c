@@ -572,7 +572,8 @@ calc_te (PlasmaPtr xplasma, double tmin, double tmax)
  * at a specifc temperature.  
  *
  * @details
- * This routine is used to estiamate a new temperature for a cell given the
+ * This routine is used in the process of estimating a new temperature for a cell
+ * given the
  * heating of the cell in the previous ionization cycle.  When 0 the heating
  * and cooling are matched.
  *
@@ -583,6 +584,13 @@ calc_te (PlasmaPtr xplasma, double tmin, double tmax)
  *
  *
  * ### Notes ###
+ *
+ * This routine is poorly named; what it does is simply calculate the
+ * sum the heating that occurred during the current cycle, and calculate
+ * the cooling for the input temperature given the current abundances
+ * it returns the difference between these two numbers.  It does update
+ * t_e in the plasma cell.
+ *
  * The abundances of ions in the cell are not modified.  Results are stored
  * in the cell of interest.  This routine is used in connection with a zero
  * finding routine

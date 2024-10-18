@@ -48,8 +48,8 @@ int
 calculate_ionization (restart_stat)
      int restart_stat;
 {
-  int n, nn;
-  double zz, z_abs_all, z_abs_all_orig, z_orig[N_ISTAT], z_abs[N_ISTAT], z_else, z_else_orig, ztot;
+  int nn;
+  double zz, z_abs_all, z_abs_all_orig, z_orig[N_ISTAT], z_abs[N_ISTAT], z_else, z_else_orig;
   double radiated[20], radiated_orig[20];
   int nphot_istat[N_ISTAT];
   WindPtr w;
@@ -146,7 +146,6 @@ calculate_ionization (restart_stat)
 
     geo.n_ioniz = 0.0;
     geo.cool_tot_ioniz = 0.0;
-    ztot = 0.0;                 /* ztot is the luminosity of the disk multipled by the number of cycles, which is used by save_disk_heating */
 
     if (!geo.wind_radiation || (geo.wcycle == 0 && geo.run_type != RUN_TYPE_PREVIOUS))
       iwind = -1;               /* Do not generate photons from wind */
@@ -190,11 +189,9 @@ calculate_ionization (restart_stat)
     geo.lum_star_back = 0;
     geo.lum_disk_back = 0;
 
+    /* Prepare qdisk for recording photon pages */
+    qdisk_reinit (p);
 
-    for (n = 0; n < NRINGS; n++)
-    {
-      qdisk.heat[n] = qdisk.nphot[n] = qdisk.w[n] = qdisk.ave_freq[n] = 0;
-    }
 
 
     zz = 0.0;
@@ -205,7 +202,6 @@ calculate_ionization (restart_stat)
 
     Log ("!!python: Total photon luminosity before transphot %18.12e\n", zz);
     Log_flush ();
-    ztot += zz;                 /* Total luminosity in all cycles, used for calculating disk heating */
 
     /* kbf_need determines how many & which bf processes one needs to considere.  It was introduced
      * as a way to speed up the program.  It has to be recalculated evey time one changes
@@ -326,7 +322,14 @@ calculate_ionization (restart_stat)
 #endif
       if (geo.disk_type != DISK_NONE)
       {
-        qdisk_save (files.disk, ztot);
+        qdisk_save (files.disk, 1);
+        if (modes.make_tables)
+        {
+          strcpy (dummy, "");
+          sprintf (dummy, "diag_%.100s/%.100s.%02d.disk.diag", files.root, files.root, geo.wcycle + 1);
+          qdisk_save (dummy, 0);
+
+        }
       }
 #ifdef MPI_ON
     }

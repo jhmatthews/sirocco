@@ -10,3 +10,8 @@ where the in a multiprocessor run, the number refers to the log of a specific th
 
 Inspecting these logs is important for understanding whether a Python run is successful,
 and for understanding why if failed if that is the case. 
+
+Additionally in this directory one will find a file **whatever.disk.diag** if the system contained a disk.  This file contains information
+about the structure of the disk as a function of disk radius. It also indicates how many photons hit the disk with how much total energy
+as a function of radius.  It provides several estimates of the effective temperature of the radiation that hits the disk, and determines 
+how the disk temperature of the disk would so that it would reradiate the sum of the viscous energy and the energy associated with illumination.

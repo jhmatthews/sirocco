@@ -717,6 +717,8 @@ a21 (line_ptr)
  * u0 is the ratio of Boltzmans constant times the electron temperature in the cell
  * divided by Plancks constant times the frequency of the line under analysis.
  *
+ * Burgess and Tully have 4 separate types, but in order to allow levels in Chianti to be combined in Python
+ * to Type 5 has collision strengths that are simply interpolatedas the ratio of Kt_e/hnu.
  *
  **********************************************************/
 
@@ -741,6 +743,10 @@ upsilon (n_coll, u0)
   {
     x = u0 / (u0 + coll_stren[n_coll].scaling_param);
   }
+  else if (coll_stren[n_coll].type == 5)
+  {
+    x = u0;
+  }
   else
   {
     Error ("upsilon:  coll_stren %i has unknown type %d\n", n_coll, coll_stren[n_coll].type);
@@ -759,7 +765,7 @@ upsilon (n_coll, u0)
   {
     upsilon = y * (log (u0 + exp (1)));
   }
-  else if (coll_stren[n_coll].type == 2)
+  else if (coll_stren[n_coll].type == 2 || coll_stren[n_coll].type == 5)
   {
     upsilon = y;
   }

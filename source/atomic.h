@@ -58,12 +58,6 @@ extern int n_inner_tot;                /**< The actual number of inner shell ion
 extern int nauger_macro;        /* the number of auger processes read in associated with macro atoms */
 #define NAUGER_ELECTRONS 4
 
-
-extern int nauger_macro;        /* the number of auger processes read in associated with macro atoms */
-#define NAUGER_MACRO 200        /* number of Auger processes */
-#define NAUGER_ELECTRONS 4
-
-
 #define MAXJUMPS          1000000       /**<  The maximum number of Macro Atom jumps before emission (if this is exceeded
                                            it gives up (SS) */
 #define NAUGER 2                /**< Maximum number of "auger" processes */
