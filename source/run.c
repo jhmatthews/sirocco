@@ -252,6 +252,7 @@ calculate_ionization (restart_stat)
       {
         radiated[p[nn].origin] += p[nn].w;
         radiated_orig[p[nn].origin] += p[nn].w_orig;
+        save_photons (&p[nn], "Escaped");
       }
       else
       {

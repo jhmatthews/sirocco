@@ -99,6 +99,7 @@ trans_phot (WindPtr w, PhotPtr p, int iextract)
   for (nphot = 0; nphot < NPHOT; nphot++)
   {
     p[nphot].np = nphot;
+    save_photons (&p[nphot], "Init");
     check_frame (&p[nphot], F_OBSERVER, "trans_phot: photon not in observer frame as expeced\n");
 
     if (nphot % nreport == 0)
@@ -543,7 +544,7 @@ trans_phot_single (WindPtr w, PhotPtr p, int iextract)
 
   /* This is set up for looking at photons in spectral cycles at present */
   // if (modes.save_photons && geo.ioniz_or_extract == CYCLE_EXTRACT)
-  //   save_photons (&pp, "End");
+  save_photons (p, "End");
 
   return (0);
 }
