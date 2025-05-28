@@ -196,8 +196,7 @@ get_extra_diagnostics ()
   n += modes.jumps_for_detailed_spectra = rdchoice ("@Diag.use_jumps_for_emissivities_in_detailed_spectra(yes,no)", "1,0", answer);
 
   strcpy (answer, "no");
-  n += modes.use_upweighting_of_simple_macro_atoms =
-    rdchoice ("@Diag.use_upweighting_of_simple_macro_atoms(yes,no)", "1,0", answer);
+  n += modes.use_upweighting_of_simple_macro_atoms = rdchoice ("@Diag.use_upweighting_of_simple_macro_atoms(yes,no)", "1,0", answer);
 
   strcpy (answer, "zero_densities");
   n += modes.partial_cells = rdchoice ("@Diag.partial_cells(include,zero_densities,extend_full_cells)", "0,1,2", answer);
@@ -482,13 +481,12 @@ save_photons (p, comment)
 {
   save_photon_number += 1;
 
-  fprintf (epltptr,
+  fprintf (epltptr, "PHOT %12d %10.3e %10.3e %10.3e %10.3e %10.3e %3d %6d %s\n",
+           p->np, p->lmn[0], p->lmn[1], p->lmn[2], p->ds, p->tau, p->istat, p->nscat, comment);
 //OLD           "PHOTON %3d %3d %10.4e %10.4e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %3d %3d %3d %3d %3d %3d %s \n",
 //OLD           "PHOTON %3d %7d %11.5e %11.5e %10.4e %10.4e %10.3e %10.3e %10.3e %12.5e %12.5e %12.5e %12.5e %9.2e %4d %3d %3d %3d %6d %3d %s \n",
-           "PHOTON %3d %7d %11.5e %11.5e %10.4e %10.4e %10.3e %10.3e %10.3e %15e %15e %15e %15e %9.2e %4d %3d %3d %3d %6d %3d %s \n",
-           geo.pcycle, p->np, p->freq_orig, p->freq, p->w_orig, p->w, p->x[0], p->x[1], p->x[2], p->lmn[0], p->lmn[1],
-//OLD           p->lmn[2], p->ds, p->grid, p->istat, p->origin, p->nscat, p->nres, p->frame, comment);
-           p->lmn[2], p->ds, p->tau, p->grid, p->istat, p->origin, p->nscat, p->nres, p->frame, comment);
+  // "PHOTON %3d %7d %11.5e %11.5e %10.4e %10.4e %10.3e %10.3e %10.3e %15e %15e %15e %15e %9.2e %4d %3d %3d %3d %6d %3d %s \n",
+  //  geo.pcycle, p->np, p->freq_orig, p->freq, p->w_orig, p->w, p->x[0], p->x[1], p->x[2], p->lmn[0], p->lmn[1],
 
   fflush (epltptr);
 

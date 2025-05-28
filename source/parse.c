@@ -176,7 +176,7 @@ parse_command_line (argc, argv)
       else if (strcmp (argv[i], "--version") == 0)
       {
         /* give information about the sirocco version, such as commit hash */
-        Log ("Sirocco Version %s \n", VERSION);  //54f -- ksl -- Now read from version.h
+        Log ("Sirocco Version %s \n", VERSION); //54f -- ksl -- Now read from version.h
         Log ("Built from git commit hash %s\n", GIT_COMMIT_HASH);
         /* warn the user if there are uncommited changes */
         int git_diff_status = GIT_DIFF_STATUS;
@@ -262,7 +262,7 @@ parse_command_line (argc, argv)
       else if (strcmp (argv[i], "--version") == 0)
       {
         /* give information about the pyhon version, such as commit hash */
-        Log ("Sirocco Version %s \n", VERSION);  //54f -- ksl -- Now read from version.h
+        Log ("Sirocco Version %s \n", VERSION); //54f -- ksl -- Now read from version.h
         Log ("Built from git commit hash %s\n", GIT_COMMIT_HASH);
         /* warn the user if there are uncommited changes */
         int git_diff_status = GIT_DIFF_STATUS;
@@ -293,12 +293,12 @@ parse_command_line (argc, argv)
 
     /* Create a subdirectory to store diaganostic files */
 
-    sprintf (files.diagfolder, "diag_%.100s/", files.root);
+    sprintf (files.diagfolder, "diag_%s/", files.root);
     mkdir (files.diagfolder, 0777);
 
     sprintf (dummy, "_%02d.diag", rank_global);
 
-    sprintf (files.diag, "%.50s/%.50s%.50s", files.diagfolder, files.root, dummy);
+    sprintf (files.diag, "%s/%s%s", files.diagfolder, files.root, dummy);
 
     /* Set up the directory structure for storing the rng state */
 
