@@ -481,8 +481,7 @@ save_photons (p, comment)
 {
   save_photon_number += 1;
 
-  fprintf (epltptr, "PHOT %12d %10.3e %10.3e %10.3e %10.3e %10.3e %3d %6d %s\n",
-           p->np, p->lmn[0], p->lmn[1], p->lmn[2], p->ds, p->tau, p->istat, p->nscat, comment);
+  fprintf (epltptr, "PH %12d %8.3e %8.3e %3d %6d %s\n", p->np, p->lmn[2], p->ds, p->istat, p->nscat, comment);
 //OLD           "PHOTON %3d %3d %10.4e %10.4e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %3d %3d %3d %3d %3d %3d %s \n",
 //OLD           "PHOTON %3d %7d %11.5e %11.5e %10.4e %10.4e %10.3e %10.3e %10.3e %12.5e %12.5e %12.5e %12.5e %9.2e %4d %3d %3d %3d %6d %3d %s \n",
   // "PHOTON %3d %7d %11.5e %11.5e %10.4e %10.4e %10.3e %10.3e %10.3e %15e %15e %15e %15e %9.2e %4d %3d %3d %3d %6d %3d %s \n",
