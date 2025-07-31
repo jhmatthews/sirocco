@@ -123,7 +123,13 @@ xsignal (char *root, char *format, ...)
 
 
     vsprintf (message, format, ap2);
+
     Log ("xxx %s %8.1f %s", curtime, elapsed_time, message);
+    if (verbosity == SHOW_ERROR)
+    {
+      printf ("xxx %s %8.1f %s", curtime, elapsed_time, message);
+    }
+
 
 
     fclose (sptr);

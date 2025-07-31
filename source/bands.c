@@ -194,6 +194,7 @@ bands_init (imode, band)
   {
     mode = imode;
   }
+  Log ("\nbands_init: Initialising bands with %s banding\n", answer);
 
   if (mode == T_STAR_BAND)
   {

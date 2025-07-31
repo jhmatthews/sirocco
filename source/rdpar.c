@@ -1504,7 +1504,7 @@ int
 rdpar_set_verbose (vlevel)
      int vlevel;
 {
-  if (vlevel < 2)
+  if (vlevel < 3)
     verbose = 0;
   return (0);
 }

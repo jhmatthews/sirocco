@@ -208,7 +208,7 @@ structure does not have this property! */
     exit (1);
   }
 
-  Log ("Get_atomic_data: Reading from masterfile %s\n", masterfile);
+  Log ("\nGet_atomic_data: Reading from masterfile %s\n", masterfile);
 
 /* Open and read each line in the masterfile in turn */
 

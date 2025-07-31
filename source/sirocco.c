@@ -153,7 +153,7 @@ main (argc, argv)
 
   /* Start logging of errors and comments */
 
-  Log ("!!Sirocco Version %s \n", VERSION);      //54f -- ksl -- Now read from version.h
+  Log ("!!Sirocco Version %s \n", VERSION);     //54f -- ksl -- Now read from version.h
   Log ("!!Git commit hash %s\n", GIT_COMMIT_HASH);
 
   /* warn the user if there are uncommited changes */
@@ -167,6 +167,7 @@ main (argc, argv)
 
   Debug ("Debug statements are on. To turn off use lower verbosity (< 5).\n");
 
+  Log ("\n--------------------------------------------\n\n");
   xsignal (files.root, "%-20s Initializing variables for %s\n", "NOK", files.root);
 
   opar_stat = setup_created_files ();
@@ -364,6 +365,7 @@ main (argc, argv)
      * purposes */
     rdstr ("Atomic_data", geo.atomic_filename);
     setup_atomic_data (geo.atomic_filename);
+    Log ("Finished reading atomic data from %s\n\n", geo.atomic_filename);
 
     /* Describe the wind, by calling get_wind_params one or more times
        and then gets params by calling e.g. get_sv_wind_params() */
@@ -564,8 +566,8 @@ main (argc, argv)
 
   /* INPUTS ARE FINALLY COMPLETE */
 
-
-  Log ("There are %d domains\n", geo.ndomain);
+  Log ("\nInputs are complete.  The next step is to define the wind.\n");
+  Log ("There are %d wind domains\n", geo.ndomain);
   for (n = 0; n < geo.ndomain; n++)
   {
     Log ("%20s type: %3d  ndim: %3d mdim: %3d ndim2: %4d\n", zdom[n].name, zdom[n].wind_type, zdom[n].ndim, zdom[n].mdim, zdom[n].ndim2);
@@ -608,7 +610,7 @@ main (argc, argv)
     define_wind ();
   }
 
-  Log ("DFUDGE set to %e based on geo.rmax\n", DFUDGE);
+  Log ("DFUDGE (push-through distance) set to %e based on geo.rmax\n", DFUDGE);
 
   if (modes.zeus_connect == 1)  //We have restarted, but are in zeus connect mode, so we want to update density, temp and velocities
   {

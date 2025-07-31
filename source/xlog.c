@@ -435,8 +435,10 @@ Error (char *format, ...)
   va_start (ap, format);
   va_copy (ap2, ap);            /*NSH 121212 - Line added to allow error logging to work */
   if (my_rank == 0)             // only want to print errors if master thread
+  {
+    printf ("Error: ");
     result = vprintf (format, ap);
-
+  }
   fprintf (diagptr, "Error: ");
   result = vfprintf (diagptr, format, ap2);
   va_end (ap);

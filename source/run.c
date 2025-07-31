@@ -90,7 +90,7 @@ calculate_ionization (restart_stat)
 
 
   if (geo.wcycle == geo.wcycles)
-    xsignal (files.root, "%-20s No ionization needed: wcycles(%d)==wcyeles(%d)\n", "COMMENT", geo.wcycle, geo.wcycles);
+    xsignal (files.root, "%-20s No ionization needed: wcycles(%d)==wcycles(%d)\n", "COMMENT", geo.wcycle, geo.wcycles);
   else
   {
     geo.pcycle = 0;             /* Set the spectrum cycles executed to 0, because
@@ -117,7 +117,7 @@ calculate_ionization (restart_stat)
 
   while (geo.wcycle < geo.wcycles)
   {                             /* This allows you to build up photons in bunches */
-
+    Log ("\n--------------------------------------------\n\n");
     xsignal (files.root, "%-20s Starting %3d of %3d ionization cycles \n", "NOK", geo.wcycle + 1, geo.wcycles);
 
     Log ("!!Sirocco: Beginning cycle %d of %d for defining wind\n", geo.wcycle + 1, geo.wcycles);
@@ -139,9 +139,9 @@ calculate_ionization (restart_stat)
 
     if (geo.rt_mode == RT_MODE_MACRO && geo.matom_transition_mode == MATOM_MATRIX && nlevels_macro > 0 && modes.store_matom_matrix)
     {
-      xsignal (files.root, "%-20s Begin state machine calculation in cycle %3d  \n", "NOK", geo.wcycle + 1);
+      xsignal (files.root, "%-20s Begin macro-atom matrix calculation in cycle %3d  \n", "NOK", geo.wcycle + 1);
       calc_all_matom_matrices ();
-      xsignal (files.root, "%-20s Finished state machine calculation in cycle %3d  \n", "OK", geo.wcycle + 1);
+      xsignal (files.root, "%-20s Finished macro-atom matrix calculation in cycle %3d  \n", "OK", geo.wcycle + 1);
     }
 
     geo.n_ioniz = 0.0;
@@ -178,10 +178,10 @@ calculate_ionization (restart_stat)
      */
 
     nphot_to_define = (long) NPHOT;
-
     xsignal (files.root, "%-20s Creating photons before transport\n", "NOK");
     define_phot (p, freqmin, freqmax, nphot_to_define, CYCLE_IONIZ, iwind, 1);
     photon_checks (p, freqmin, freqmax, "Check before transport");
+    Log ("!!Sirocco: Finished generating banded photons for cycle %d\n", geo.wcycle + 1);
 
     /* Zero the arrays, and other variables that need to be zeroed after the photons are generated. */
 
@@ -200,7 +200,8 @@ calculate_ionization (restart_stat)
       zz += p[nn].w;
     }
 
-    Log ("!!sirocco: Total photon luminosity before transphot %18.12e\n", zz);
+    Log ("\n--------------------------------------------\n\n");
+    Log ("!!Sirocco: Total photon luminosity before photon transport %18.12e\n", zz);
     Log_flush ();
 
     /* kbf_need determines how many & which bf processes one needs to considere.  It was introduced
@@ -260,17 +261,20 @@ calculate_ionization (restart_stat)
       }
     }
 
-    for (nn = 0; nn < N_ISTAT; nn++)
-    {
-      Log ("XXX stat %8d     %8d      %12.3e    %12.3e\n", nn, nphot_istat[nn], z_abs[nn], z_orig[nn]);
-    }
-    for (nn = 0; nn < 20; nn++)
-    {
-      Log ("XXX rad %8d     %12.3e    %12.3e\n", nn, radiated[nn], radiated_orig[nn]);
-    }
-    Log ("XXX  rad  abs_all  %12.3e    %12.3e\n", z_abs_all, z_abs_all_orig);
-    Log ("XXX  rad  else  l  %12.3e    %12.3e\n", z_else, z_else_orig);
 
+    // for (nn = 0; nn < N_ISTAT; nn++)
+    // {
+    //   Log ("XXX stat %8d     %8d      %12.3e    %12.3e\n", nn, nphot_istat[nn], z_abs[nn], z_orig[nn]);
+    // }
+    // for (nn = 0; nn < 20; nn++)
+    // {
+    //   Log ("XXX rad %8d     %12.3e    %12.3e\n", nn, radiated[nn], radiated_orig[nn]);
+    // }
+    // Log ("XXX  rad  abs_all  %12.3e    %12.3e\n", z_abs_all, z_abs_all_orig);
+    // Log ("XXX  rad  else  l  %12.3e    %12.3e\n", z_else, z_else_orig);
+
+    Log ("\n--------------------------------------------\n\n");
+    Log ("!!sirocco: Summary after photon transport\n");
     Log
       ("!!sirocco: luminosity (radiated or lost) after transphot %18.12e (absorbed or lost  %18.12e  %18.12e). \n",
        z_abs_all, z_abs_all - zz, z_abs_all - z_abs_all_orig);
@@ -333,9 +337,9 @@ calculate_ionization (restart_stat)
 #endif
 
 /* Completed writing file describing disk heating */
-
+    Log ("\n--------------------------------------------\n\n");
     wind_update (w);
-    Log ("Completed ionization cycle %d :  The elapsed TIME was %f\n", geo.wcycle + 1, timer ());
+    Log ("\nCompleted ionization cycle %d :  The elapsed TIME was %f\n", geo.wcycle + 1, timer ());
 
 #ifdef MPI_ON
     /* Do an MPI reduce to get the spectra all gathered to the master thread */

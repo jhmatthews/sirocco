@@ -51,7 +51,7 @@ parse_command_line (argc, argv)
      int argc;
      char *argv[];
 {
-  int restart_stat, verbosity, max_errors, i;
+  int restart_stat, max_errors, i;
   int j = 0;
   char dummy[LINELENGTH];
   int mkdir ();
