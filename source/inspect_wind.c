@@ -187,6 +187,7 @@ main (argc, argv)
   int n, i;
   FILE *fptr, *fopen ();
   int ii, jj, ndom, nnwind;
+  double q;
   int mkdir ();
 
 
@@ -233,6 +234,60 @@ main (argc, argv)
     fprintf (fptr, "-------- ");
   }
   fprintf (fptr, "\n");
+
+  for (n = 0; n < NPLASMA; n++)
+  {
+    fprintf (fptr, "%15s", "z");
+
+    nnwind = plasmamain[n].nwind;
+    ndom = wmain[nnwind].ndom;
+    wind_n_to_ij (ndom, nnwind, &ii, &jj);
+    fprintf (fptr, " %4d %4d %4d ", n, ii, jj);
+
+    for (i = 0; i < nlevels_macro; i++)
+    {
+      // q = q_ioniz (&phot_top[xconfig[i].bfu_indx_first], plasmamain[n].t_e) * plasmamain[n].ne;
+      // printf ("INSPECT WIND %d %d %d\n", phot_top[xconfig[i].bfu_indx_first].nlev, phot_top[xconfig[i].bfu_indx_first].uplev, i);
+      fprintf (fptr, "%8d ", xconfig[i].z);
+    }
+    fprintf (fptr, "\n");
+  }
+
+  for (n = 0; n < NPLASMA; n++)
+  {
+    fprintf (fptr, "%15s", "istate");
+
+    nnwind = plasmamain[n].nwind;
+    ndom = wmain[nnwind].ndom;
+    wind_n_to_ij (ndom, nnwind, &ii, &jj);
+    fprintf (fptr, " %4d %4d %4d ", n, ii, jj);
+
+    for (i = 0; i < nlevels_macro; i++)
+    {
+      // q = q_ioniz (&phot_top[xconfig[i].bfu_indx_first], plasmamain[n].t_e) * plasmamain[n].ne;
+      // printf ("INSPECT WIND %d %d %d\n", phot_top[xconfig[i].bfu_indx_first].nlev, phot_top[xconfig[i].bfu_indx_first].uplev, i);
+      fprintf (fptr, "%8d ", xconfig[i].istate);
+    }
+    fprintf (fptr, "\n");
+  }
+
+  for (n = 0; n < NPLASMA; n++)
+  {
+    fprintf (fptr, "%15s", "nlev");
+
+    nnwind = plasmamain[n].nwind;
+    ndom = wmain[nnwind].ndom;
+    wind_n_to_ij (ndom, nnwind, &ii, &jj);
+    fprintf (fptr, " %4d %4d %4d ", n, ii, jj);
+
+    for (i = 0; i < nlevels_macro; i++)
+    {
+      // q = q_ioniz (&phot_top[xconfig[i].bfu_indx_first], plasmamain[n].t_e) * plasmamain[n].ne;
+      // printf ("INSPECT WIND %d %d %d\n", phot_top[xconfig[i].bfu_indx_first].nlev, phot_top[xconfig[i].bfu_indx_first].uplev, i);
+      fprintf (fptr, "%8d ", xconfig[i].ilv);
+    }
+    fprintf (fptr, "\n");
+  }
 
   for (n = 0; n < NPLASMA; n++)
   {
@@ -320,7 +375,43 @@ main (argc, argv)
 
     for (i = 0; i < nlevels_macro; i++)
     {
-      fprintf (fptr, "%8.2e ", macromain[n].recomb_sp[i]);
+      fprintf (fptr, "%8.2e ", macromain[n].recomb_sp[i] * plasmamain[n].ne);
+    }
+    fprintf (fptr, "\n");
+  }
+
+  for (n = 0; n < NPLASMA; n++)
+  {
+    fprintf (fptr, "%15s", "q_ioniz");
+
+    nnwind = plasmamain[n].nwind;
+    ndom = wmain[nnwind].ndom;
+    wind_n_to_ij (ndom, nnwind, &ii, &jj);
+    fprintf (fptr, " %4d %4d %4d ", n, ii, jj);
+
+    for (i = 0; i < nlevels_macro; i++)
+    {
+      q = q_ioniz (&phot_top[xconfig[i].bfu_indx_first], plasmamain[n].t_e) * plasmamain[n].ne;
+      // printf ("INSPECT WIND %d %d %d\n", phot_top[xconfig[i].bfu_indx_first].nlev, phot_top[xconfig[i].bfu_indx_first].uplev, i);
+      fprintf (fptr, "%8.2e ", q);
+    }
+    fprintf (fptr, "\n");
+  }
+
+  for (n = 0; n < NPLASMA; n++)
+  {
+    fprintf (fptr, "%15s", "q_recomb");
+
+    nnwind = plasmamain[n].nwind;
+    ndom = wmain[nnwind].ndom;
+    wind_n_to_ij (ndom, nnwind, &ii, &jj);
+    fprintf (fptr, " %4d %4d %4d ", n, ii, jj);
+
+    for (i = 0; i < nlevels_macro; i++)
+    {
+      q = q_recomb (&phot_top[xconfig[i].bfu_indx_first], plasmamain[n].t_e) * plasmamain[n].ne * plasmamain[n].ne;
+      // printf ("INSPECT WIND %d %d %d\n", phot_top[xconfig[i].bfu_indx_first].nlev, phot_top[xconfig[i].bfu_indx_first].uplev, i);
+      fprintf (fptr, "%8.2e ", q);
     }
     fprintf (fptr, "\n");
   }
