@@ -186,7 +186,8 @@ int normalise_macro_estimators(PlasmaPtr xplasma);
 double total_fb_matoms(PlasmaPtr xplasma, double t_e, double f1, double f2);
 double total_bb_cooling(PlasmaPtr xplasma, double t_e);
 double macro_bb_heating(PlasmaPtr xplasma, double t_e);
-double macro_bf_heating(PlasmaPtr xplasma, double t_e);
+double macro_photo_heating(PlasmaPtr xplasma, double t_e);
+double macro_qrecomb_heating(PlasmaPtr xplasma, double t_e);
 int bb_simple_heat(PlasmaPtr xplasma, PhotPtr p, double tau_sobolev, int nn);
 int check_stimulated_recomb(PlasmaPtr xplasma);
 int get_dilute_estimators(PlasmaPtr xplasma);
@@ -361,8 +362,6 @@ int invert_matrix(double *matrix, double *inverted_matrix, int num_rows);
 /* matrix_ion.c */
 int matrix_ion_populations(PlasmaPtr xplasma, int mode);
 int populate_ion_rate_matrix(double rate_matrix[nions][nions], double pi_rates[nions], double inner_rates[n_inner_tot], double rr_rates[nions], double b_temp[nions], double xne, double nh1, double nh2);
-/* matrix_ion2.c */
-int matrix_ion_populations2(PlasmaPtr xplasma, int mode);
 /* models_extern_init.c */
 /* para_update.c */
 int get_parallel_nrange(int rank, int ntotal, int nproc, int *my_nmin, int *my_nmax);
