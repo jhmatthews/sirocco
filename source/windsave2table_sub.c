@@ -527,8 +527,11 @@ create_heat_table (ndom, rootname)
   c[30] = get_one (ndom, "cool_bf_macro");
   strcpy (column_name[30], "cl_ph_macro");
 
+  c[31] = get_one (ndom, "cool_di_macro");
+  strcpy (column_name[30], "cl_di__macro");
+
   /* This should be the maximum number above +1 */
-  ncols = 31;
+  ncols = 32;
 
 
   converge = get_one (ndom, "converge");
@@ -1535,6 +1538,10 @@ get_one (ndom, variable_name)
       {
         x[n] = plasmamain[nplasma].heat_photo_macro;
       }
+      else if (strcmp (variable_name, "heat_qrecomb_macro") == 0)
+      {
+        x[n] = plasmamain[nplasma].heat_qrecomb_macro;
+      }
       else if (strcmp (variable_name, "cool_lines_macro") == 0)
       {
         x[n] = plasmamain[nplasma].cool_lines_macro;
@@ -1543,7 +1550,10 @@ get_one (ndom, variable_name)
       {
         x[n] = plasmamain[nplasma].cool_bf_macro;
       }
-
+      else if (strcmp (variable_name, "cool_di_macro") == 0)
+      {
+        x[n] = plasmamain[nplasma].cool_di_macro;
+      }
       else if (strcmp (variable_name, "gain") == 0)
       {
         x[n] = plasmamain[nplasma].gain;
