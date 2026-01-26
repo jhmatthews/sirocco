@@ -27,6 +27,8 @@ void skiplines(FILE *fptr, int nskip);
 int bands_init(int imode, struct xbands *band);
 int ion_bands_init(int mode, double freqmin, double freqmax, struct xbands *band);
 void check_appropriate_banding(struct xbands *band, int mode);
+/* bands_spec.c */
+void band_copy(void);
 /* bb.c */
 double planck(double t, double freqmin, double freqmax);
 double get_rand_pow(double x1, double x2, double alpha);
@@ -361,8 +363,6 @@ int invert_matrix(double *matrix, double *inverted_matrix, int num_rows);
 /* matrix_ion.c */
 int matrix_ion_populations(PlasmaPtr xplasma, int mode);
 int populate_ion_rate_matrix(double rate_matrix[nions][nions], double pi_rates[nions], double inner_rates[n_inner_tot], double rr_rates[nions], double b_temp[nions], double xne, double nh1, double nh2);
-/* matrix_ion2.c */
-int matrix_ion_populations2(PlasmaPtr xplasma, int mode);
 /* models_extern_init.c */
 /* para_update.c */
 int get_parallel_nrange(int rank, int ntotal, int nproc, int *my_nmin, int *my_nmax);
@@ -385,7 +385,7 @@ double r_draw_from_path_histogram(Wind_Paths_Ptr PathPtr);
 int wind_paths_gen_phot(WindPtr wind, PhotPtr pp);
 int line_paths_gen_phot(WindPtr wind, PhotPtr pp, int nres);
 int wind_paths_evaluate_single(Wind_Paths_Ptr paths);
-int wind_paths_evaluate(WindPtr wind, int i_rank);
+int wind_paths_evaluate(WindPtr wind);
 int wind_paths_dump(WindPtr wind, int rank_global);
 int wind_paths_output_dump(WindPtr wind, int i_rank);
 int wind_paths_point_index(int i, int j, int k, int i_top, DomainPtr dom);
@@ -414,7 +414,7 @@ double ds_in_cell(int ndom, PhotPtr p);
 int define_phot(PhotPtr p, double f1, double f2, long nphot_tot, int ioniz_or_extract, int iwind, int freq_sampling);
 double populate_bands(int ioniz_or_extract, int iwind, struct xbands *band);
 int xdefine_phot(double f1, double f2, int ioniz_or_extract, int iwind, int print_mode, int tot_flag);
-int phot_status(void);
+int phot_status(int tot_flag);
 int xmake_phot(PhotPtr p, double f1, double f2, int ioniz_or_extract, int iwind, double weight, int iphot_start, int nphotons);
 int star_init(double freqmin, double freqmax, int ioniz_or_extract, double *f);
 int photo_gen_star(PhotPtr p, double r, double t, double weight, double f1, double f2, int spectype, int istart, int nphot);
@@ -456,6 +456,7 @@ int opar(char filename[]);
 int add_par(char filename[]);
 int cpar(char filename[]);
 int rdpar_init(void);
+char *check_and_fix_string(char *s);
 int string_process(char question[], char dummy[]);
 int string_process_from_command_line(char question[], char dummy[]);
 int string_process_from_file(char question[], char dummy[]);
@@ -537,6 +538,8 @@ int rtheta_is_cell_in_wind(int n);
 /* run.c */
 int calculate_ionization(int restart_stat);
 int make_spectra(int restart_stat);
+int stats_phot_pre(PhotPtr p, int nphot);
+int stats_phot_post(PhotPtr p, int nphot);
 /* saha.c */
 int nebular_concentrations(PlasmaPtr xplasma, int mode);
 int concentrations(PlasmaPtr xplasma, int mode);
@@ -726,6 +729,10 @@ int Log_set_mpi_rank(int rank, int n_mpi);
 int Log_parallel(char *format, ...);
 int Debug(char *format, ...);
 void Exit(int error_code);
+void print_platform_info(void);
+void print_linux_detailed_memory(void);
+void print_memory_usage(const char *label);
+void Log_separator_line(int newlines);
 /* xtest.c */
 int xtest(void);
 /* zeta.c */

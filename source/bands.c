@@ -592,11 +592,10 @@ bands_init (imode, band)
   Log ("bands_init: There are %d bands\n", band->nbands);
   for (nband = 0; nband < band->nbands; nband++)
   {
-    Log ("bands_init: band %i,  f1=%10.3e,  f2=%10.3e, frac=%.2f\n", nband, band->f1[nband], band->f2[nband], band->min_fraction[nband]);
-    Log ("bands_init: band %i, eV1=%10.3e, eV2=%10.3e, frac=%.2f\n", nband,
-         band->f1[nband] * HEV, band->f2[nband] * HEV, band->min_fraction[nband]);
-    Log ("bands_init: band %i, alpha1=%f, alpha2=%f, frac=%.2f\n", nband,
-         band->f1[nband] * PLANCK / (BOLTZMANN * tmax), band->f2[nband] * PLANCK / (BOLTZMANN * tmax), band->min_fraction[nband]);
+    Log ("bands_init: band %i, %8.3e to %8.3e Hz (%.2f to %.2f eV), frac=%.2f\n", nband,
+         band->f1[nband], band->f2[nband], band->f1[nband] * HEV, band->f2[nband] * HEV, band->min_fraction[nband]);
+    Log_silent ("bands_init: band %i, alpha1=%f, alpha2=%f, frac=%.2f\n", nband,
+                band->f1[nband] * PLANCK / (BOLTZMANN * tmax), band->f2[nband] * PLANCK / (BOLTZMANN * tmax), band->min_fraction[nband]);
   }
 
   check_appropriate_banding (band, mode);
@@ -609,6 +608,11 @@ bands_init (imode, band)
   geo.cell_log_freq_min = log10 (band->f1[0]);
   geo.cell_log_freq_max = log10 (band->f2[band->nbands - 1]);
   geo.cell_delta_lfreq = (geo.cell_log_freq_max - geo.cell_log_freq_min) / NBINS_IN_CELL_SPEC;
+
+  for (ii = 0; ii <= NBINS_IN_CELL_SPEC; ii++)
+  {
+    geo.cell_freq[ii] = pow (10., (geo.cell_log_freq_min + ii * geo.cell_delta_lfreq));
+  }
 
   return (0);
 }

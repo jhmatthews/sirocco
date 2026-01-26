@@ -68,7 +68,7 @@ main (argc, argv)
      int argc;
      char *argv[];
 {
-  WindPtr w;
+//OLD  WindPtr w;
 
   double freqmin, freqmax;
   int n;
@@ -127,6 +127,7 @@ main (argc, argv)
 
   rel_mode = REL_MODE_FULL;
   run_xtest = FALSE;
+  xdev = FALSE;
   NWAVE_MAX = (int) NWAVE_IONIZ;
 
   /* Set the verbosity level for logging.  To get more info raise the verbosity level to a higher number. To
@@ -142,13 +143,15 @@ main (argc, argv)
   /* Parse the command line. Get the root. create files.diagfolder + diagfiles */
 
 
+
+
+
   restart_stat = parse_command_line (argc, argv);
 
   /* If the restart flag has been set, we check to see if a windsave file exists.  If it doues we will
      we will restart from that point.  If the windsave file does not exist we will start from scratch */
 
   init_log_and_windsave (restart_stat);
-
   Log ("Thread %d starting.\n", my_rank);
 
   /* Start logging of errors and comments */
@@ -167,7 +170,7 @@ main (argc, argv)
 
   Debug ("Debug statements are on. To turn off use lower verbosity (< 5).\n");
 
-  Log ("\n--------------------------------------------\n\n");
+  Log_separator_line (TRUE);
   xsignal (files.root, "%-20s Initializing variables for %s\n", "NOK", files.root);
 
   opar_stat = setup_created_files ();
@@ -197,7 +200,7 @@ main (argc, argv)
       Error ("sirocco: Unable to open %s\n", files.old_windsave);
       Exit (0);
     }
-    w = wmain;
+    //OLD w = wmain;
 
     geo.run_type = RUN_TYPE_RESTART;
 
@@ -266,7 +269,7 @@ main (argc, argv)
 
       geo.run_type = RUN_TYPE_PREVIOUS;
 
-      w = wmain;
+//OLD w = wmain;
       geo.wcycle = 0;
       geo.pcycle = 0;
       geo.model_count = 0;
@@ -515,6 +518,7 @@ main (argc, argv)
   rdpar_comment ("Other parameters");
 
   bands_init (-1, &xband);
+
   freqmin = xband.f1[0];
   freqmax = xband.f2[xband.nbands - 1];
 
@@ -565,8 +569,9 @@ main (argc, argv)
 
 
   /* INPUTS ARE FINALLY COMPLETE */
+  Log_separator_line (TRUE);
 
-  Log ("\nInputs are complete.  The next step is to define the wind.\n");
+  Log ("Inputs are complete.  The next step is to define the wind.\n");
   Log ("There are %d wind domains\n", geo.ndomain);
   for (n = 0; n < geo.ndomain; n++)
   {
@@ -610,7 +615,11 @@ main (argc, argv)
     define_wind ();
   }
 
+  /* Now that the wind is defined we can copy the bands information */
+  band_copy ();
+
   Log ("DFUDGE (push-through distance) set to %e based on geo.rmax\n", DFUDGE);
+
 
   if (modes.zeus_connect == 1)  //We have restarted, but are in zeus connect mode, so we want to update density, temp and velocities
   {
@@ -622,7 +631,7 @@ main (argc, argv)
   /* this routine checks, somewhat crudely, if the grid is well enough resolved */
   check_grid ();
 
-  w = wmain;
+//OLD  w = wmain;
   if (modes.extra_diagnostics)
   {
     init_extra_diagnostics ();
@@ -693,18 +702,21 @@ main (argc, argv)
 
 /* XXXX - END OF CYCLE TO CALCULATE THE IONIZATION OF THE WIND */
   Log (" Completed wind creation.  The elapsed TIME was %f\n", timer ());
-  /* Evaluate wind paths for last iteration */
-  if (geo.reverb == REV_WIND || geo.reverb == REV_MATOM)
-  {                             //If this is a mode in which we keep wind arrays, update them
-    wind_paths_evaluate (w, my_rank);
-  }
+
+// Next lines were  moved to calculate ionization; they should not be needed here.  ksl 250920
+//OLD  /* Evaluate wind paths for last iteration */
+//OLD  if (geo.reverb == REV_WIND || geo.reverb == REV_MATOM)
+//OLD  {                             //If this is a mode in which we keep wind arrays, update them
+//OLD//OLD    wind_paths_evaluate (w, my_rank);
+//OLD    wind_paths_evaluate (w);
+//OLD  }
 
 /* XXXX - THE CALCULATION OF A DETAILED SPECTRUM IN A SPECIFIC REGION OF WAVELENGTH SPACE */
 
   freqmax = VLIGHT / (geo.swavemin * 1.e-8);
   freqmin = VLIGHT / (geo.swavemax * 1.e-8);
 
-  /* Perform the initilizations required to handle macro-atoms during the detailed
+  /* Perform the initializations required to handle macro-atoms during the detailed
      calculation of the spectrum.
 
      Next lines turns off macro atom estimators and other portions of the code that are
@@ -778,9 +790,14 @@ main (argc, argv)
   Log ("Convergence statistics for the wind after the ionization calculation:\n");
   check_convergence ();
   Log ("Information about luminosities and apparent fluxes due to various portions of the system:\n");
-  phot_status ();
+  phot_status (1);
+
 
   clean_on_exit ();
+
+  print_memory_usage ("After program is complete");
+  Log_close ();
+
 
   return (0);
 }

@@ -3,6 +3,7 @@ int opar(char filename[]);
 int add_par(char filename[]);
 int cpar(char filename[]);
 int rdpar_init(void);
+char *check_and_fix_string(char *s);
 int string_process(char question[], char dummy[]);
 int string_process_from_command_line(char question[], char dummy[]);
 int string_process_from_file(char question[], char dummy[]);
@@ -43,6 +44,10 @@ int Log_set_mpi_rank(int rank, int n_mpi);
 int Log_parallel(char *format, ...);
 int Debug(char *format, ...);
 void Exit(int error_code);
+void print_platform_info(void);
+void print_linux_detailed_memory(void);
+void print_memory_usage(const char *label);
+void Log_separator_line(int newlines);
 /* synonyms.c */
 int get_question_name_length(char question[]);
 int are_synonym_lists_valid(void);

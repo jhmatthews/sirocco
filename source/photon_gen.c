@@ -463,7 +463,7 @@ iwind = -1 	Don't generate any wind photons at all
 
   if (print_mode == PRINT_ON)
   {
-    phot_status ();
+    phot_status (tot_flag);     /* we pass tot_flag here so we only report the total luminosities once */
   }
 
 
@@ -477,6 +477,8 @@ iwind = -1 	Don't generate any wind photons at all
 /**
  * @brief    Log information about total and band limited
  * luminosities
+ * 
+ * @param [in] int  tot_flag   If 1, report total luminosities, else do not
  *
  * @return     Always returns 0
  *
@@ -489,34 +491,45 @@ iwind = -1 	Don't generate any wind photons at all
  **********************************************************/
 
 int
-phot_status ()
+phot_status (tot_flag)
+     int tot_flag;
 {
 
-  Log
-    ("!! xdefine_phot: lum_tot %8.2e lum_star %8.2e lum_bl %8.2e lum_bh %8.2e lum_disk %8.2e lum_wind %8.2e\n",
-     geo.lum_tot, geo.lum_star, geo.lum_bl, geo.lum_agn, geo.lum_disk, geo.lum_wind);
+  if (tot_flag == 1)
+  {
+    Log
+      ("!! xdefine_phot: total luminosities: lum_tot %8.2e lum_star %8.2e lum_bl %8.2e lum_bh %8.2e lum_disk %8.2e lum_wind %8.2e\n",
+       geo.lum_tot, geo.lum_star, geo.lum_bl, geo.lum_agn, geo.lum_disk, geo.lum_wind);
+  }
+
+  if (geo.absorb_reflect == BACK_RAD_ABSORB_AND_HEAT && tot_flag == 1)
+  {
+    if (geo.lum_star > 0)
+    {
+      Log
+        ("!! xdefine_phot, total luminosities for star: tstar %8.2e %8.2e lum_star %8.2e initial %8.2e from irradiation %8.2e\n",
+         geo.tstar, geo.tstar_init, geo.lum_star, geo.lum_star_init, geo.lum_star_back);
+    }
+    if (geo.lum_disk > 0)
+    {
+      Log
+        ("!! xdefine_phot, total luminosities for disk: lum_disk %8.2e initial %8.2e from irradiation %8.2e \n",
+         geo.lum_disk, geo.lum_disk_init, geo.lum_disk_back);
+    }
+  }
 
   Log
-    ("!! xdefine_phot:   f_tot %8.2e   f_star %8.2e   f_bl %8.2e   f_bh %8.2e   f_disk %8.2e   f_wind %8.2e   f_matom %8.2e   f_kpkt %8.2e \n",
+    ("!! xdefine_phot: banded_luminosities: f_tot %8.2e f_star %8.2e f_bl %8.2e f_bh %8.2e f_disk %8.2e f_wind %8.2e f_matom %8.2e f_kpkt %8.2e\n",
      geo.f_tot, geo.f_star, geo.f_bl, geo.f_agn, geo.f_disk, geo.f_wind, geo.f_matom, geo.f_kpkt);
 
-  Log
-    ("!! xdefine_phot: wind ff %8.2e       fb %8.2e   lines  %8.2e  for freq %8.2e %8.2e\n",
-     geo.lum_ff, geo.lum_rr, geo.lum_lines, geo.f1, geo.f2);
-  if (geo.lum_star > 0)
+  if (geo.rt_mode != RT_MODE_MACRO)
   {
     Log
-      ("!! xdefine_phot: star  tstar  %8.2e   %8.2e   lum_star %8.2e %8.2e  %8.2e \n",
-       geo.tstar, geo.tstar_init, geo.lum_star, geo.lum_star_init, geo.lum_star_back);
+      ("!! xdefine_phot: wind ff %8.2e fb %8.2e lines %8.2e for freq %8.2e %8.2e\n", geo.lum_ff, geo.lum_rr, geo.lum_lines, geo.f1, geo.f2);
   }
-  if (geo.lum_disk > 0)
-  {
-    Log
-      ("!! xdefine_phot: disk                               lum_disk %8.2e %8.2e  %8.2e \n",
-       geo.lum_disk, geo.lum_disk_init, geo.lum_disk_back);
-  }
-  if (geo.adiabatic)
-    Log ("!! xdefine_phot: heating & cooling  due to adiabatic processes:         %8.2e %8.2e \n", geo.heat_adiabatic, geo.cool_adiabatic);
+
+  if (geo.adiabatic && tot_flag == 1)
+    Log ("!! xdefine_phot: heating & cooling  due to adiabatic processes: %8.2e %8.2e \n", geo.heat_adiabatic, geo.cool_adiabatic);
 
   return (0);
 }
@@ -654,7 +667,7 @@ xmake_phot (p, f1, f2, ioniz_or_extract, iwind, weight, iphot_start, nphotons)
 
 
   Log
-    ("photon_gen: band %6.2e to %6.2e weight %6.2e nphotons %8d ndisk %7d nwind %7d nstar %7d npow %d \n",
+    ("!! xmake_phot: band %6.2e to %6.2e weight %6.2e nphotons %8d ndisk %7d nwind %7d nstar %7d nbh %d \n",
      f1, f2, weight, nphotons, ndisk, nwind, nstar, nagn);
 
   /* Generate photons from the star, the bl, the wind and then from the disk */
@@ -911,7 +924,9 @@ photo_gen_star (p, r, t, weight, f1, f2, spectype, istart, nphot)
   {
     Error ("photo_gen_star: Cannot generate photons if freqmax %g < freqmin %g\n", f2, f1);
   }
-  Log_silent ("photo_gen_star creates nphot %5d photons from %5d to %5d \n", nphot, istart, iend);
+  Log ("photo_gen_star creates nphot %5d photons from %5d to %5d \n", nphot, istart, iend);
+  Log_flush ();
+
   freqmin = f1;
   freqmax = f2;
   r = (1. + EPSILON) * r;       /* Generate photons just outside the photosphere */
