@@ -48,8 +48,7 @@
  **********************************************************/
 
 int
-compute_di_coeffs (T)
-     double T;
+compute_di_coeffs (double T)
 {
   int n;
 
@@ -88,9 +87,7 @@ compute_di_coeffs (T)
  **********************************************************/
 
 double
-q_ioniz_dere (nion, t_e)
-     int nion;
-     double t_e;
+q_ioniz_dere (int nion, double t_e)
 {
   double coeff, t, scaled_t;
   double exp_int, dt, drdt, rate;
@@ -181,10 +178,7 @@ q_ioniz_dere (nion, t_e)
  **********************************************************/
 
 double
-total_di (one, t_e)
-     WindPtr one;
-     double t_e;
-
+total_di (WindPtr one, double t_e)
 {
   double cooling_rate;
   int nplasma;
@@ -236,8 +230,7 @@ total_di (one, t_e)
  **********************************************************/
 
 int
-compute_qrecomb_coeffs (T)
-     double T;
+compute_qrecomb_coeffs (double T)
 {
   int n, nvmin, ntmin;
   struct topbase_phot *xtop;
@@ -310,9 +303,7 @@ compute_qrecomb_coeffs (T)
  **********************************************************/
 
 double
-q_recomb_dere (cont_ptr, electron_temperature)
-     struct topbase_phot *cont_ptr;
-     double electron_temperature;
+q_recomb_dere (struct topbase_phot *cont_ptr, double electron_temperature)
 {
   int nion;
   double u0;
@@ -383,9 +374,7 @@ q_recomb_dere (cont_ptr, electron_temperature)
  **********************************************************/
 
 double
-q_ioniz (cont_ptr, electron_temperature)
-     struct topbase_phot *cont_ptr;
-     double electron_temperature;
+q_ioniz (struct topbase_phot *cont_ptr, double electron_temperature)
 {
   double coeff;
   double gaunt;
@@ -446,9 +435,7 @@ q_ioniz (cont_ptr, electron_temperature)
  **********************************************************/
 
 double
-q_recomb (cont_ptr, electron_temperature)
-     struct topbase_phot *cont_ptr;
-     double electron_temperature;
+q_recomb (struct topbase_phot *cont_ptr, double electron_temperature)
 {
   double coeff;
   double gaunt, u0;

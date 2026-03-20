@@ -37,9 +37,7 @@
  *
  **********************************************************/
 double
-cooling (xplasma, t)
-     PlasmaPtr xplasma;
-     double t;
+cooling (PlasmaPtr xplasma, double t)
 {
 
   xplasma->t_e = t;
@@ -233,9 +231,7 @@ xtotal_emission (one, f1, f2)
  **********************************************************/
 
 double
-adiabatic_cooling (one, t)
-     WindPtr one;
-     double t;
+adiabatic_cooling (WindPtr one, double t)
 {
   double cooling;
   int nplasma, nion;
@@ -305,8 +301,7 @@ adiabatic_cooling (one, t)
 
 
 double
-shock_heating (one)
-     WindPtr one;
+shock_heating (WindPtr one)
 {
   int nplasma;
   double x, r;

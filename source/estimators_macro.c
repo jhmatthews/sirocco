@@ -66,11 +66,7 @@ double temp_ext_rad;            //radiation temperature passed externally
  **********************************************************/
 
 int
-bf_estimators_increment (one, p, ds)
-     WindPtr one;
-     PhotPtr p;
-     double ds;
-
+bf_estimators_increment (WindPtr one, PhotPtr p, double ds)
 {
   double freq_av;
   double weight_of_packet;
@@ -286,13 +282,7 @@ bf_estimators_increment (one, p, ds)
  **********************************************************/
 
 int
-bb_estimators_increment (one, p, tau_sobolev, dvds, nn)
-     WindPtr one;
-     PhotPtr p;
-     double tau_sobolev;
-     double dvds;
-     int nn;
-
+bb_estimators_increment (WindPtr one, PhotPtr p, double tau_sobolev, double dvds, int nn)
 {
   int llvl;
   int n;
@@ -600,10 +590,7 @@ normalise_macro_estimators (PlasmaPtr xplasma)
  **********************************************************/
 
 double
-total_fb_matoms (xplasma, t_e, f1, f2)
-     PlasmaPtr xplasma;
-     double t_e;
-     double f1, f2;
+total_fb_matoms (PlasmaPtr xplasma, double t_e, double f1, double f2)
 {
   double cool_contribution;
   double t_e_store;
@@ -725,9 +712,7 @@ cooling_di_matoms (xplasma, t_e, f1, f2)
  **********************************************************/
 
 double
-total_bb_cooling (xplasma, t_e)
-     PlasmaPtr xplasma;
-     double t_e;
+total_bb_cooling (PlasmaPtr xplasma, double t_e)
 {
   double cool_contribution;
   struct lines *line_ptr;
@@ -791,9 +776,7 @@ total_bb_cooling (xplasma, t_e)
  **********************************************************/
 
 double
-macro_bb_heating (xplasma, t_e)
-     PlasmaPtr xplasma;
-     double t_e;
+macro_bb_heating (PlasmaPtr xplasma, double t_e)
 {
   double heat_contribution;
   struct lines *line_ptr;
@@ -834,14 +817,11 @@ macro_bb_heating (xplasma, t_e)
  **********************************************************/
 
 double
-macro_photo_heating (xplasma, t_e)
-     PlasmaPtr xplasma;
-     double t_e;
+macro_photo_heating (PlasmaPtr xplasma, double t_e)
 {
   double heat_contribution;
   double total, lower_density;
   int i, j;
-  double q_recomb ();
   MacroPtr mplasma;
 
   mplasma = &macromain[xplasma->nplasma];
@@ -883,9 +863,7 @@ macro_photo_heating (xplasma, t_e)
  **********************************************************/
 
 double
-macro_qrecomb_heating (xplasma, t_e)
-     PlasmaPtr xplasma;
-     double t_e;
+macro_qrecomb_heating (PlasmaPtr xplasma, double t_e)
 {
   double heat_contribution;
   double total, upper_density;
@@ -939,12 +917,7 @@ macro_qrecomb_heating (xplasma, t_e)
  **********************************************************/
 
 int
-bb_simple_heat (xplasma, p, tau_sobolev, nn)
-     PlasmaPtr xplasma;
-     PhotPtr p;
-     double tau_sobolev;
-     int nn;
-
+bb_simple_heat (PlasmaPtr xplasma, PhotPtr p, double tau_sobolev, int nn)
 {
   double heat_contribution;
   double weight_of_packet;
@@ -991,8 +964,7 @@ bb_simple_heat (xplasma, p, tau_sobolev, nn)
  **********************************************************/
 
 int
-check_stimulated_recomb (xplasma)
-     PlasmaPtr xplasma;
+check_stimulated_recomb (PlasmaPtr xplasma)
 {
   int i, j;
   struct topbase_phot *cont_ptr;
@@ -1040,8 +1012,7 @@ check_stimulated_recomb (xplasma)
  **********************************************************/
 
 int
-get_dilute_estimators (xplasma)
-     PlasmaPtr xplasma;
+get_dilute_estimators (PlasmaPtr xplasma)
 {
 
   int i, j;
@@ -1084,14 +1055,10 @@ get_dilute_estimators (xplasma)
  **********************************************************/
 
 double
-get_gamma (cont_ptr, xplasma)
-     struct topbase_phot *cont_ptr;
-     PlasmaPtr xplasma;
+get_gamma (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
 {
   double gamma_value;
   double fthresh, flast;
-  double qromb ();
-  double gamma_integrand ();
 
   temp_ext2 = xplasma->t_r;     //external temperature
   cont_ext_ptr2 = cont_ptr;     //external cont pointer
@@ -1165,14 +1132,10 @@ gamma_integrand (double freq, void *params)
  **********************************************************/
 
 double
-get_gamma_e (cont_ptr, xplasma)
-     struct topbase_phot *cont_ptr;
-     PlasmaPtr xplasma;
+get_gamma_e (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
 {
   double gamma_e_value;
   double fthresh, flast;
-  double qromb ();
-  double gamma_e_integrand ();
 
   temp_ext2 = xplasma->t_r;     //external temperature
   cont_ext_ptr2 = cont_ptr;     //external cont pointer
@@ -1245,14 +1208,10 @@ gamma_e_integrand (double freq, void *params)
  **********************************************************/
 
 double
-get_alpha_st (cont_ptr, xplasma)
-     struct topbase_phot *cont_ptr;
-     PlasmaPtr xplasma;
+get_alpha_st (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
 {
   double alpha_st_value;
   double fthresh, flast;
-  double qromb ();
-  double alpha_st_integrand ();
 
   temp_ext2 = xplasma->t_e;     //external for use in integrand
   temp_ext_rad = xplasma->t_r;
@@ -1342,14 +1301,10 @@ alpha_st_integrand (double freq, void *params)
  **********************************************************/
 
 double
-get_alpha_st_e (cont_ptr, xplasma)
-     struct topbase_phot *cont_ptr;
-     PlasmaPtr xplasma;
+get_alpha_st_e (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
 {
   double alpha_st_e_value;
   double fthresh, flast;
-  double qromb ();
-  double alpha_st_e_integrand ();
 
   temp_ext2 = xplasma->t_e;     //external for use in integrand
   temp_ext_rad = xplasma->t_r;  //"
