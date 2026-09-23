@@ -31,9 +31,14 @@
 char inroot[LINELENGTH], outroot[LINELENGTH], model_file[LINELENGTH], folder[LINELENGTH];
 int model_flag, ksl_flag, cmf2obs_flag, obs2cmf_flag;
 
+#define MAX_HR1985_LINES 20
+int hr1985_flag, n_hr1985;
+double hr1985_lambda[MAX_HR1985_LINES];
+
 double line_matom_lum_single (double lum[], PlasmaPtr xplasma, int uplvl);
 int line_matom_lum (int uplvl);
 int create_matom_level_map ();
+int hr1985_dump ();
 
 /**********************************************************/
 /**
@@ -70,6 +75,7 @@ xparse_command_line (argc, argv)
   sprintf (outroot, "%s", "new");
 
   model_flag = ksl_flag = obs2cmf_flag = cmf2obs_flag = 0;
+  hr1985_flag = n_hr1985 = 0;
 
   if (argc == 1)
   {
@@ -130,6 +136,25 @@ xparse_command_line (argc, argv)
       else if (strcmp (argv[i], "-obs") == 0)
       {
         cmf2obs_flag = 1;
+      }
+      else if (strcmp (argv[i], "-hr1985") == 0)
+      {
+        /* comma separated list of wavelengths in Angstroms, e.g. -hr1985 1215.67,1548.19,6562.8 */
+        char *tok;
+        if (i + 1 >= argc || argv[i + 1][0] == '-')
+        {
+          printf ("sirocco: Expected a comma separated list of wavelengths (A) after -hr1985 switch\n");
+          exit (0);
+        }
+        strcpy (dummy, argv[i + 1]);
+        n_hr1985 = 0;
+        for (tok = strtok (dummy, ","); tok != NULL && n_hr1985 < MAX_HR1985_LINES; tok = strtok (NULL, ","))
+        {
+          hr1985_lambda[n_hr1985++] = atof (tok);
+        }
+        hr1985_flag = 1;
+        i++;
+        j = i;
       }
       else if (strncmp (argv[i], "-", 1) == 0)
       {
@@ -205,6 +230,12 @@ main (argc, argv)
   }
 
   wind_read (infile);
+
+  if (hr1985_flag)
+  {
+    hr1985_dump ();
+    exit (0);
+  }
 
   if (nlevels_macro == 0)
   {
@@ -567,4 +598,187 @@ line_matom_lum_single (lum, xplasma, uplvl)
   }
 
   return (lum_tot);
+}
+
+
+/**********************************************************/
+/**
+ * @brief The HR1985 two-sided continuum loss probability, for diagnostics
+ *
+ * @param [in] double beta   continuum-to-line opacity ratio k_C/k_L
+ * @param [in] double gamma  1/tau_Sobolev
+ * @param [in] double P      the Sobolev escape probability
+ * @param [in] int use_table TRUE to use the table read with the atomic data,
+ * FALSE for the analytic fit
+ * @return  A = beta F(beta) f(beta,gamma), limited so that P + A <= 1, or -1
+ * if the table is requested but none was read
+ *
+ * ### Notes ###
+ * Hummer & Rybicki (1985) eqs. 2.30 and 2.38, using hr1985_g_table or
+ * hr1985_g_fit from lines.c. A is zero for gamma >= 1 (tau <= 1), as in
+ * hr1985_es_loss.
+ **********************************************************/
+
+double
+hr1985_A (beta, gamma, P, use_table)
+     double beta, gamma, P;
+     int use_table;
+{
+  double A;
+
+  if (use_table && hr1985_npts == 0)
+    return (-1.0);
+  if (beta <= 0.0 || gamma >= 1.0)
+    return (0.0);
+
+  A = 2.0 * (use_table ? hr1985_g_table (beta, gamma) : hr1985_g_fit (beta, gamma));
+  if (P + A > 1.0)
+    A = 1.0 - P;
+  return (A);
+}
+
+
+/**********************************************************/
+/**
+ * @brief Write out the quantities needed for the Hummer & Rybicki (1985)
+ * continuum-absorption correction to the escape probability
+ *
+ * @return Always returns 0
+ *
+ * @details
+ * For each wavelength given with -hr1985, the nearest line in the atomic
+ * data is used and, for every plasma cell, we write tau_Sobolev, the
+ * thermal speed of the ion, the continuum opacities at the line frequency,
+ * beta = kappa_c v_th / (dvds tau), gamma = 1/tau, the Sobolev escape
+ * probability P and the continuum absorption probability A from the analytic
+ * fit and (if one was read with the atomic data) the HR1985 table. kappa_c is
+ * true absorption only (bf + ff). beta_es and A_es repeat the calculation with
+ * electron scattering alone as the continuum, in which case A_es is the
+ * probability that a trapped line photon is electron scattered out of the
+ * resonance zone rather than destroyed. P_sirocco is what p_escape actually
+ * returns, which for Lyman alpha includes A_es when a table was read.
+ *
+ * HR1985 say the continuum term dominates where gamma < 15 beta. The counts
+ * printed to the screen are for the electron scattering case, using the table
+ * if there is one and the fit otherwise.
+ **********************************************************/
+
+int
+hr1985_dump ()
+{
+  int k, n, nline, nplasma, nwind, ndom, ii, jj;
+  int ncells, nthick, ndominant, nten;
+  double lambda, dlam, dlam_best;
+  double tau, dvds, vth, kap_bf_c, kap_ff_c, kap_es_c, beta, beta_es, gamma, P, P_sirocco;
+  double A_fit, A_es_fit, A_tab, A_es_tab, A_es;
+  double max_ratio;
+  char outfile[LINELENGTH];
+  struct lines *line_ptr;
+  PlasmaPtr xplasma;
+  WindPtr one;
+  FILE *fptr, *fopen ();
+
+  sprintf (outfile, "%.150s.hr1985.txt", inroot);
+  fptr = fopen (outfile, "w");
+  printf ("Writing HR1985 diagnostics to %s\n", outfile);
+
+  fprintf (fptr, "# HR1985 continuum absorption diagnostics for %s\n", inroot);
+  fprintf (fptr, "# beta = (kappa_bf+kappa_ff) v_th / (dvds tau); beta_es = kappa_es v_th / (dvds tau); gamma = 1/tau\n");
+  fprintf (fptr, "# P = Sobolev escape probability, A = beta F(beta) f(beta,gamma) from the analytic fit (_fit) or the table (_tab)\n");
+  fprintf (fptr, "# A_es uses beta_es; _tab columns are -1 if no HR1985 table was read; P_sirocco is what p_escape returns\n");
+  fprintf (fptr, "# HR1985 table read: %s\n", hr1985_npts > 0 ? "yes" : "no");
+  fprintf (fptr,
+           "%9s %3s %3s %6s %6s %4s %4s %11s %11s %9s %9s %11s %11s %11s %11s %11s %11s %11s %11s %11s %11s %11s %11s %11s %11s %11s\n",
+           "lambda", "z", "ion", "nplasm", "nwind", "i", "j", "x", "zz", "ne", "t_e", "dvds", "tau", "v_th", "kappa_bf", "kappa_ff",
+           "kappa_es", "beta", "beta_es", "gamma", "P", "A_fit", "A_es_fit", "A_tab", "A_es_tab", "P_sirocco");
+
+  for (k = 0; k < n_hr1985; k++)
+  {
+    /* find the line nearest to the requested wavelength */
+    nline = -1;
+    dlam_best = VERY_BIG;
+    for (n = 0; n < nlines; n++)
+    {
+      dlam = fabs (VLIGHT / line[n].freq / ANGSTROM - hr1985_lambda[k]);
+      if (dlam < dlam_best)
+      {
+        dlam_best = dlam;
+        nline = n;
+      }
+    }
+    if (nline < 0)
+    {
+      printf ("hr1985_dump: no line found near %.2f A\n", hr1985_lambda[k]);
+      continue;
+    }
+
+    line_ptr = &line[nline];
+    lambda = VLIGHT / line_ptr->freq / ANGSTROM;
+    ncells = nthick = ndominant = nten = 0;
+    max_ratio = 0.0;
+
+    for (nplasma = 0; nplasma < NPLASMA; nplasma++)
+    {
+      xplasma = &plasmamain[nplasma];
+      nwind = xplasma->nwind;
+      one = &wmain[nwind];
+      ndom = one->ndom;
+      wind_n_to_ij (ndom, nwind, &ii, &jj);
+      dvds = one->dvds_ave;
+
+      if (dvds <= 0.0)
+        continue;
+
+      /* same tau as p_escape uses */
+      tau = sobolev (one, one->x, xplasma->density[line_ptr->nion], line_ptr, dvds);
+      P = p_escape_from_tau (tau);      /* the Sobolev part of p_escape, without any HR1985 correction */
+      P_sirocco = p_escape (line_ptr, xplasma);
+
+      vth = sqrt (2. * BOLTZMANN * xplasma->t_e / (MPROT * ele[ion[line_ptr->nion].nelem].atomic_weight));
+      kap_bf_c = kappa_bf (xplasma, line_ptr->freq, 0);
+      kap_ff_c = kappa_ff (xplasma, line_ptr->freq);
+      kap_es_c = xplasma->ne * THOMPSON * zdom[ndom].fill;
+
+      if (tau > 0.0)
+      {
+        beta = (kap_bf_c + kap_ff_c) * vth / (dvds * tau);
+        beta_es = kap_es_c * vth / (dvds * tau);
+        gamma = 1.0 / tau;
+        A_fit = hr1985_A (beta, gamma, P, FALSE);
+        A_es_fit = hr1985_A (beta_es, gamma, P, FALSE);
+        A_tab = hr1985_A (beta, gamma, P, TRUE);
+        A_es_tab = hr1985_A (beta_es, gamma, P, TRUE);
+      }
+      else
+      {
+        beta = beta_es = gamma = -1.0;
+        A_fit = A_es_fit = 0.0;
+        A_tab = A_es_tab = hr1985_npts > 0 ? 0.0 : -1.0;
+      }
+      A_es = hr1985_npts > 0 ? A_es_tab : A_es_fit;
+
+      ncells++;
+      if (tau > 1.0)
+        nthick++;
+      if (tau > 0.0 && gamma < 15. * beta_es)
+        ndominant++;
+      if (P > 0.0 && A_es / P > 0.1)
+        nten++;
+      if (P > 0.0 && A_es / P > max_ratio)
+        max_ratio = A_es / P;
+
+      fprintf (fptr,
+               "%9.2f %3d %3d %6d %6d %4d %4d %11.4e %11.4e %9.3e %9.3e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e\n",
+               lambda, line_ptr->z, line_ptr->istate, nplasma, nwind, ii, jj, one->xcen[0], one->xcen[2], xplasma->ne, xplasma->t_e,
+               dvds, tau, vth, kap_bf_c, kap_ff_c, kap_es_c, beta, beta_es, gamma, P, A_fit, A_es_fit, A_tab, A_es_tab, P_sirocco);
+    }
+
+    printf
+      ("%9.2f A (z=%d ion=%d, requested %.2f): %d cells, %d with tau>1, %d with gamma<15beta_es, %d with A_es/P>0.1, max A_es/P %.3e (%s)\n",
+       lambda, line_ptr->z, line_ptr->istate, hr1985_lambda[k], ncells, nthick, ndominant, nten, max_ratio,
+       hr1985_npts > 0 ? "table" : "fit");
+  }
+
+  fclose (fptr);
+  return (0);
 }
