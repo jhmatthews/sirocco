@@ -116,6 +116,36 @@ together.  So for example, all of the variables associated with the central obje
 that is, they all begin with Central_object.  This convention should be followed.
 
 
+
+Hidden choices in rdchoice
+==========================
+
+Inputs that take one of a set of named choices are read with ``rdchoice``, e.g.::
+
+    rdchoice ("Line_transfer(pure_abs,pure_scat,sing_scat,classic_iso,classic,macro_iso,macro"
+              ",escape_prob,thermal_trapping,macro_atoms_escape_prob,macro_atoms_thermal_trapping)",
+              "0,1,2,3,5,6,7,103,105,106,107", answer);
+
+Any choice whose integer value is 100 or more is *hidden*. A hidden choice is accepted as input,
+but is an alias for the visible choice with value ``value - 100``, so in the example above
+``thermal_trapping`` (105) behaves exactly like ``classic`` (5). The 100 offset is controlled by the 
+defined alias #HIDDEN_CHOICE in rdpar.c. Hidden choices are not shown in the interactive prompt, in error messages, or in the question
+written to the ``.out.pf`` file. In addition, the calling code never sees the hidden value, because 
+``rdchoice`` returns ``value - 100``. Finally, the answer recorded in the ``.out.pf`` file (and in the ``# Var`` headers of output files)
+is the name of the corresponding visible choice. 
+The values of ordinary (visible) choices must be less than 100.
+
+This makes it possible to rename a choice, or add a shorthand for one, while keeping older parameter
+files working, without changing ``rdchoice`` or any of the code that uses the returned value.
+To add one, append the hidden name to the list of choices and ``100 + value`` to the list of values, or
+see ``setup_line_transfer.c`` for an example. 
+
+.. warning::
+    Please note, at most ``MAX_CHOICES`` (in ``rdpar.c``) choices, visible and hidden combined, can be given in one call
+
+See also :doc:`../input/overview`. 
+
+
 External variables
 ==================
 

@@ -24,7 +24,9 @@ Each line begins with a keyword followed optionally by a comment in parentheses,
 
 The comment generally specifies a set of valid choices or the units in which information is expected.
 
-When a series of choices is presented, one does not need to enter the complete word, just enough to provide unique match to the choice.
+When a series of choices is presented, one does not need to enter the complete word, just enough to provide unique match to the choice. 
+This means a choice can be a prefix of another (e.g. ``macro`` and ``macro_iso``) -- entering ``macro`` will select the first choice, while entering ``macro_i`` will select the second.  
+
 
 The user does not need to create a parameter .pf file before running SIROCCO. Invoking SIROCCO without a parameter file will cause SIROCCO to prompt the user for the necessary information to create a parameter file. The user can specfiy any name for the parameter file. The example below calls the filename 'my_new_model'
 
@@ -66,6 +68,11 @@ one normally copies, in this case :code:`test.out.pf` to  :code:`test.pf` to avo
 
 A better approach, if one is aware a change to the inputs has been made, is to run the old parameter file with :code:`-i` switch, copy the :code:`test.out.pf` to  :code:`test.pf`, and then
 run the program normally.
+
+When the name of an option for a choice-type input is changed, the old name can be retained as a
+hidden synonym, so older parameter files continue to work.  These synonyms are not shown in the prompt,
+and the new name is written to the :code:`.out.pf` file.  For example, :code:`thermal_trapping` for
+:ref:`Line_transfer` is now :code:`classic`. See :ref:`Hidden choices in rdchoice` for more information on hidden synonyms.
 
 Alternatively, if one heeds to modify a number of input files, once one knows what the change is, one can simply edit the .pf files directly.
 
