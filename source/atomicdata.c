@@ -21,6 +21,11 @@
 // If routines are added cproto > atomic_proto.h should be run
 #include "atomic_proto.h"
 
+/* Raw HR1985 records, which are only turned into hr1985_table (and checked) once all the data has been read */
+static double hr1985_logbeta_in[MAX_HR1985_BETA * MAX_HR1985_GAMMA];
+static double hr1985_loggamma_in[MAX_HR1985_BETA * MAX_HR1985_GAMMA];
+static double hr1985_log_g_in[MAX_HR1985_BETA * MAX_HR1985_GAMMA];
+
 #ifdef LINELENGTH
 #undef LINELENGTH
 #endif
@@ -290,6 +295,8 @@ structure does not have this property! */
         else if (strncmp (word, "FF_GAUNT", 8) == 0)
           choice = 'g';
         /*Its a data file giving the temperature averaged gaunt factors from Sutherland (1998) */
+        else if (strncmp (word, "HR1985", 6) == 0)
+          choice = 'H';         /*Its a Hummer & Rybicki (1985) escape probability table record */
         else if (strncmp (word, "Kelecyield", 10) == 0)
           choice = 'K';         /*Electron yield from inner shell ionization fro Kaastra and Mewe */
         else if (strncmp (word, "ChEx", 4) == 0)
@@ -2241,6 +2248,35 @@ would like to have simple lines for macro-ions */
             exit (0);
           }
           break;
+
+/**
+ * @section HR1985 escape probability table
+ * A table of log10( 0.5 beta F(beta) f(beta,gamma) ) from Hummer & Rybicki (1985, eq. 2.30),
+ * written by HR1985_claude.py. The records must form a complete, regular grid in
+ * log10(beta) and log10(gamma), ordered with beta varying slowest and both ascending.
+ * If the table is present, the HR1985 electron scattering loss is added to the escape
+ * probability of Lyman alpha (see p_escape).
+ * @verbatim
+ * # label log_beta log_gamma log_g
+ * HR1985 -11.0 -9.0 -10.9632
+ * HR1985 -11.0 -8.75 -10.9632
+ * @endverbatim
+ */
+        case 'H':
+          if (hr1985_npts >= MAX_HR1985_BETA * MAX_HR1985_GAMMA)
+          {
+            Error ("Get_atomic_data: Too many HR1985 records, increase MAX_HR1985_BETA/GAMMA\n");
+            exit (0);
+          }
+          if (sscanf (aline, "%*s %le %le %le", &hr1985_logbeta_in[hr1985_npts], &hr1985_loggamma_in[hr1985_npts],
+                      &hr1985_log_g_in[hr1985_npts]) != 3)
+          {
+            Error ("Something wrong with HR1985 data\n");
+            Error ("Get_atomic_data %s\n", aline);
+            exit (0);
+          }
+          hr1985_npts++;
+          break;
 /**
  * @section direct (collisional) ionization data from Dere 07.
  * #Title: Ionization rate coefficients for elements H to Zn (Dere+, 2007)
@@ -2599,6 +2635,12 @@ SCUPS    1.132e-01   2.708e-01   5.017e-01   8.519e-01   1.478e+00
  */
 
   fclose (mptr);
+
+  if (hr1985_npts > 0)
+  {
+    hr1985_setup_table (hr1985_logbeta_in, hr1985_loggamma_in, hr1985_log_g_in, hr1985_npts);
+  }
+
 /* OK now summarize the data that has been read*/
 
   n_elec_yield_tot = 0;         //Reset this numnber, we are now going to use it to check we have yields for all inner shells
@@ -2641,6 +2683,9 @@ SCUPS    1.132e-01   2.708e-01   5.017e-01   8.519e-01   1.478e+00
   Log ("We have read in %5d Badnell GS   Radiative rate coefficients over the temp range %e to %e\n", n_bad_gs_rr, gstmin, gstmax);
   Log ("We have read in %5d Scaled electron temperature frequency averaged gaunt factors\n", gaunt_n_gsqrd);
   Log ("We have read in %5d Charge exchange rates\n", n_charge_exchange);
+  if (hr1985_npts > 0)
+    Log ("We have read in a %d x %d HR1985 table: the HR1985 electron scattering loss is ON for Lyman alpha\n",
+         hr1985_table.nbeta, hr1985_table.ngamma);
   Log ("The minimum frequency for photoionization is %8.2e\n", phot_freq_min);
   Log ("The minimum frequency for inner shell ionization is %8.2e\n", inner_freq_min);
 

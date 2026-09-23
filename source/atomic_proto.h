@@ -8,6 +8,7 @@ int index_inner_cross(void);
 void indexx(int n, float arrin[], int indx[]);
 int limit_lines(double freqmin, double freqmax);
 int check_xsections(void);
+int hr1985_setup_table(double logbeta[], double loggamma[], double log_g[], int npts);
 double q21(struct lines *line_ptr, double t);
 double q12(struct lines *line_ptr, double t);
 double a21(struct lines *line_ptr);

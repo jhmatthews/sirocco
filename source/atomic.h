@@ -506,6 +506,25 @@ typedef struct gaunt_total
 
 extern Gaunt_total gaunt_total[MAX_GAUNT_N_GSQRD];      //Set up the structure
 
+/* Hummer & Rybicki (1985) table of log10( 0.5 beta F(beta) f(beta,gamma) ) on a regular grid in
+   log10(beta) and log10(gamma), read from HR1985 records in the atomic data. If no table is read
+   (hr1985_npts == 0) the HR1985 correction to the escape probability is not applied. */
+
+#define MAX_HR1985_BETA  100
+#define MAX_HR1985_GAMMA 100
+
+extern int hr1985_npts;         /**< The number of HR1985 records read */
+
+typedef struct hr1985_table
+{
+  int nbeta, ngamma;
+  double logbeta_min, dlogbeta;
+  double loggamma_min, dloggamma;
+  double log_g[MAX_HR1985_BETA][MAX_HR1985_GAMMA];      /**< log_g[i][j] at logbeta_min + i dlogbeta, loggamma_min + j dloggamma */
+} HR1985_table;
+
+extern HR1985_table hr1985_table;
+
 
 
 #define MAX_CHARGE_EXCHANGE 100 //Space set aside for charge exchange parameters

@@ -478,6 +478,92 @@ double pe_ne, pe_te, pe_dd, pe_dvds, pe_w, pe_tr;
 double pe_escape;
 int hr1985_lya_logged = FALSE;
 
+/* The HR1985 electron scattering loss is switched on by including an HR1985 table in the
+   atomic data (see hr1985_setup_table). These switches are for testing:
+   HR1985_ALL_LINES  1 applies it to every line, 0 to Lyman alpha only
+   HR1985_USE_FIT    1 uses the analytic fit instead of the table (a table must still be read) */
+#define HR1985_ALL_LINES 0
+#define HR1985_USE_FIT   0
+
+
+/**********************************************************/
+/**
+ * @brief      Analytic fit to 0.5 beta F(beta) f(beta,gamma) (Hummer & Rybicki 1985)
+ *
+ * @param [in] double  beta   Continuum to line opacity ratio
+ * @param [in] double  gamma   1/tau_Sobolev
+ * @return     1.666 beta^0.95 (1 - gamma^0.3)
+ *
+ * ### Notes ###
+ * Within ~10-25% of HR1985 Table 1 for beta <~ 1e-2, but overestimates
+ * badly at large beta (x1.5 at beta = 0.1, x4.6 at beta = 1). Kept for testing.
+ **********************************************************/
+
+double
+hr1985_g_fit (beta, gamma)
+     double beta, gamma;
+{
+  return (1.666 * pow (beta, 0.95) * (1.0 - pow (gamma, 0.3)));
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Tabulated 0.5 beta F(beta) f(beta,gamma) (Hummer & Rybicki 1985)
+ *
+ * @param [in] double  beta   Continuum to line opacity ratio
+ * @param [in] double  gamma   1/tau_Sobolev
+ * @return     0.5 beta F(beta) f(beta,gamma)
+ *
+ * @details
+ * Bilinear interpolation of log10 g in (log10 beta, log10 gamma) on the
+ * regular grid in hr1985_table, which is read from the atomic data.
+ *
+ * ### Notes ###
+ * Outside the table:
+ * - gamma below the table: clamped, which is exact since f -> 1 as gamma -> 0
+ * - gamma above the table: clamped (Sobolev limit of HR1985 is doubtful there)
+ * - beta above the table: clamped (g tends slowly to 1/2 as beta -> infinity)
+ * - beta below the table: extrapolated linearly in log g from the first interval
+ **********************************************************/
+
+double
+hr1985_g_table (beta, gamma)
+     double beta, gamma;
+{
+  double x, y, tx, ty, log_g;
+  int i, j;
+
+  HR1985_table *t = &hr1985_table;
+
+  x = (log10 (beta) - t->logbeta_min) / t->dlogbeta;
+  y = (log10 (gamma) - t->loggamma_min) / t->dloggamma;
+
+  if (x > t->nbeta - 1)
+    x = t->nbeta - 1;
+  if (y < 0.0)
+    y = 0.0;
+  else if (y > t->ngamma - 1)
+    y = t->ngamma - 1;
+
+  /* x < 0 gives tx < 0 below, i.e. linear extrapolation from the first interval */
+  i = (x < 0.0) ? 0 : (int) x;
+  if (i > t->nbeta - 2)
+    i = t->nbeta - 2;
+  j = (int) y;
+  if (j > t->ngamma - 2)
+    j = t->ngamma - 2;
+
+  tx = x - i;
+  ty = y - j;
+
+  log_g = (1. - tx) * (1. - ty) * t->log_g[i][j] + tx * (1. - ty) * t->log_g[i + 1][j]
+    + (1. - tx) * ty * t->log_g[i][j + 1] + tx * ty * t->log_g[i + 1][j + 1];
+
+  return (pow (10., log_g));
+}
+
+
 /**********************************************************/
 /**
  * @brief      Probability that a trapped line photon is electron
@@ -493,10 +579,8 @@ int hr1985_lya_logged = FALSE;
  * @details
  * HR1985 eqs. 2.30 and 2.38, with gamma = 1/tau and
  * beta = kappa_es v_th / (dvds tau) the ratio of electron scattering to
- * line opacity. The one-sided term 0.5 beta F(beta) f(beta,gamma) is
- * approximated by 1.666 beta^0.95 (1 - gamma^0.3), which is within ~10-25%
- * of HR1985 Table 1 and within ~6-13% of the exact integrals for
- * beta ~ 1e-5 - 2e-3, gamma ~ 4e-4 - 8e-4.
+ * line opacity. The one-sided term 0.5 beta F(beta) f(beta,gamma) comes
+ * from hr1985_g_table, or hr1985_g_fit if HR1985_USE_FIT is set.
  *
  * ### Notes ###
  * Preliminary investigation only. Returns zero for tau <= 1, where the
@@ -509,7 +593,7 @@ hr1985_es_loss (line_ptr, xplasma, tau, dvds)
      PlasmaPtr xplasma;
      double tau, dvds;
 {
-  double vth, kappa_es, beta, gamma;
+  double vth, kappa_es, beta, gamma, g;
   int ndom;
 
   if (tau <= 1.0)
@@ -522,7 +606,12 @@ hr1985_es_loss (line_ptr, xplasma, tau, dvds)
   beta = kappa_es * vth / (dvds * tau);
   gamma = 1.0 / tau;
 
-  return (2.0 * 1.666 * pow (beta, 0.95) * (1.0 - pow (gamma, 0.3)));
+  if (HR1985_USE_FIT)
+    g = hr1985_g_fit (beta, gamma);
+  else
+    g = hr1985_g_table (beta, gamma);
+
+  return (2.0 * g);
 }
 
 
@@ -539,7 +628,8 @@ hr1985_es_loss (line_ptr, xplasma, tau, dvds)
  * Estimate the escape probability using the Sobolev approximation
  *
  * ### Notes ###
- * PRELIMINARY: for H I Lyman alpha only, the probability that a trapped
+ * If an HR1985 table was read with the atomic data, then for H I Lyman alpha
+ * (or all lines if HR1985_ALL_LINES is set) the probability that a trapped
  * photon is electron scattered out of the resonance zone (Hummer & Rybicki
  * 1985, see hr1985_es_loss) is added to the Sobolev escape probability,
  * since such photons leave the line and are not destroyed.
@@ -583,14 +673,15 @@ p_escape (line_ptr, xplasma)
 
     escape = p_escape_from_tau (tau);
 
-    /* PRELIMINARY: HR1985 electron scattering loss, Lyman alpha only */
-    if (line_ptr->z == 1 && line_ptr->istate == 1 && line_ptr->freq > VLIGHT / (1220. * ANGSTROM)
-        && line_ptr->freq < VLIGHT / (1210. * ANGSTROM))
+    /* HR1985 electron scattering loss, on if a table was read with the atomic data */
+    if (hr1985_npts > 0 && (HR1985_ALL_LINES || (line_ptr->z == 1 && line_ptr->istate == 1
+                                                 && line_ptr->freq > VLIGHT / (1220. * ANGSTROM)
+                                                 && line_ptr->freq < VLIGHT / (1210. * ANGSTROM))))
     {
       if (hr1985_lya_logged == FALSE)
       {
-        Log ("p_escape: adding HR1985 electron scattering loss to escape probability for Lyman alpha (%.2f A)\n",
-             VLIGHT / line_ptr->freq / ANGSTROM);
+        Log ("p_escape: adding HR1985 electron scattering loss to escape probability for %s, using the %s\n",
+             HR1985_ALL_LINES ? "all lines" : "Lyman alpha", HR1985_USE_FIT ? "analytic fit" : "table");
         hr1985_lya_logged = TRUE;
       }
       escape += hr1985_es_loss (line_ptr, xplasma, tau, dvds);

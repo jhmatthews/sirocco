@@ -1,0 +1,9 @@
+#This is a standard atomic data set for a 20 level hydrogen model
+#that can be treated with or without the full macro atom formalism.
+data/atomic_macro/h20_elem_ions.dat
+data/atomic_macro/h20_levels.dat
+data/atomic_macro/h20_lines.dat
+data/atomic_macro/h20_phot.dat
+data/atomic/recomb.dat
+#Hummer & Rybicki (1985) table: switches on the HR1985 electron scattering loss for Lyman alpha
+data/atomic/hr1985_es.dat

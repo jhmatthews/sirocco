@@ -83,6 +83,9 @@ int gaunt_n_gsqrd;              //The actual number of scaled temperatures
 
 Gaunt_total gaunt_total[MAX_GAUNT_N_GSQRD];     //Set up the structure
 
+int hr1985_npts;                //The number of HR1985 records read; 0 means the HR1985 correction is off
+HR1985_table hr1985_table;      //The HR1985 table of log10( 0.5 beta F(beta) f(beta,gamma) )
+
 int n_charge_exchange;          //The actual number of scaled temperatures
 
 Charge_exchange charge_exchange[MAX_CHARGE_EXCHANGE];   //Set up the structure

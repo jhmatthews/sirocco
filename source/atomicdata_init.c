@@ -399,6 +399,10 @@ init_atomic_data ()
     gaunt_total[n].s3 = 0.0;
   }
 
+/* The HR1985 escape probability table, which is optional */
+  hr1985_npts = 0;
+  hr1985_table.nbeta = hr1985_table.ngamma = 0;
+
 /* The following lines initialise the Sutherland gaunt factors */
   n_charge_exchange = 0;        //The number of sets of scaled temperatures we have data for
   for (n = 0; n < MAX_CHARGE_EXCHANGE; n++)

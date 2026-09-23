@@ -835,3 +835,71 @@ skiplines (FILE *fptr, int nskip)
     while (c = fgetc (fptr), c != '\n' && c != EOF);
   }
 }
+
+
+/**********************************************************/
+/**
+ * @brief      Build hr1985_table from the HR1985 records in the atomic data
+ *
+ * @param [in] double  logbeta[]   log10(beta) of each record
+ * @param [in] double  loggamma[]   log10(gamma) of each record
+ * @param [in] double  log_g[]   log10( 0.5 beta F(beta) f(beta,gamma) ) of each record
+ * @param [in] int  npts   The number of records
+ * @return     0, or exits if the records do not form a complete regular grid
+ *
+ * @details
+ * The records must be ordered with beta varying slowest, and both beta and
+ * gamma ascending on regular grids, as written by HR1985_claude.py. The grid is
+ * worked out from the records themselves and every record is checked against it,
+ * so a missing, duplicated or out of order record is an error.
+ *
+ **********************************************************/
+
+int
+hr1985_setup_table (logbeta, loggamma, log_g, npts)
+     double logbeta[], loggamma[], log_g[];
+     int npts;
+{
+  int n, i, j, ngamma, nbeta;
+  double tol = 1.e-6;
+
+  /* The number of gammas is the length of the first run of records with the same beta */
+  for (ngamma = 1; ngamma < npts && logbeta[ngamma] == logbeta[0]; ngamma++);
+  nbeta = npts / ngamma;
+
+  if (ngamma < 2 || nbeta < 2 || nbeta * ngamma != npts || nbeta > MAX_HR1985_BETA || ngamma > MAX_HR1985_GAMMA)
+  {
+    Error ("hr1985_setup_table: %d HR1985 records do not form a regular grid (%d betas x %d gammas, max %d x %d)\n",
+           npts, nbeta, ngamma, MAX_HR1985_BETA, MAX_HR1985_GAMMA);
+    exit (1);
+  }
+
+  hr1985_table.nbeta = nbeta;
+  hr1985_table.ngamma = ngamma;
+  hr1985_table.logbeta_min = logbeta[0];
+  hr1985_table.dlogbeta = logbeta[ngamma] - logbeta[0];
+  hr1985_table.loggamma_min = loggamma[0];
+  hr1985_table.dloggamma = loggamma[1] - loggamma[0];
+
+  if (hr1985_table.dlogbeta <= 0 || hr1985_table.dloggamma <= 0)
+  {
+    Error ("hr1985_setup_table: beta and gamma must both be ascending in the HR1985 records\n");
+    exit (1);
+  }
+
+  for (n = 0; n < npts; n++)
+  {
+    i = n / ngamma;
+    j = n % ngamma;
+    if (fabs (logbeta[n] - (hr1985_table.logbeta_min + i * hr1985_table.dlogbeta)) > tol
+        || fabs (loggamma[n] - (hr1985_table.loggamma_min + j * hr1985_table.dloggamma)) > tol || !isfinite (log_g[n]))
+    {
+      Error ("hr1985_setup_table: HR1985 record %d (log beta %g, log gamma %g, log g %g) is not on the expected grid\n",
+             n + 1, logbeta[n], loggamma[n], log_g[n]);
+      exit (1);
+    }
+    hr1985_table.log_g[i][j] = log_g[n];
+  }
+
+  return (0);
+}
