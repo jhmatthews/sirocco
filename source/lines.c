@@ -476,6 +476,55 @@ scattering_fraction (line_ptr, xplasma)
 struct lines *pe_line_ptr;
 double pe_ne, pe_te, pe_dd, pe_dvds, pe_w, pe_tr;
 double pe_escape;
+int hr1985_lya_logged = FALSE;
+
+/**********************************************************/
+/**
+ * @brief      Probability that a trapped line photon is electron
+ * scattered out of the resonance zone, following Hummer & Rybicki (1985)
+ *
+ * @param [in] struct lines *  line_ptr   The line
+ * @param [in] PlasmaPtr  xplasma   The plasma cell
+ * @param [in] double  tau   The Sobolev optical depth of the line
+ * @param [in] double  dvds   The velocity gradient used to calculate tau
+ * @return     A_es = beta F(beta) f(beta,gamma), with electron scattering
+ * as the continuum
+ *
+ * @details
+ * HR1985 eqs. 2.30 and 2.38, with gamma = 1/tau and
+ * beta = kappa_es v_th / (dvds tau) the ratio of electron scattering to
+ * line opacity. The one-sided term 0.5 beta F(beta) f(beta,gamma) is
+ * approximated by 1.666 beta^0.95 (1 - gamma^0.3), which is within ~10-25%
+ * of HR1985 Table 1 and within ~6-13% of the exact integrals for
+ * beta ~ 1e-5 - 2e-3, gamma ~ 4e-4 - 8e-4.
+ *
+ * ### Notes ###
+ * Preliminary investigation only. Returns zero for tau <= 1, where the
+ * Sobolev limit of HR1985 does not apply.
+ **********************************************************/
+
+double
+hr1985_es_loss (line_ptr, xplasma, tau, dvds)
+     struct lines *line_ptr;
+     PlasmaPtr xplasma;
+     double tau, dvds;
+{
+  double vth, kappa_es, beta, gamma;
+  int ndom;
+
+  if (tau <= 1.0)
+    return (0.0);
+
+  ndom = wmain[xplasma->nwind].ndom;
+  vth = sqrt (2. * BOLTZMANN * xplasma->t_e / (MPROT * ele[ion[line_ptr->nion].nelem].atomic_weight));
+  kappa_es = xplasma->ne * THOMPSON * zdom[ndom].fill;  /* tau from sobolev also includes the filling factor */
+
+  beta = kappa_es * vth / (dvds * tau);
+  gamma = 1.0 / tau;
+
+  return (2.0 * 1.666 * pow (beta, 0.95) * (1.0 - pow (gamma, 0.3)));
+}
+
 
 /**********************************************************/
 /**
@@ -490,6 +539,10 @@ double pe_escape;
  * Estimate the escape probability using the Sobolev approximation
  *
  * ### Notes ###
+ * PRELIMINARY: for H I Lyman alpha only, the probability that a trapped
+ * photon is electron scattered out of the resonance zone (Hummer & Rybicki
+ * 1985, see hr1985_es_loss) is added to the Sobolev escape probability,
+ * since such photons leave the line and are not destroyed.
  *
  **********************************************************/
 
@@ -529,6 +582,21 @@ p_escape (line_ptr, xplasma)
     tau = sobolev (one, one->x, dd, line_ptr, dvds);
 
     escape = p_escape_from_tau (tau);
+
+    /* PRELIMINARY: HR1985 electron scattering loss, Lyman alpha only */
+    if (line_ptr->z == 1 && line_ptr->istate == 1 && line_ptr->freq > VLIGHT / (1220. * ANGSTROM)
+        && line_ptr->freq < VLIGHT / (1210. * ANGSTROM))
+    {
+      if (hr1985_lya_logged == FALSE)
+      {
+        Log ("p_escape: adding HR1985 electron scattering loss to escape probability for Lyman alpha (%.2f A)\n",
+             VLIGHT / line_ptr->freq / ANGSTROM);
+        hr1985_lya_logged = TRUE;
+      }
+      escape += hr1985_es_loss (line_ptr, xplasma, tau, dvds);
+      if (escape > 1.0)
+        escape = 1.0;
+    }
 
 
     pe_line_ptr = line_ptr;

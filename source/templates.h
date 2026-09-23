@@ -328,6 +328,7 @@ double lum_lines(PlasmaPtr xplasma, int nmin, int nmax);
 double two_level_atom(struct lines *line_ptr, PlasmaPtr xplasma, double *d1, double *d2);
 double line_nsigma(struct lines *line_ptr, PlasmaPtr xplasma);
 double scattering_fraction(struct lines *line_ptr, PlasmaPtr xplasma);
+double hr1985_es_loss(struct lines *line_ptr, PlasmaPtr xplasma, double tau, double dvds);
 double p_escape(struct lines *line_ptr, PlasmaPtr xplasma);
 double p_escape_from_tau(double tau);
 int line_heat(PlasmaPtr xplasma, PhotPtr pp, int nres);
