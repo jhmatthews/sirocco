@@ -27,7 +27,7 @@ Photons_per_cycle                          5e7
 Ionization_cycles                          25
 Spectrum_cycles                            5
 Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,fixed,matrix_bb,matrix_pow,matrix_est)           matrix_pow
-Line_transfer(pure_abs,pure_scat,sing_scat,escape_prob,thermal_trapping,macro_atoms_escape_prob,macro_atoms_thermal_trapping) macro_atoms_thermal_trapping
+Line_transfer(pure_abs,pure_scat,sing_scat,classic_iso,classic,macro_iso,macro)                                               macro
 Matom_transition_mode(mc_jumps,matrix)               matrix
 Surface.reflection.or.absorption(reflect,absorb,thermalized.rerad)              reflect
 Wind_heating.extra_processes(none,adiabatic,nonthermal,both)            adiabatic

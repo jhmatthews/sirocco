@@ -33,7 +33,7 @@ Photons_per_cycle                          200000
 Ionization_cycles                          30
 Spectrum_cycles                            20
 Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,fixed,matrix_bb,matrix_pow)           matrix_pow
-Line_transfer(pure_abs,pure_scat,sing_scat,escape_prob,thermal_trapping,macro_atoms,macro_atoms_thermal_trapping)          escape_prob
+Line_transfer(pure_abs,pure_scat,sing_scat,classic_iso,classic,macro_iso,macro)                                            classic_iso
 Atomic_data                                data/standard80.dat
 Surface.reflection.or.absorption(reflect,absorb,thermalized.rerad)               absorb
 Wind_heating.extra_processes(none,adiabatic,nonthermal,both)            adiabatic
