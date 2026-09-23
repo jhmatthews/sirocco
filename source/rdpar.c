@@ -1190,7 +1190,7 @@ rdline (question, answer)
  **********************************************************/
 
 
-#define MAX_CHOICES 10
+#define MAX_CHOICES 12
 int
 string2int (word, string_choices, string_values, string_answer)
      char *word;
@@ -1267,9 +1267,11 @@ string2int (word, string_choices, string_values, string_answer)
   check_and_fix_string (choices);
   check_and_fix_string (values);
 
-  nchoices = sscanf (choices, "%s %s %s %s %s %s %s %s %s %s", xs[0], xs[1], xs[2], xs[3], xs[4], xs[5], xs[6], xs[7], xs[8], xs[9]);
+  nchoices = sscanf (choices, "%s %s %s %s %s %s %s %s %s %s %s %s",
+                     xs[0], xs[1], xs[2], xs[3], xs[4], xs[5], xs[6], xs[7], xs[8], xs[9], xs[10], xs[11]);
   nchoices =
-    sscanf (values, "%d %d %d %d %d %d %d %d %d %d", &xv[0], &xv[1], &xv[2], &xv[3], &xv[4], &xv[5], &xv[6], &xv[7], &xv[8], &xv[9]);
+    sscanf (values, "%d %d %d %d %d %d %d %d %d %d %d %d",
+            &xv[0], &xv[1], &xv[2], &xv[3], &xv[4], &xv[5], &xv[6], &xv[7], &xv[8], &xv[9], &xv[10], &xv[11]);
 
 
   /* Check that one of the values is not one of the values that is an error return value, -9998 or -9999.  If
@@ -1292,6 +1294,13 @@ string2int (word, string_choices, string_values, string_answer)
   ibest = -1;                   //Set this to a sensible initial value
   for (i = 0; i < nchoices; i++)
   {
+    if (strcmp (word, xs[i]) == 0)
+    {                           /* An exact match wins, even if word is also a prefix of other choices */
+      ivalue = xv[i];
+      ibest = i;
+      matched = 1;
+      break;
+    }
     if (strncmp (word, xs[i], strlen (word)) == 0)
     {
       ivalue = xv[i];
@@ -1366,7 +1375,13 @@ string2int (word, string_choices, string_values, string_answer)
  * char answer[LINELENGTH];
  *
  * and use strcpy or some other routine to initialize it.  Then one can call rdchoice.
+ *
+ * Hidden choices: a choice whose value in answers is >= HIDDEN_CHOICE (e.g. 107) is accepted
+ * as input but is not shown in the prompt or written to the output .pf file.  rdchoice
+ * returns value - HIDDEN_CHOICE (e.g. 7), and records the visible choice with that value.
  **********************************************************/
+
+#define HIDDEN_CHOICE 100
 
 int
 rdchoice (question, answers, answer)
@@ -1380,12 +1395,44 @@ rdchoice (question, answers, answer)
   int ianswer;
   int query;
   char full_answer[LINELEN];
+  char visible_question[LINELEN], choices[LINELEN], values[LINELEN];
+  char vis_names[MAX_CHOICES][LINELEN];
+  int vis_values[MAX_CHOICES];
+  int nvis = 0;
+  char *name, *value, *save_name, *save_value;
+
+  /* Build a version of the question with the hidden choices removed */
+  strcpy (visible_question, question);
+  if ((name = strchr (visible_question, '(')) != NULL)
+  {
+    strcpy (choices, name + 1);
+    strcpy (name + 1, "");
+    if ((name = strchr (choices, ')')) != NULL)
+      *name = '\0';
+    strcpy (values, answers);
+    name = strtok_r (choices, ",", &save_name);
+    value = strtok_r (values, ",", &save_value);
+    while (name != NULL && value != NULL && nvis < MAX_CHOICES)
+    {
+      if (atoi (value) < HIDDEN_CHOICE)
+      {
+        strcat (visible_question, nvis > 0 ? "," : "");
+        strcat (visible_question, name);
+        strcpy (vis_names[nvis], name);
+        vis_values[nvis++] = atoi (value);
+      }
+      name = strtok_r (NULL, ",", &save_name);
+      value = strtok_r (NULL, ",", &save_value);
+    }
+    strcat (visible_question, ")");
+  }
+
   rdpar_choice = 1;
   strcpy (string_answer, answer);
   query = REISSUE;
   while (query == REISSUE)
   {
-    query = rdstr (question, string_answer);
+    query = rdstr (visible_question, string_answer);
     /* First check to see if we have returned an integer.  The fact taht we attempt to find a string
      * after the integer is to make it possible for a string answer to be something like "2dcoords" */
     if (sscanf (string_answer, "%d%s", &ianswer, dummy) == 1)
@@ -1393,12 +1440,12 @@ rdchoice (question, answers, answer)
       strcpy (answer, string_answer);
       rdpar_comment ("Deprecated use of rdchoice. NO ERROR CHECKS! For %s replace answer %s in %s with its string equivalent",
                      question, string_answer, answers);
-      fprintf (rdout_ptr, "%-30s %20s\n", question, string_answer);
+      fprintf (rdout_ptr, "%-30s %20s\n", visible_question, string_answer);
       Error ("rdchoice: Deprecated use of rdchoice. NO ERROR CHECKS! For %s replace answer %s in %s with its string equivalent \n",
              question, string_answer, answers);
       strict = 1;
       rdpar_choice = 0;
-      return (ianswer);
+      return (ianswer >= HIDDEN_CHOICE ? ianswer - HIDDEN_CHOICE : ianswer);
     }
 
     /* Otherwise we assume it is a new style input */
@@ -1423,19 +1470,34 @@ rdchoice (question, answers, answer)
     ianswer = string2int (string_answer, dummy, answers, full_answer);
     if (ianswer == -9998)
     {
-      Error ("rdchoice: Could not match %s input to one of answers: %s\nTry again\n", string_answer, dummy);
+      Error ("rdchoice: Could not match %s input to one of answers: %s\nTry again\n", string_answer, visible_question);
       query = REISSUE;
     }
     if (ianswer == -9999)
     {
-      Error ("rdchoice: Multiple matches of  %s input to answers: %s\nTry again\n", string_answer, dummy);
+      Error ("rdchoice: Multiple matches of  %s input to answers: %s\nTry again\n", string_answer, visible_question);
       query = REISSUE;
+    }
+  }
+
+  /* A hidden choice maps onto the visible choice with value ianswer - HIDDEN_CHOICE */
+  if (ianswer >= HIDDEN_CHOICE)
+  {
+    ianswer -= HIDDEN_CHOICE;
+    for (n = 0; n < nvis; n++)
+    {
+      if (vis_values[n] == ianswer)
+      {
+        strcpy (full_answer, vis_names[n]);
+        strcpy (string_answer, vis_names[n]);
+        strcpy (rdpar_record[rdpar_nrec - 1].value, vis_names[n]);
+      }
     }
   }
 
   if (query != OLD)
   {
-    fprintf (rdout_ptr, "%-30s %20s\n", question, full_answer);
+    fprintf (rdout_ptr, "%-30s %20s\n", visible_question, full_answer);
   }
   strcpy (answer, string_answer);
   rdpar_choice = 0;

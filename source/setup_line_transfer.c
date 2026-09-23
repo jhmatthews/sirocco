@@ -55,11 +55,14 @@ get_line_transfer_mode ()
      cannot be reached by rdchoice easily, except as numbers.  
      * We need a better way to deal with these. */
 
-  strcpy (answer, "thermal_trapping");
-  user_line_mode =
-    rdchoice
-    ("Line_transfer(pure_abs,pure_scat,sing_scat,escape_prob,thermal_trapping,macro_atoms_escape_prob,macro_atoms_thermal_trapping)",
-     "0,1,2,3,5,6,7", answer);
+  strcpy (answer, "classic");
+  /* 103, 105, 106, 107 are hidden synonyms for 3, 5, 6, 7 (see rdchoice). 
+     The INDENT-OFF flags stop this becoming one long line */
+  /* *INDENT-OFF* */
+  user_line_mode = rdchoice ("Line_transfer(pure_abs,pure_scat,sing_scat,classic_iso,classic,macro_iso,macro"
+                             ",escape_prob,thermal_trapping,macro_atoms_escape_prob,macro_atoms_thermal_trapping)",
+                             "0,1,2,3,5,6,7,103,105,106,107", answer);
+  /* *INDENT-ON* */
 
   /* JM 1406 -- geo.rt_mode and geo.macro_simple control different things. geo.rt_mode controls the radiative
      transfer and whether or not you are going to use the indivisible packet constraint, so you can have all simple 
@@ -142,7 +145,7 @@ get_line_transfer_mode ()
   if (geo.rt_mode == RT_MODE_MACRO)
   {
     /* XMACRO -- these options MUST be consistent with the define statements in sirocco.h */
-    strcpy (answer, "mc_jumps");
+    strcpy (answer, "matrix");
     geo.matom_transition_mode = rdchoice ("Matom_transition_mode(mc_jumps,matrix)", "0,1", answer);
 
     if (geo.matom_transition_mode == MATOM_MATRIX && modes.store_matom_matrix == TRUE)
@@ -215,18 +218,18 @@ line_transfer_help_message ()
 \n\
 Available line transfer modes and descriptions are: \n\
 \n\
-  pure_abs Pure Absorption\n\
-  pure_scat Pure Scattering\n\
-  sing_scat Single Scattering\n\
-  escape_prob Escape Probabilities, isotropic scattering\n\
-  thermal_trapping Escape Probabilities, anisotropic scattering\n\
-  macro_atoms Indivisible energy packets / macro-atoms, isotropic scattering\n\
-  macro_atoms_thermal_trapping Indivisible energy packets / macro-atoms, anisotropic scattering\n\
+  pure_abs: Pure Absorption\n\
+  pure_scat: Pure Scattering\n\
+  sing_scat: Single Scattering\n\
+  classic_iso: Classic mode, escape Probabilities, isotropic scattering, synonym escape_prob\n\
+  classic: Classic mode, escape Probabilities, anisotropic scattering, synonym thermal_trapping\n\
+  macro_iso: Indivisible energy packets / macro-atoms, isotropic scattering, synonym macro_atoms_escape_prob\n\
+  macro: Indivisible energy packets / macro-atoms, anisotropic scattering, synonym macro_atoms_thermal_trapping\n\
   8(deprecated) Indivisible energy packets, force all simple-atoms, anisotropic scattering\n\
   9(deprecated) Indivisible energy packets, force all simple-atoms, anisotropic scattering\n\
 \n\
-  Classic mode is thermal_trapping for runs involving weight reduction and no macro-atoms\n\
-  Hybrid macro-atom mode is macro_atoms_thermal_trapping\n\
+  Recommended classic mode is classic, uses weight reduction, thermal trapping and no macro-atoms\n\
+  Hybrid macro-atom mode is macro, uses thermal trapping and macro-atoms\n\
 \n\
 See this web address for more information: https://github.com/agnwinds/sirocco/wiki/Line-Transfer-and-Scattering\n\
 \n\
