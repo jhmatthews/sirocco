@@ -33,8 +33,8 @@
 #include "atomic.h"
 #include "sirocco.h"
 
-char inroot[LINELENGTH], outroot[LINELENGTH], model_file[LINELENGTH];
-int model_flag, ksl_flag, cmf2obs_flag, obs2cmf_flag;
+char inroot[LINELENGTH], outroot[LINELENGTH];
+int ksl_flag, cmf2obs_flag, obs2cmf_flag;
 
 /**********************************************************/
 /**
@@ -70,7 +70,7 @@ xparse_command_line (argc, argv)
 
   sprintf (outroot, "%s", "new");
 
-  model_flag = ksl_flag = obs2cmf_flag = cmf2obs_flag = 0;
+  ksl_flag = obs2cmf_flag = cmf2obs_flag = 0;
 
   if (argc == 1)
   {
@@ -103,16 +103,9 @@ xparse_command_line (argc, argv)
       }
       if (strcmp (argv[i], "-model_file") == 0)
       {
-        if (sscanf (argv[i + 1], "%s", dummy) != 1)
-        {
-          printf ("sirocco: Expected a model file containing density, velocity and temperature after -model_file switch\n");
-          exit (0);
-        }
-        get_root (model_file, dummy);
-        i++;
-        j = i;
-        printf ("got a model file %s\n", model_file);
-        model_flag = 1;
+        printf ("modify_wind: The -model_file option has moved to hydro2sirocco, e.g.\n");
+        printf ("   hydro2sirocco -model_file model.txt root\n");
+        exit (1);
       }
       else if (strcmp (argv[i], "-ksl") == 0)
       {
@@ -187,9 +180,8 @@ main (argc, argv)
   double *den;
   char name[LINELENGTH];        /* file name extension */
   char infile[LINELENGTH], outfile[LINELENGTH];
-  int put_ion ();
-  int apply_model ();
-  int frame_transform ();
+  int put_ion (int ndom, int element, int istate, double *den);
+  int frame_transform (int ndom);
   int ndom;
   int i;
 
@@ -213,10 +205,6 @@ main (argc, argv)
 
   wind_read (infile);
 
-  if (model_flag)
-  {
-    apply_model (ndom, model_file);
-  }
   if (obs2cmf_flag || cmf2obs_flag)
   {
     printf ("BOOM - we are going to be converting from one frame to another\n");
@@ -312,85 +300,7 @@ put_ion (ndom, element, istate, den)
 
 
 int
-apply_model (ndom, filename)
-     int ndom;
-     char *filename;
-{
-  int ndim, mdim;
-//OLD  int nstart, n, nion, nplasma;
-  int n, nion, nplasma;
-
-  printf ("We have been given a model file - we will be using this for new densities in domain 0\n");
-  ndim = zdom[ndom].ndim;
-  mdim = zdom[ndom].mdim;
-  printf ("Current dimensions are %i %i\n", ndim, mdim);
-  import_wind2 (ndom, model_file);
-  printf ("Model dimensions are %i %i\n", imported_model[ndom].ndim, imported_model[ndom].mdim);
-  if (ndim == imported_model[ndom].ndim && mdim == imported_model[ndom].mdim)
-  {
-    printf ("The model dimensions match the current file - proceeding\n");
-    if (zdom[ndom].coord_type == SPHERICAL)
-    {
-      printf ("We have a spherical model\n");
-//OLD      nstart = zdom[ndom].nstart;
-      for (n = 0; n < ndim; n++)
-      {
-        wmain[n].v[0] = imported_model[ndom].v_r[n];    //we need a value for v_r for all cells including ghosts
-        if (wmain[n].inwind > -1)
-        {
-          nplasma = wmain[n].nplasma;
-          for (nion = 0; nion < nions; nion++)  //Change the absolute number densities, fractions remain the same
-          {
-            plasmamain[nplasma].density[nion] =
-              plasmamain[nplasma].density[nion] * (imported_model[ndom].mass_rho[n] / plasmamain[nplasma].rho);
-          }
-          plasmamain[nplasma].rho = imported_model[ndom].mass_rho[n];
-          if (imported_model[ndom].init_temperature == FALSE)
-          {
-            plasmamain[nplasma].t_e = imported_model[ndom].t_e[n];
-            plasmamain[nplasma].t_r = imported_model[ndom].t_r[n];
-          }
-        }
-      }
-    }
-    else if (zdom[ndom].coord_type == RTHETA)
-    {
-      printf ("We have an r-theta model %i %i\n", ndim, mdim);
-      for (n = 0; n < imported_model[ndom].ncell; n++)  //Loop over all the cells in the model
-      {
-        wmain[n].v[0] = imported_model[ndom].v_x[n];    //we need a value for v_r for all cells including ghosts
-        wmain[n].v[1] = imported_model[ndom].v_y[n];    //we need a value for v_r for all cells including ghosts
-        wmain[n].v[2] = imported_model[ndom].v_z[n];    //we need a value for v_r for all cells including ghosts
-        if (wmain[n].inwind > -1)
-        {
-          nplasma = wmain[n].nplasma;
-          for (nion = 0; nion < nions; nion++)  //Change the absolute number densities, fractions remain the same
-          {
-            plasmamain[nplasma].density[nion] =
-              plasmamain[nplasma].density[nion] * (imported_model[ndom].mass_rho[n] / plasmamain[nplasma].rho);
-          }
-          plasmamain[nplasma].rho = imported_model[ndom].mass_rho[n];
-          if (imported_model[ndom].init_temperature == FALSE)
-          {
-            plasmamain[nplasma].t_e = imported_model[ndom].t_e[n];
-            plasmamain[nplasma].t_r = imported_model[ndom].t_r[n];
-          }
-        }
-      }
-    }
-  }
-  else
-  {
-    printf ("The model doesnt match the current windsave aborting\n");
-    exit (0);
-  }
-  return (0);
-}
-
-
-int
-frame_transform (ndom)
-     int ndom;
+frame_transform (int ndom)
 {
   int n, nion;
   double factor;                //This will either be gamma or 1/gamma
