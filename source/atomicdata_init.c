@@ -399,7 +399,7 @@ init_atomic_data ()
     gaunt_total[n].s3 = 0.0;
   }
 
-/* The HR1985 escape probability table, which is optional */
+/* The HR1985 table for corrections to the escape probability -- optional  */
   hr1985_npts = 0;
   hr1985_table.nbeta = hr1985_table.ngamma = 0;
 

@@ -2265,7 +2265,8 @@ would like to have simple lines for macro-ions */
         case 'H':
           if (hr1985_npts >= MAX_HR1985_BETA * MAX_HR1985_GAMMA)
           {
-            Error ("Get_atomic_data: Too many HR1985 records, increase MAX_HR1985_BETA/GAMMA\n");
+            Error ("Get_atomic_data: tried to read too many HR1985 records (> %d), increase MAX_HR1985_BETA or MAX_HR1985_GAMMA\n", 
+                    MAX_HR1985_BETA * MAX_HR1985_GAMMA);
             exit (0);
           }
           if (sscanf (aline, "%*s %le %le %le", &hr1985_logbeta_in[hr1985_npts], &hr1985_loggamma_in[hr1985_npts],

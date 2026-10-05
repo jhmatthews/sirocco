@@ -480,10 +480,11 @@ int hr1985_lya_logged = FALSE;
 
 /* The HR1985 electron scattering loss is switched on by including an HR1985 table in the
    atomic data (see hr1985_setup_table). These switches are for testing:
-   HR1985_ALL_LINES  1 applies it to every line, 0 to Lyman alpha only
-   HR1985_USE_FIT    1 uses the analytic fit instead of the table (a table must still be read) */
-#define HR1985_ALL_LINES 0
-#define HR1985_USE_FIT   0
+   HR1985_ALL_LINES  TRUE applies it to every line, 0 to Lyman alpha only
+   HR1985_USE_FIT    TRUE uses James' analytic approximation instead of the table (a table must still be read). 
+                       this can probably be turned off after testing*/
+#define HR1985_ALL_LINES FALSE
+#define HR1985_USE_FIT   FALSE
 
 
 /**********************************************************/
@@ -517,14 +518,12 @@ hr1985_g_fit (beta, gamma)
  *
  * @details
  * Bilinear interpolation of log10 g in (log10 beta, log10 gamma) on the
- * regular grid in hr1985_table, which is read from the atomic data.
+ * regular grid in hr1985_table, which is read from the atomic data. 
+ * This should probably be done using coord fraction or similar. 
  *
  * ### Notes ###
- * Outside the table:
- * - gamma below the table: clamped, which is exact since f -> 1 as gamma -> 0
- * - gamma above the table: clamped (Sobolev limit of HR1985 is doubtful there)
- * - beta above the table: clamped (g tends slowly to 1/2 as beta -> infinity)
- * - beta below the table: extrapolated linearly in log g from the first interval
+ * Outside the table, we fix gamma and beta to the nearest table value, except for beta below the table, 
+ * which is extrapolated linearly in log g.
  **********************************************************/
 
 double
