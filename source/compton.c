@@ -466,10 +466,17 @@ compton_dir (p)
   x1 = PLANCK * p->freq / MELEC / VLIGHT / VLIGHT;      //compute the ratio of photon energy to electron energy. In the electron rest frame this is just the electron rest mass energy
 
   n = l = m = 0.0;
+  f = 1.0;
 
-  if (x1 < 0.0001)              //If the photon energy is low, we use the diple approximation            
+  if (x1 < 0.0001)              //If the photon energy is low, we use the dipole approximation
   {
     randvdipole (lmn, p->lmn);
+
+    /* Thomson-limit recoil: E_old/E_new = 1 + x1 (1 - cos theta), where theta is the
+       scattering angle. Applied here so that the k-packet probability (f-1)/f and the
+       frequency shift use the same f as in the Klein-Nishina branch below */
+    f = 1. + x1 * (1. - dot (lmn, p->lmn));
+
     stuff_v (lmn, p->lmn);
   }
   else
@@ -515,9 +522,16 @@ compton_dir (p)
     renorm (lmn, 1.0);          //Make sure the length of the direction vector is equal to 1
     stuff_v (lmn, p->lmn);      //Put the new photon direction into the photon structure
 
-    p->freq = p->freq / f;      //reduce the photon frequency by the fractional energy change
+  }
+  
+  p->freq = p->freq / f;      //reduce the photon frequency by the fractional energy change
+
+  if (geo.rt_mode == RT_MODE_2LEVEL) /* only reduce the weight in classic mode */
+  {
     p->w = p->w / f;            //reduce the photon weight by the same ammount to conserve photon numbers
   }
+
+  
   return (f);                   /* return the fractional energy change. This is the ratio of the old freq to the new freq */
 }
 
