@@ -24,7 +24,7 @@ PlasmaPtr xplasma;              /// Pointer to current plasma cell
  * @brief      carry out the process of Compton scattering a photon    
  *
  * @param [in] Photpr p  A photon                        
- * @return     0
+ * @return     double f The fractional energy change of the photon due to Compton scattering
  *
  * @details
  * 
@@ -35,7 +35,7 @@ PlasmaPtr xplasma;              /// Pointer to current plasma cell
  **********************************************************/
 
 
-int
+double
 compton_scatter (p)
      PhotPtr p;                 // Pointer to the current photon
 {

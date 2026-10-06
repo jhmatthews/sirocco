@@ -75,7 +75,7 @@ int normalize_spectra_across_ranks(void);
 /* communicate_wind.c */
 void broadcast_wind_grid(const int n_start, const int n_stop, const int n_cells_rank);
 /* compton.c */
-int compton_scatter(PhotPtr p);
+double compton_scatter(PhotPtr p);
 double kappa_comp(PlasmaPtr xplasma, double freq);
 double kappa_ind_comp(PlasmaPtr xplasma, double freq);
 double total_comp(WindPtr one, double t_e);
@@ -361,8 +361,6 @@ int invert_matrix(double *matrix, double *inverted_matrix, int num_rows);
 /* matrix_ion.c */
 int matrix_ion_populations(PlasmaPtr xplasma, int mode);
 int populate_ion_rate_matrix(double rate_matrix[nions][nions], double pi_rates[nions], double inner_rates[n_inner_tot], double rr_rates[nions], double b_temp[nions], double xne, double nh1, double nh2);
-/* matrix_ion2.c */
-int matrix_ion_populations2(PlasmaPtr xplasma, int mode);
 /* models_extern_init.c */
 /* para_update.c */
 int get_parallel_nrange(int rank, int ntotal, int nproc, int *my_nmin, int *my_nmax);
