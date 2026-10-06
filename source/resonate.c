@@ -1173,20 +1173,30 @@ scatter (p, nres, nnscat)
       w_before_scatter = p->w;
       f_compton = compton_scatter (p);
 
-      /* we choose whether to go to k-packet based on a factor (f-1)/f, where 
-         "f" is the ratio of the frequency of the packet before scatter to that after scattering 
-         in the rest frame of the electron */
-      prob_kpkt = (f_compton - 1.0) / f_compton;
-      kpkt_choice = random_number (0.0, 1.0);   //random number for kpkt choice
-      if (prob_kpkt > kpkt_choice)
+      /* The Compton recoil (k-packet) and Doppler-gain channels are only switched on once an
+         ionisation cycle has completed, because the Compton sink rate (cooling_compton) is not
+         known until the first wind_update. Before then, treat this as a pure scatter so that
+         no energy is created by the thermal Doppler shifts */
+      if (geo.wcycle > 0 || geo.ioniz_or_extract == CYCLE_EXTRACT)
       {
-        p->w = w_before_scatter;        // we need to reset the weight to go to kpkt 
-        macro_gov (p, nres, 2, &which_out);     //routine to deal with kpkt
-        geo.heat_comp_kpkt += p->w;
+        /* we choose whether to go to k-packet based on a factor (f-1)/f, where
+           "f" is the ratio of the frequency of the packet before scatter to that after scattering
+           in the rest frame of the electron */
+        prob_kpkt = (f_compton - 1.0) / f_compton;
+        kpkt_choice = random_number (0.0, 1.0); //random number for kpkt choice
+        // Log ("JMSCATTER: prob_kpkt %10.5e kpkt_choice %10.5e f_compton %10.5e\n", prob_kpkt, kpkt_choice, f_compton);
+        if (prob_kpkt > kpkt_choice)
+        {
+          p->w = w_before_scatter;      // we need to reset the weight to go to kpkt
+          macro_gov (p, nres, 2, &which_out);   //routine to deal with kpkt
+          geo.heat_comp_kpkt += p->w;
+        }
+        else
+          geo.cool_comp_kpkt += p->w - w_before_scatter;
+        /* if we don't excite a k-packet, we just carry on */
       }
       else
-        geo.cool_comp_kpkt += p->w - w_before_scatter;
-      /* if we don't excite a k-packet, we just carry on */
+        p->w = w_before_scatter;        /* undo the D1*D2 weight change; the frequency shifts are kept */
     }
 
 

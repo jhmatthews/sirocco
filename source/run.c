@@ -418,7 +418,8 @@ calculate_ionization (restart_stat)
         {
           Log
             ("!!Early_stop: Convergence stabilised at cycle %d of %d (converged=%.1f%% >= floor %.1f%%, avg_change=%.4f%% < tolerance=%.1f%%)\n",
-             geo.wcycle, geo.wcycles, geo.fraction_converged * 100.0, geo.convergence_fraction, avg_change * 100.0, geo.convergence_tolerance);
+             geo.wcycle, geo.wcycles, geo.fraction_converged * 100.0, geo.convergence_fraction, avg_change * 100.0,
+             geo.convergence_tolerance);
           xsignal (files.root, "%-20s Ionization converged early at cycle %3d of %3d\n", "OK", geo.wcycle, geo.wcycles);
           Log_flush ();
           break;
@@ -854,8 +855,8 @@ stats_phot_post (p, nphot)
     Log ("!!sirocco: luminosity lost by adiabatic kpkt destruction %18.12e number of packets %d\n", z_abs[P_ADIABATIC],
          nphot_istat[P_ADIABATIC]);
     Log ("!!python: luminosity lost by Compton kpkt destruction %18.12e number of packets %d\n", z_abs[P_COMP_COOL],
-           nphot_istat[P_COMP_COOL]);
-    Log ("!!python: geo.heat_comp_kpkt %8.4e, geo.cool_comp_kpkt %8.4e", geo.heat_comp_kpkt, geo.cool_comp_kpkt);
+         nphot_istat[P_COMP_COOL]);
+    Log ("!!python: geo.heat_comp_kpkt %8.4e, geo.cool_comp_kpkt %8.4e\n", geo.heat_comp_kpkt, geo.cool_comp_kpkt);
     Log ("!!sirocco: luminosity lost to low-frequency free-free    %18.12e number of packets %d\n", z_abs[P_LOFREQ_FF],
          nphot_istat[P_LOFREQ_FF]);
   }

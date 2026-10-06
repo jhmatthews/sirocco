@@ -231,13 +231,6 @@ bf_estimators_increment (one, p, ds)
 
   xplasma->heat_ff += heat_contribution = y;    // record ff hea   
 
-  /* This heat contribution is also the contibution to making k-packets in this volume. So we record it. */
-  /* JM 2402 note that previously we incorrectly included Compton processes in kpkt_abs, which could lead to large 
-     amounts of radiation coming out incorrectly in other k->r channels in spectral cycles */
-  xplasma->kpkt_abs += heat_contribution;
-
-
-
   /* Now for contribution to heating due to compton processes. (JM, Sep 013) */
 
   y = weight_of_packet * kappa_comp (xplasma, freq_av) * ds;
@@ -245,6 +238,9 @@ bf_estimators_increment (one, p, ds)
   xplasma->heat_comp += y;      // record the compton heating
   heat_contribution += y;       // add compton to the heat contribution
 
+  /* The ff and Compton heating are the contribution to making k-packets in this volume, so we record them.
+     Compton heating is included because electron scatters now create k-packets with
+     probability (f-1)/f. Induced Compton is not included */
   xplasma->kpkt_abs += heat_contribution;
 
 

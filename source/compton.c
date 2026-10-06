@@ -115,7 +115,7 @@ compton_scatter (p)
   lorentz_transform (p, p, velocity_electron);
 //  if (modes.save_extract_photons)
 //    save_photons (p, "BeforeC");
-  compton_dir (p);
+  f = compton_dir (p);
 //  if (modes.save_extract_photons)
 //    save_photons (p, "AfterC");
   rescale (velocity_electron, -1, vel);
@@ -524,14 +524,14 @@ compton_dir (p)
 
   }
 
-  p->freq = p->freq / f;      //reduce the photon frequency by the fractional energy change
+  p->freq = p->freq / f;        //reduce the photon frequency by the fractional energy change
 
-  if (geo.rt_mode == RT_MODE_2LEVEL) /* only reduce the weight in classic mode */
+  if (geo.rt_mode == RT_MODE_2LEVEL)    /* only reduce the weight in classic mode */
   {
     p->w = p->w / f;            //reduce the photon weight by the same ammount to conserve photon numbers
   }
 
-  
+
   return (f);                   /* return the fractional energy change. This is the ratio of the old freq to the new freq */
 }
 
