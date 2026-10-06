@@ -1,12 +1,10 @@
 
 /***********************************************************/
 /** @file  para_update.c
- * @author ksl, jm
+ * @author ksl, jm, ejp
  * @date   January, 2018
  *
- * @brief  routines for communicating MC estimators and spectra between MPI ranks.
- *
- * @TODO: as much as this as possible should use non-blocking communication
+ * @brief  Utility functions for MPI parallelisation
  *
  ***********************************************************/
 
@@ -16,7 +14,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 /**********************************************************/
 /**

@@ -1,7 +1,7 @@
-py4py
---------
-`py4py` is a module written in *Python* for reading, processing and visualising the input and output
-files of the *c* code **Python**.
+py4py (Reverberation+)
+-------------------------
+`py4py` is a module written in python for reading, processing and visualising the input and output
+files *SIROCCO*, which is primarily used for Reverberation Mapping analysis.
 
 Installation instructions can be found in the associated README.md
 

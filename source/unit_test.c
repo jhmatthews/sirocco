@@ -5,7 +5,7 @@
  * @date   January, 2021
  *
  * @brief  This file contains main and various related routines
- * to test one or more low level routines in Python
+ * to test one or more low level routines in Sirocco
  *
  ***********************************************************/
 
@@ -20,7 +20,7 @@
 #include <string.h>
 #include <math.h>
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 char inroot[LINELENGTH];
 

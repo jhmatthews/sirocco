@@ -14,7 +14,7 @@
  * ### Notes ###
  *
  * The files here are all written out as binary files.  They are
- * used for restars, and also by routines like py_wind and windsave2talbe
+ * used for restars, and also by routines like swind and windsave2talbe
  * which inspect what is happening in the wind.
  *
  * There are separate ascii_writing 
@@ -29,7 +29,7 @@
 #include <sys/stat.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -66,8 +66,15 @@ wind_save (filename)
     Exit (0);
   }
 
-  sprintf (header, "Version %s\n", VERSION);
+  memset (header, ' ', sizeof (header));
+  header[sizeof (header) - 1] = '\0';   // ensure termination
+  snprintf (header, sizeof (header), "Version %s\n", VERSION);
   n = fwrite (header, sizeof (header), 1, fptr);
+
+
+//OLD  sprintf (header, "Version %s\n", VERSION);
+//OLD  n = fwrite (header, sizeof (header), 1, fptr);
+
   n += fwrite (&geo, sizeof (geo), 1, fptr);
 
   n += fwrite (zdom, sizeof (domain_dummy), geo.ndomain, fptr);
@@ -202,7 +209,7 @@ wind_read (filename)
 
   n = fread (header, sizeof (header), 1, fptr);
   sscanf (header, "%*s %s", version);
-  Log ("Reading Windfile %s created with python version %s with python version %s\n", filename, version, VERSION);
+  Log ("Reading Windfile %s created with sirocco version %s with sirocco version %s\n", filename, version, VERSION);
 
   /* Now read in the geo structure */
 
@@ -215,7 +222,7 @@ wind_read (filename)
 
   if (stat (geo.atomic_filename, &file_stat))
   {
-    if (system ("Setup_Py_Dir"))
+    if (system ("Setup_Sirocco_Dir"))
     {
       Error ("Unable to open %s or create link for atomic data\n", geo.atomic_filename);
       Exit (1);
@@ -459,7 +466,7 @@ spec_save (filename)
  *
  * ### Notes ###
  *
- * The first line of the file contains the Python version
+ * The first line of the file contains the Sirocco version
  * and the number of spectra to be read in
  * 
  * The program exits if the file does not exist
@@ -498,8 +505,9 @@ spec_read (filename)
     Exit (EXIT_FAILURE);
   }
 
-  Log ("Reading specfile %s with %d spectra and %d wavelength bins, created with python version %s and currently using python version %s\n",
-       filename, nspectra, NWAVE_EXTRACT, version, VERSION);
+  Log
+    ("Reading specfile %s with %d spectra and %d wavelength bins, created with sirocco version %s and currently using sirocco version %s\n",
+     filename, nspectra, NWAVE_EXTRACT, version, VERSION);
 
   /* First allocate space */
 

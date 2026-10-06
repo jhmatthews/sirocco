@@ -19,7 +19,7 @@ Command line usage (if any):
 Description:  
 
     The program checks all the .pf files in a directory by
-    running the file with Python with the -i switch turned 
+    running the file with Sirocco with the -i switch turned 
     on so to check whether the pf file will run, querying
     the user for any missing inputs.  
 
@@ -29,14 +29,14 @@ Description:
 
         pf_check_directory_date
 
-    The full path names to directories in the `$PYTHON/examples`
+    The full path names to directories in the `$SIROCCO/examples`
     do not need to be given, so for example::
 
         pf_check.py beta
 
-    will test the parameter files in `$PYTHON/examples/beta`.
+    will test the parameter files in `$SIROCCO/examples/beta`.
 
-    After running Python in -i mode for each of the files, 
+    After running Sirocco in -i mode for each of the files, 
     the routine diffs the .out.pf file with the original.pf
     file to see if changes should be made to the .pf file
 
@@ -95,9 +95,9 @@ def travis():
     Return a special set of commands when dealing with the travis directory
     '''
 
-    PYTHON=os.environ['PYTHON']
+    SIROCCO=os.environ['SIROCCO']
 
-    x=open('%s/.travis.yml' % (PYTHON))
+    x=open('%s/.travis.yml' % (SIROCCO))
     z=yaml.load(x)
     print(z['script'])
     commands=[]
@@ -132,9 +132,9 @@ def doit(directory):
     if os.path.isdir(directory):
         xdir=directory
     else:
-        # Get the PYTHON environment variable
-        PYTHON=os.environ['PYTHON']
-        ydir='%s/examples/%s' % (PYTHON,directory)
+        # Get the SIROCCO environment variable
+        SIROCCO=os.environ['SIROCCO']
+        ydir='%s/examples/%s' % (SIROCCO,directory)
         if os.path.isdir(ydir):
             xdir=ydir
         else:

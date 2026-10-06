@@ -12,7 +12,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 /* External variables for use in matom */
 
@@ -25,7 +25,7 @@ int matom_cycle = -1;
 
 /**********************************************************/
 /**
- * @brief The core of the implementation of Macro Atoms in python
+ * @brief The core of the implementation of Macro Atoms in sirocco
  *
  * @param [in,out]  PhotPtr p   the packet at the point of activation and deactivation
  * @param [in,out]  int nres    the process which activates and deactivates the Macro Atom
@@ -602,6 +602,36 @@ xalpha_sp (cont_ptr, xplasma, ichoice)
 }
 
 
+
+/**********************************************************/
+/**
+ * @brief the matom estimator for the spontaneous recombination rate.
+ *
+ * @param [in] struct topbase_phot cont_ptr pointer to calculate
+ * @param [in] struct PlasmaPtr xplasma the plasma cell of interesest
+ * @param [in] int ichoice one of several types or rates to calculate
+ *
+ * @return the recombination rate is returned
+ *
+ * @details
+ * The rate is given by
+ *
+ *    (4 pi /c2) (gu/gl) (h2/2 pi m k T)^(3/2)
+ * times the integral of   a(nu) nu2 exp [(chi- h nu)/kT].
+ *
+ * The choices are
+ * * ichoice = 0   --> spontanous recombination
+ * * ichoice = 1   --> energy weighted recombination
+ * * ichoice = 2   --> the difference between energy_weighted and spontaneous
+ *
+ * ###Notes###
+ *
+ * This basically coumputs integrals similar to eqn 13 of Lucy 2003
+ *
+ *  Energy weighted means that the integrand has an extra factor nu/nu_threshold
+ *  The difference case is (nu-nu_threshold)/nu_threhold
+***********************************************************/
+
 double
 alpha_sp (cont_ptr, xplasma, ichoice)
      struct topbase_phot *cont_ptr;
@@ -1059,7 +1089,7 @@ kpkt (p, nres, escape, mode)
   }
   else if (destruction_choice < (mplasma->cooling_bftot + cooling_bbtot + mplasma->cooling_ff + mplasma->cooling_ff_lofreq))
   {
-    /*this is ff at a frequency that is so low frequency that it is not worth tracking further */
+/*this is ff at a frequency that is so low frequency that it is not worth tracking further */
     *escape = TRUE;
     *nres = NRES_FF;
     p->istat = P_LOFREQ_FF;
@@ -1070,7 +1100,7 @@ kpkt (p, nres, escape, mode)
   else if (destruction_choice <
            (mplasma->cooling_bftot + cooling_bbtot + mplasma->cooling_ff + mplasma->cooling_ff_lofreq + cooling_adiabatic))
   {
-    /* It is a k-packat that is destroyed by adiabatic cooling */
+/* It is a k-packat that is destroyed by adiabatic cooling */
 
     if (geo.adiabatic == 0 || mode == KPKT_MODE_CONTINUUM)
     {
@@ -1211,7 +1241,7 @@ fake_matom_bb (p, nres, escape)
      The relative rates are then given by
      Einstein-A * escape probability  for radiative deactivations  and
      Collision de-excitation rate coeff. * electron density for where
-     The extra factor of (1 - exp (-h nu / k T)) is explained in KSL's notes on Python. It appears because we are
+     The extra factor of (1 - exp (-h nu / k T)) is explained in KSL's notes on Sirocco. It appears because we are
      using the "scattering fraction" formalism for simple ions.
 
    */

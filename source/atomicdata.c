@@ -4,7 +4,7 @@
  * @author ksl
  * @date   March, 2018
  *
- * @brief  Read in all of the atomic data for use with Python
+ * @brief  Read in all of the atomic data for use with Sirocco
  * and other similar programs
  *
  ***********************************************************/
@@ -15,7 +15,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 #include "log.h"
 // If routines are added cproto > atomic_proto.h should be run
@@ -82,11 +82,11 @@
  * ### Notes ###
  *
  * get_atomic data is intended to be stand-alone, that is one should be able to use it for routines
- * other than Python, e.g for another routine intended to calculate the ionization state of
+ * other than Sirocco, e.g for another routine intended to calculate the ionization state of
  * a plasma in collisional equilibrium.
  *
- * To this end, the routines populate stuctures in atomic.h, which are not part of python.h, and 
- * one should avoid calling routines like Exit(0) that are very python centric.  It's important
+ * To this end, the routines populate stuctures in atomic.h, which are not part of sirocco.h, and 
+ * one should avoid calling routines like Exit(0) that are very sirocco centric.  It's important
  * that future modifications to get_atomic_data maintain this independence.
  *
  *
@@ -544,7 +544,7 @@ structure does not have this property! */
 */
 
 /* ?? ksl This mix and match situation may be too much.  We are storing both macro level densities and so-called
-topbase level densities in some of the same arrays in python.  Leave for now, but it may be difficult to keep
+topbase level densities in some of the same arrays in sirocco.  Leave for now, but it may be difficult to keep
 the program working in both cases, and certainly mixed cases  04apr ksl  */
 
 /* 080810 -- ksl -- 62 -- I have changed the way levels are created so that one can only read one type
@@ -845,7 +845,7 @@ described as macro-levels. */
 /**
  * @section  Photoionization
  *
- * Until at least Oct 2001, Python used photoionization crossections from Verner, Ferland, Korista, and Yakolev (VFKY)
+ * Until at least Oct 2001, Sirocco used photoionization crossections from Verner, Ferland, Korista, and Yakolev (VFKY)
  * The routine sigma_phot(xptr, freq) calculates the crossection based on this.
  *
  *
@@ -864,7 +864,7 @@ described as macro-levels. */
  *   4.420684E+00 1.206E+00
  * @endverbatim
  *
- * They are converted to something that is more compatible with Python 
+ * They are converted to something that is more compatible with Sirocco 
  * by py_top_phot
  *
  * The new topbase style records look like this.

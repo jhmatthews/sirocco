@@ -8,8 +8,8 @@
  * randomly oriented vectors
  *
  * These routines should be kept SEPARATE from routines that 
- * require the Python specific
- * structures in python.h so that it is possible to test 
+ * require the Sirocco specific
+ * structures in sirocco.h so that it is possible to test 
  * them more easily.
  *
 ***********************************************************/
@@ -31,7 +31,7 @@
 /* A basis is defined such that if x is a 3 vector as expressed an unprimed cartesian coordinate
    frame, and if y is the same vector in some rotated frame, then
    x[i] = a[i][j] y[j]
-   Basis is defined in python.h
+   Basis is defined in sirocco.h
  */
 
 gsl_rng *rng = NULL;            // pointer to a global random number generator
@@ -459,7 +459,7 @@ init_rng_directory (root, rank)
     }
   }
 
-  sprintf (file_name, "%.50s%.50s_%d.rng_save", dir_name, root, rank);
+  sprintf (file_name, "%.100s%.100s_%d.rng_save", dir_name, root, rank);
   strcpy (rngsave_file, file_name);
 }
 

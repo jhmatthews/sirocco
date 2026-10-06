@@ -5,7 +5,7 @@
 #include <time.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 /**********************************************************/
 /**
@@ -523,8 +523,11 @@ fill_kpkt_rates (xplasma, escape, p)
 
     if (one->inwind >= 0)
     {
-      cooling_ff = mplasma->cooling_ff = total_free (xplasma, xplasma->t_e, freqmin, freqmax) / xplasma->vol / xplasma->ne;
-      cooling_ff += mplasma->cooling_ff_lofreq = total_free (xplasma, xplasma->t_e, 0.0, freqmin) / xplasma->vol / xplasma->ne;
+//Old      cooling_ff = mplasma->cooling_ff = total_free (xplasma, xplasma->t_e, freqmin, freqmax) / xplasma->vol / xplasma->ne;
+//Old      cooling_ff += mplasma->cooling_ff_lofreq = total_free (xplasma, xplasma->t_e, 0.0, freqmin) / xplasma->vol / xplasma->ne;
+//   Next lines reset cooling_ff_lofreq to 0.
+      cooling_ff = mplasma->cooling_ff = total_free (xplasma, xplasma->t_e, 0.0, freqmax) / xplasma->vol / xplasma->ne;
+      mplasma->cooling_ff_lofreq = 0.0;
     }
     else
     {

@@ -11,7 +11,7 @@
  *
  * windsave2table  windsave_root
  *
- * where windsave_root is the root name for a python run, or more precisely
+ * where windsave_root is the root name for a sirocco run, or more precisely
  * the rootname of a windsave file, as the .pf file is not read.
  *
  * The routine reads the windsavefile and then writes out a selected 
@@ -21,7 +21,7 @@
  *
  * All of the files begin
  * with the rootname and the domain number.
- * If Python run that created the windsave file
+ * If Sirocco run that created the windsave file
  * has multiple domains a sepearate output file is created for each
  * domain
  *
@@ -40,7 +40,7 @@
  *
  * ### Notes ###
  *
- * Whereas py_wind is intended to be run interactively, windsave2table is
+ * Whereas swind is intended to be run interactively, windsave2table is
  * entirely hardwired so that it produces a standard set of output
  * files.  To change the outputs one has to modify the routine
  *
@@ -58,7 +58,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -67,7 +67,7 @@
  *
  * @param[in] int argc        The number of arguments in the command line
  * @param[in] char *argv[]    The command line arguments
- * @param[out] char root[]    The rootname of the Python simulation
+ * @param[out] char root[]    The rootname of the Sirocco simulation
  *
  * @return void
  *
@@ -88,8 +88,8 @@
  *
  * The switches only affect the ion tables not the master table
  * This was originally implemented to enable somebody to query which version of
- * Python windsave2table was compiled with. Works in a similar fashion to how
- * the version information is stored and viewed in Python.
+ * Sirocco windsave2table was compiled with. Works in a similar fashion to how
+ * the version information is stored and viewed in Sirocco.
  * 
  * 
  *
@@ -138,7 +138,7 @@ parse_arguments (int argc, char *argv[], char root[], int *ion_switch, int *spec
     {
       if (!strcmp (argv[i], "--version"))
       {
-        printf ("Python Version %s\n", VERSION);
+        printf ("Sirocco Version %s\n", VERSION);
         printf ("windsave2table built from git commit hash %s\n", GIT_COMMIT_HASH);
         if (GIT_DIFF_STATUS)
           printf ("This version was compiled with %i files with uncommitted changes.\n", GIT_DIFF_STATUS);
@@ -153,7 +153,7 @@ parse_arguments (int argc, char *argv[], char root[], int *ion_switch, int *spec
       {
         if (sscanf (argv[i + 1], "%d", spec_switch) != 1)
         {
-          Error ("python: wind cell number  after -x switch\n");
+          Error ("sirocco: wind cell number  after -x switch\n");
           exit (1);
         }
 
@@ -206,7 +206,7 @@ parse_arguments (int argc, char *argv[], char root[], int *ion_switch, int *spec
 /**********************************************************/
 /** 
  * @brief      windsave2table writes key variables in a windsave file 
- * to an astropy table calculated Python.  This is the  main routine.
+ * to an astropy table calculated Sirocco.  This is the  main routine.
  *
  * @param [in] int  argc   The number of argments in the command line
  * @param [in] char *  argv[]   The command line
@@ -247,7 +247,7 @@ main (argc, argv)
 
   strcpy (parameter_file, "NONE");
 
-  /* Next command stops Debug statements printing out in py_wind */
+  /* Next command stops Debug statements printing out in swind */
   Log_set_verbosity (3);
 
   /*
@@ -280,7 +280,7 @@ main (argc, argv)
 
   if (wind_read (windsavefile) < 0)
   {
-    Error ("py_wind: Could not open %s", windsavefile);
+    Error ("swind: Could not open %s", windsavefile);
     exit (0);
   }
 

@@ -15,7 +15,7 @@
 
 #include <float.h>
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -182,7 +182,7 @@ matrix_ion_populations (xplasma, mode)
     }
   }
 
-  /* This next line sets the partition function for each ion. This has always been the place here python calculates the
+  /* This next line sets the partition function for each ion. This has always been the place here sirocco calculates the
      partition functions and sets the level densities for each ion. It needs to be done, or other parts of the code which rely
      on sensible level populations don't work properly. In the case of the dilute blackbody, the code works well, however we do
      not currently (v78) have a procedure to calucate the levels for a spectral model case. We therefore call partition
@@ -212,7 +212,7 @@ matrix_ion_populations (xplasma, mode)
   /* xne is the current working number xxne */
 
 
-  /* We are now going to iterate on the electron density - MAXITERATIONS is set in python.h and is currently (78) set to 200.
+  /* We are now going to iterate on the electron density - MAXITERATIONS is set in sirocco.h and is currently (78) set to 200.
      We would normally expect to converge much fater than this */
 
   niterate = 0;
@@ -366,12 +366,12 @@ matrix_ion_populations (xplasma, mode)
       Error ("matrix_ion_populations: failed to converge for cell %i t %e nh %e xnew %e\n", xplasma->nplasma, t_e, nh, xnew);
 
 
-      for (nn = 0; nn < geo.nxfreq; nn++)
+      for (nn = 0; nn < xplasma->nbands; nn++)
       {
         Log
           ("numin= %e (%e) numax= %e (%e) Model= %2d PL_log_w= %e PL_alpha= %e Exp_w= %e EXP_temp= %e\n",
-           xplasma->fmin_mod[nn], geo.xfreq[nn], xplasma->fmax_mod[nn],
-           geo.xfreq[nn + 1], xplasma->spec_mod_type[nn],
+           xplasma->fmin_mod[nn], xplasma->f1[nn], xplasma->fmax_mod[nn],
+           xplasma->f2[nn], xplasma->spec_mod_type[nn],
            xplasma->pl_log_w[nn], xplasma->pl_alpha[nn], xplasma->exp_w[nn], xplasma->exp_temp[nn]);
       }
 

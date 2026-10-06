@@ -21,7 +21,7 @@
 #include <stdint.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -185,6 +185,7 @@ macro_gov (p, nres, matom_or_kpkt, which_out)
     {
       emit_matom (wmain, p, nres, new_uplvl, 0, VERY_BIG);
       *which_out = MATOM;
+      mplasma->energy_flow_out += p->w;
     }
 
     if (p->origin < 10)
@@ -214,6 +215,7 @@ macro_gov (p, nres, matom_or_kpkt, which_out)
             /* It escapes as a r-packet that was created by de-activation of a macro atom.
              */
             *which_out = MATOM;
+            mplasma->energy_flow_out += p->w;
 
             /* Update the the photon origin to indicate the packet has been processed
                by a macro atom */
@@ -233,6 +235,7 @@ macro_gov (p, nres, matom_or_kpkt, which_out)
             /* It  escapes as a r-packet that was created by de-activation of a macro atom.
              */
             *which_out = MATOM;
+            mplasma->energy_flow_out += p->w;
             /* Update the the photon origin to indicate the packet has been processed
                by a macro atom */
             if (p->origin < 10)
@@ -265,6 +268,7 @@ macro_gov (p, nres, matom_or_kpkt, which_out)
            destroyed by collisionally exciting a macro atom so...
          */
         matom_or_kpkt = MATOM;
+        mplasma->energy_flow_out += p->w;
       }
       else
       {

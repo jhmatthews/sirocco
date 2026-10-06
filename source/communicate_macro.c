@@ -5,8 +5,6 @@
  *
  * @brief Functions for communicating macro atom properties
  *
- * @TODO: as much as this as possible should use non-blocking communication
- *
  ***********************************************************/
 
 #include <stdio.h>
@@ -15,7 +13,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 /**********************************************************/
 /**
@@ -27,7 +25,12 @@
  *
  * @details
  *
- * The communication pattern is as outlined in broadcast_updated_plasma_properties.
+ * The communication pattern and how the size of the communication buffer is
+ * determined is documented in
+ * $SIROCCO/docs/sphinx/source/developer/mpi_comms.rst.
+ * To communicate a new variable, the communication buffer needs to be made
+ * bigger and a new `MPI_Pack` and `MPI_Unpack` call need to be added. See the
+ * developer documentation for more details.
  *
  **********************************************************/
 
@@ -44,7 +47,13 @@ broadcast_macro_atom_emissivities (const int n_start, const int n_stop, const in
   d_xsignal (files.root, "%-20s Begin macro atom emissivity communication\n", "NOK");
   const int n_cells_max = get_max_cells_per_rank (NPLASMA);
   const int comm_buffer_size = calculate_comm_buffer_size (1 + n_cells_max, n_cells_max * (1 + nlevels_macro));
+
   char *comm_buffer = malloc (comm_buffer_size);
+  if (comm_buffer == NULL)
+  {
+    Error ("broadcast_macro_atom_emissivities: Error in allocating memory for comm_buffer\n");
+    Exit (EXIT_FAILURE);
+  }
 
   for (current_rank = 0; current_rank < np_mpi_global; current_rank++)
   {
@@ -92,7 +101,12 @@ broadcast_macro_atom_emissivities (const int n_start, const int n_stop, const in
  *
  * @details
  *
- * The communication pattern is as outlined in broadcast_updated_plasma_properties.
+ * The communication pattern and how the size of the communication buffer is
+ * determined is documented in
+ * $SIROCCO/docs/sphinx/source/developer/mpi_comms.rst.
+ * To communicate a new variable, the communication buffer needs to be made
+ * bigger and a new `MPI_Pack` and `MPI_Unpack` call need to be added. See the
+ * developer documentation for more details.
  *
  **********************************************************/
 
@@ -109,7 +123,13 @@ broadcast_macro_atom_recomb (const int n_start, const int n_stop, const int n_ce
   d_xsignal (files.root, "%-20s Begin macro atom recombination communication\n", "NOK");
   const int n_cells_max = get_max_cells_per_rank (NPLASMA);
   const int comm_buffer_size = calculate_comm_buffer_size (1 + n_cells_max, n_cells_max * (2 * size_alpha_est + 2 * nphot_total));
+
   char *const comm_buffer = malloc (comm_buffer_size);
+  if (comm_buffer == NULL)
+  {
+    Error ("broadcast_macro_atom_recomb: Error in allocating memory for comm_buffer\n");
+    Exit (EXIT_FAILURE);
+  }
 
   for (current_rank = 0; current_rank < np_mpi_global; ++current_rank)
   {
@@ -178,7 +198,12 @@ broadcast_macro_atom_recomb (const int n_start, const int n_stop, const int n_ce
  *
  * @details
  *
- * The communication pattern is as outlined in broadcast_updated_plasma_properties.
+ * The communication pattern and how the size of the communication buffer is
+ * determined is documented in
+ * $SIROCCO/docs/sphinx/source/developer/mpi_comms.rst.
+ * To communicate a new variable, the communication buffer needs to be made
+ * bigger and a new `MPI_Pack` and `MPI_Unpack` call need to be added. See the
+ * developer documentation for more details.
  *
  **********************************************************/
 
@@ -194,8 +219,14 @@ broadcast_updated_macro_atom_properties (const int n_start, const int n_stop, co
 
   d_xsignal (files.root, "%-20s Begin macro atom updated properties communication\n", "NOK");
   const int n_cells_max = get_max_cells_per_rank (NPLASMA);
-  const int comm_buffer_size = calculate_comm_buffer_size (1 + 3 * n_cells_max, n_cells_max * (6 * size_gamma_est + 2 * size_Jbar_est));
+  const int comm_buffer_size = calculate_comm_buffer_size (1 + 3 * n_cells_max, n_cells_max * (6 * size_gamma_est + 2 * size_Jbar_est + 1));
+
   char *const comm_buffer = malloc (comm_buffer_size);
+  if (comm_buffer == NULL)
+  {
+    Error ("broadcast_updated_macro_atom_properties: Error in allocating memory for comm_buffer\n");
+    Exit (EXIT_FAILURE);
+  }
 
   for (current_rank = 0; current_rank < np_mpi_global; ++current_rank)
   {
@@ -217,6 +248,7 @@ broadcast_updated_macro_atom_properties (const int n_start, const int n_stop, co
         MPI_Pack (macromain[n_plasma].alpha_st_old, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&macromain[n_plasma].kpkt_rates_known, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&macromain[n_plasma].matrix_rates_known, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (&macromain[n_plasma].energy_flow_in, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
       }
     }
 
@@ -240,6 +272,7 @@ broadcast_updated_macro_atom_properties (const int n_start, const int n_stop, co
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].alpha_st_old, size_gamma_est, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &macromain[n_plasma].kpkt_rates_known, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &macromain[n_plasma].matrix_rates_known, 1, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &macromain[n_plasma].energy_flow_in, 1, MPI_DOUBLE, MPI_COMM_WORLD);
       }
     }
   }
@@ -260,6 +293,13 @@ broadcast_updated_macro_atom_properties (const int n_start, const int n_stop, co
  * and should only be called if geo.rt_mode == RT_MODE_MACRO
  * and nlevels_macro > 0
  *
+ * The communication pattern and how the size of the communication buffer is
+ * determined is documented in
+ * $SIROCCO/docs/sphinx/source/developer/mpi_comms.rst.
+ * To communicate a new variable, the communication buffer needs to be made
+ * bigger and a new `MPI_Pack` and `MPI_Unpack` call need to be added. See the
+ * developer documentation for more details.
+ *
  **********************************************************/
 
 int
@@ -273,7 +313,13 @@ broadcast_macro_atom_state_matrix (int n_start, int n_stop, int n_cells_rank)
   const int matrix_size = nlevels_macro + 1;
   const int n_cells_max = get_max_cells_per_rank (NPLASMA);
   const int comm_buffer_size = calculate_comm_buffer_size (1 + n_cells_max, n_cells_max * (matrix_size * matrix_size));
+
   char *comm_buffer = malloc (comm_buffer_size);
+  if (comm_buffer == NULL)
+  {
+    Error ("broadcast_macro_atom_state_matrix: Error in allocating memory for comm_buffer\n");
+    Exit (EXIT_FAILURE);
+  }
 
   for (n_mpi = 0; n_mpi < np_mpi_global; n_mpi++)
   {
@@ -373,7 +419,7 @@ reduce_macro_atom_estimators (void)
   gamma_helper2 = calloc (sizeof (double), NPLASMA * 4 * size_gamma_est);
   alpha_helper2 = calloc (sizeof (double), NPLASMA * 2 * size_alpha_est);
   level_helper2 = calloc (sizeof (double), NPLASMA * nlevels_macro);
-  cell_helper2 = calloc (sizeof (double), 9 * NPLASMA);
+  cell_helper2 = calloc (sizeof (double), 10 * NPLASMA);
   cooling_bf_helper2 = calloc (sizeof (double), NPLASMA * 2 * nphot_total);
   cooling_bb_helper2 = calloc (sizeof (double), NPLASMA * nlines);
 
@@ -393,7 +439,7 @@ reduce_macro_atom_estimators (void)
     cell_helper[mpi_i + 6 * NPLASMA] = macromain[mpi_i].cooling_ff_lofreq / np_mpi_global;
     cell_helper[mpi_i + 7 * NPLASMA] = macromain[mpi_i].cooling_adiabatic / np_mpi_global;
     cell_helper[mpi_i + 8 * NPLASMA] = macromain[mpi_i].cooling_compton / np_mpi_global;
-
+    cell_helper[mpi_i + 9 * NPLASMA] = macromain[mpi_i].energy_flow_out / np_mpi_global;
 
 
     for (n = 0; n < nlevels_macro; n++)
@@ -434,7 +480,7 @@ reduce_macro_atom_estimators (void)
 
   /* because in the above loop we have already divided by number of processes, we can now do a sum
      with MPI_Reduce, passing it MPI_SUM as an argument. This will give us the mean across threads */
-  MPI_Allreduce (cell_helper, cell_helper2, NPLASMA * 8, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce (cell_helper, cell_helper2, NPLASMA * 9, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce (level_helper, level_helper2, NPLASMA * nlevels_macro, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce (jbar_helper, jbar_helper2, NPLASMA * size_Jbar_est, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce (gamma_helper, gamma_helper2, NPLASMA * 4 * size_gamma_est, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -459,6 +505,7 @@ reduce_macro_atom_estimators (void)
     macromain[mpi_i].cooling_ff_lofreq = cell_helper2[mpi_i + 6 * NPLASMA];
     macromain[mpi_i].cooling_adiabatic = cell_helper2[mpi_i + 7 * NPLASMA];
     macromain[mpi_i].cooling_compton = cell_helper2[mpi_i + 8 * NPLASMA];
+    macromain[mpi_i].energy_flow_out = cell_helper2[mpi_i + 9 * NPLASMA];
 
 
     for (n = 0; n < nlevels_macro; n++)

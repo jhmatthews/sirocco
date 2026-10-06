@@ -16,7 +16,7 @@ Values
 
   models
     Available for :ref:`System_type` of ``star`` or ``cv``.
-    Radiate according to a model. Python can support tabulated models that output with a binned luminosity distribution
+    Radiate according to a model. SIROCCO can support tabulated models that output with a binned luminosity distribution
     depending on system properties like temperature and gravity. See :ref:`Input_spectra.model_file`. The total
     luminosity will be set by :ref:`Central_object.luminosity`.
 
@@ -45,7 +45,7 @@ Values
 
 
 File
-  `python.c <https://github.com/agnwinds/python/blob/master/source/python.c>`_
+  `sirocco.c <https://github.com/sirocco-rt/sirocco/blob/master/source/sirocco.c>`_
 
 
 Parent(s)

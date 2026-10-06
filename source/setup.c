@@ -8,7 +8,7 @@
  *
  * ### Notes ###
  *
- * Because the input and setup of Python is relatively complex,
+ * Because the input and setup of Sirocco is relatively complex,
  * we have over time moved much of this out of main into
  * subroutines, and we have generally tried to collect
  * related portion of the initialization into different setup
@@ -26,7 +26,7 @@
 #include <sys/stat.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -42,7 +42,7 @@
  *
  * ### Notes ###
  *
- * In general, cgs units are the working units for Python.  Thus all
+ * In general, cgs units are the working units for Sirocco.  Thus all
  * intialization should be converted to these units.
  *
  * @bug Currently init_geo is set up for CVs and Stars and not AGN.  We now
@@ -132,6 +132,10 @@ init_geo ()
 
   geo.wcycles = geo.pcycles = 1;
   geo.wcycle = geo.pcycle = 0;
+  geo.convergence_tolerance = 2;        /* 2% tolerance */
+  geo.convergence_fraction = 80;        /* 80% floor */
+  geo.min_ionization_cycles = 0;
+  geo.convergence_lookback = 5;
 
   // Note that geo.model_list is initialized through get_spectype
   geo.model_count = 0;          //The number of models read in
@@ -297,7 +301,7 @@ get_spectype (yesno, question, spectype)
  * @details
  *
  * ### Notes ###
- * modes is a structure declared in python.h
+ * modes is a structure declared in sirocco.h
  *
  * Most of the modes are initialized to FALSE, which means that
  * activites that could be undertaken for this mode, will
@@ -350,6 +354,7 @@ init_advanced_modes ()
   modes.partial_cells = PC_ZERO_DEN;    /* Default is to omit partial cells in calculation */
 
   modes.no_macro_pops_for_ions = FALSE; /* use the ion densities from macro_pops where applicable */
+  modes.early_stopping = FALSE; /* convergence-based early stopping of ionization cycles */
 
   return (0);
 }
@@ -594,10 +599,15 @@ init_observers ()
  * @return     Generally returns 0
  *
  * @details
- * ??? DESCRIPTION ???
+ *
+ * The routine reads the input variables associated with the
+ * number of photons per cycle, the number of ionization 
+ * cycles and the number of spectral cycle
  *
  * ### Notes ###
  * The routine also allocates memory for the photon structure.
+ * (for each thread) 
+ * 
  * If the routine is unable to allocate this membory, the routine
  * will exit.
  *
@@ -606,7 +616,6 @@ init_observers ()
 PhotPtr
 init_photons ()
 {
-  PhotPtr p;
 
   /* Although Photons_per_cycle is really an integer,
      read in as a double so it is easier for input
@@ -622,12 +631,53 @@ init_photons ()
   }
 
 
-#ifdef MPI_ON
-  Log ("Photons per cycle per MPI task will be %d\n", NPHOT / np_mpi_global);
-  NPHOT /= np_mpi_global;
-#endif
 
   rdint ("Ionization_cycles", &geo.wcycles);
+
+  if (modes.early_stopping)
+  {
+    rddoub ("@estop.Ionization_cycles.convergence_tolerance(%)", &geo.convergence_tolerance);
+    if (geo.convergence_tolerance > 50.0)
+    {
+      Error ("convergence_tolerance (%.1f%%) is very large, clamping to 50%%\n", geo.convergence_tolerance);
+      geo.convergence_tolerance = 50.0;
+    }
+    if (geo.convergence_tolerance <= 0.0)
+    {
+      Error ("convergence_tolerance (%.1f%%) must be > 0, setting to 2%%\n", geo.convergence_tolerance);
+      geo.convergence_tolerance = 2.0;
+    }
+    rddoub ("@estop.Ionization_cycles.convergence_fraction(%)", &geo.convergence_fraction);
+    if (geo.convergence_fraction < 0.0)
+    {
+      Error ("convergence_fraction (%.1f%%) cannot be negative, setting to 0%%\n", geo.convergence_fraction);
+      geo.convergence_fraction = 0.0;
+    }
+    if (geo.convergence_fraction > 100.0)
+    {
+      Error ("convergence_fraction (%.1f%%) cannot exceed 100%%, clamping to 100%%\n", geo.convergence_fraction);
+      geo.convergence_fraction = 100.0;
+    }
+    rdint ("@estop.Ionization_cycles.min_cycles", &geo.min_ionization_cycles);
+    if (geo.min_ionization_cycles < 0)
+    {
+      Error ("min_ionization_cycles (%d) must be >= 0, setting to 0\n", geo.min_ionization_cycles);
+      geo.min_ionization_cycles = 0;
+    }
+    rdint ("@estop.Ionization_cycles.convergence_lookback", &geo.convergence_lookback);
+    if (geo.convergence_lookback > CONVERGENCE_HISTORY_MAX)
+    {
+      Error ("convergence_lookback (%d) exceeds maximum (%d), clamping\n", geo.convergence_lookback, CONVERGENCE_HISTORY_MAX);
+      geo.convergence_lookback = CONVERGENCE_HISTORY_MAX;
+    }
+    if (geo.convergence_lookback < 2)
+    {
+      Error ("convergence_lookback (%d) must be >= 2, setting to 2\n", geo.convergence_lookback);
+      geo.convergence_lookback = 2;
+    }
+    Log ("Early stopping enabled: tolerance = %.1f%%, fraction floor = %.1f%%, min_cycles = %d, lookback = %d\n",
+         geo.convergence_tolerance, geo.convergence_fraction, geo.min_ionization_cycles, geo.convergence_lookback);
+  }
 
   /* On restarts, the spectra that are read in have to be renormalized if
    * the number of spectral cycles has been increased before a restart, and
@@ -652,33 +702,7 @@ init_photons ()
     Log ("After that, the windsave file will be written to disk but then the program will exit\n");
   }
 
-  /* Allocate the memory for the photon structure now that NPHOT is established */
-
-  photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT);
-  /* If the number of photons per cycle is changed, NPHOT can be less, so we define NPHOT_MAX
-   * to the maximum number of photons that one can create.  NPHOT is used extensively with
-   * Python.  It is the NPHOT in a particular cycle, in a given thread.
-   */
-
-  NPHOT_MAX = NPHOT;
-
-
-  if (p == NULL)
-  {
-    Error ("init_photons: There is a problem in allocating memory for the photon structure\n");
-    Exit (0);
-  }
-  else
-  {
-    /* large photon numbers can cause problems / runs to crash. Report to use (see #209) */
-    Log
-      ("Allocated %10d bytes for each of %5d elements of photon structure totaling %10.1f Mb \n",
-       sizeof (p_dummy), NPHOT, 1.e-6 * NPHOT * sizeof (p_dummy));
-    if ((NPHOT * sizeof (p_dummy)) > 1e9)
-      Error ("Over 1 GIGABYTE of photon structure allocated. Could cause serious problems.\n");
-  }
-
-  return (p);
+  return (0);
 }
 
 
@@ -715,7 +739,8 @@ init_ionization ()
 
   strcpy (answer, "matrix_bb");
   geo.ioniz_mode =
-    rdchoice ("Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,fixed,matrix_bb,matrix_pow,matrix_est)", "0,3,1,4,2,8,9,10", answer);
+    rdchoice ("Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,LTE_iterate,fixed,matrix_bb,matrix_pow,matrix_est,matrix_multishot)",
+              "0,3,1,4,5,2,8,9,10,11", answer);
 
   if (geo.ioniz_mode == IONMODE_FIXED)
   {
@@ -843,7 +868,7 @@ fixed concentration file. \n\
  * ### Notes ###
  *
  * setup_dfudge is used to modify the variable DFUDGE which
- * can be found in python.h.
+ * can be found in sirocco.h.
  *
  * Originally, DFUDGE was the only number used to push through
  * boundariies, but today DFUDGE is used sparingly, if at all,
@@ -907,7 +932,7 @@ setup_dfudge ()
 void
 setup_atomic_data (const char *atomic_filename)
 {
-  int rc;                       // Return code from running Setup_Py_Dir
+  int rc;                       // Return code from running Setup_Sirocco_Dir
   struct stat file_stat;        // Used to check the atomic data exists
   char answer[LINELENGTH];
 
@@ -924,20 +949,20 @@ setup_atomic_data (const char *atomic_filename)
 
   /*
    * Check that geo.atomic_filename exists - i.e. that the directory is readable
-   * and in the directory Python is being executed from. If it isn't - then
-   * try to run Setup_Py_Dir. If both fail, then warn the user and exit Python
+   * and in the directory Sirocco is being executed from. If it isn't - then
+   * try to run Setup_Sirocco_Dir. If both fail, then warn the user and exit Sirocco
    */
 
   if (stat (atomic_filename, &file_stat))
   {
     Log ("Unable to open atomic masterfile %s\n", atomic_filename);
-    Log ("Running Setup_Py_Dir to try and fix the situation\n");
+    Log ("Running Setup_Sirocco_Dir to try and fix the situation\n");
     if (rank_global == 0)
     {
-      rc = system ("Setup_Py_Dir");
+      rc = system ("Setup_Sirocco_Dir");
       if (rc)
       {
-        Error ("Unable to open %s and run Setup_Py_Dir\n", atomic_filename);
+        Error ("Unable to open %s and run Setup_Sirocco_Dir\n", atomic_filename);
         Exit (1);
       }
     }

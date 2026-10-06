@@ -17,10 +17,10 @@ Values
     A homologous expansion law useful for simulating SNe. (:ref:`Homologous`)
 
   hydro
-    A special purpose mode used by the python collaboration for importing models from Zeus and Pluto. (Depreciated) (:ref:`Hydro`)
+    A special purpose mode used by the sirocco.collaboration for importing models from Zeus and Pluto. (Depreciated) (:ref:`Hydro`)
 
   imported
-    A general purpose mode for importing a wind from an ascii file (see also :doc:`Python Script documentation <../wind_models/importing_models>`).
+    A general purpose mode for importing a wind from an ascii file (see also :doc:`Importing Models </wind_models/importing_models>`).
 
   kwd
     The Knigge-Woods-Drew parameterization of a bi-conical flow. (:ref:`KWD`)
@@ -33,7 +33,7 @@ Values
 
 
 File
-  `setup_domains.c <https://github.com/agnwinds/python/blob/master/source/setup_domains.c>`_
+  `setup_domains.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup_domains.c>`_
 
 
 Parent(s)

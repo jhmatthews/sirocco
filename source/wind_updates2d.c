@@ -17,7 +17,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 /**********************************************************/
 /**
@@ -55,6 +55,9 @@ wind_update (WindPtr w)
   double xsum, psum, fsum, lsum, csum, icsum, ausum, chexsum;
   double cool_sum, lum_sum, radiated_luminosity_sum;    //1706 - the total cooling and luminosity of the wind
   double apsum, aausum, abstot; //Absorbed photon energy from PI and auger
+  double heat_macro_photo_sum, heat_macro_qrecomb_sum, heat_macro_lines_sum;
+  double cool_macro_photo_sum, cool_macro_di_sum, cool_macro_lines_sum;
+  double macro_energy_in, macro_energy_out;
   double flux_persist_scale;
   double volume;
   double dt_r, dt_e;
@@ -149,6 +152,7 @@ wind_update (WindPtr w)
     }
 
     /* Calculate the densities in various ways depending on the ioniz_mode */
+    Debug ("XXX -- matrix_multishot -- updating cycle %3d cell %3d\n", geo.wcycle, n_plasma);
     ion_abundances (&plasmamain[n_plasma], geo.ioniz_mode);
   }
 
@@ -199,7 +203,6 @@ wind_update (WindPtr w)
     }
   }
   /* Finished updating region outside of wind */
-
   /* Check the balance between the absorbed and the emitted flux */
   /* NSH 0717 - ensure the cooling and luminosities reflect the current temperature */
 
@@ -220,6 +223,9 @@ wind_update (WindPtr w)
   aausum = 0.0;
   abstot = 0.0;
   chexsum = 0.0;
+  heat_macro_photo_sum = heat_macro_qrecomb_sum = heat_macro_lines_sum = 0.0;
+  cool_macro_photo_sum = cool_macro_di_sum = cool_macro_lines_sum = 0.0;
+  macro_energy_in = macro_energy_out = 0.0;
 
   /* Each rank now has updated plasma cells (temperature, ion abundances, heat/cool rates, etc.), so we can now find
    * out what the max d_t is in the wind and also sum up properties to find the total/global values */
@@ -268,6 +274,19 @@ wind_update (WindPtr w)
     apsum += plasmamain[n_plasma].abs_photo;
     aausum += plasmamain[n_plasma].abs_auger;
     chexsum += plasmamain[n_plasma].heat_ch_ex;
+
+    heat_macro_photo_sum += plasmamain[n_plasma].heat_photo_macro;
+    heat_macro_qrecomb_sum += plasmamain[n_plasma].heat_qrecomb_macro;
+    heat_macro_lines_sum += plasmamain[n_plasma].heat_lines_macro;
+    cool_macro_photo_sum += plasmamain[n_plasma].cool_bf_macro;
+    cool_macro_lines_sum += plasmamain[n_plasma].cool_lines_macro;
+    cool_macro_di_sum += plasmamain[n_plasma].cool_di_macro;
+
+    if (geo.rt_mode == RT_MODE_MACRO)
+    {
+      macro_energy_in += macromain[n_plasma].energy_flow_in;
+      macro_energy_out += macromain[n_plasma].energy_flow_out;
+    }
   }
 
   /* We can now calculate the average of the t */
@@ -301,9 +320,9 @@ wind_update (WindPtr w)
   Log ("wind_update: note, errors from mean intensity can be high in a working model\n");
   Log
     ("wind_update: can be a problem with photon numbers if there are also errors from spectral_estimators and low photon number warnings\n");
-  Log ("wind_update: mean_intensity: %8.4e occurrences, this cycle, this thread of 'no model exists in a band'\n", nerr_no_Jmodel);
+  Log ("wind_update: mean_intensity: %8d occurrences, this cycle, this thread of 'no model exists in a band'\n", nerr_no_Jmodel);
   Log
-    ("wind_update: mean intensity: %8.4e occurrences, this cycle, this thread of 'photon freq is outside frequency range of spectral model'\n",
+    ("wind_update: mean intensity: %8d occurrences, this cycle, this thread of 'photon freq is outside frequency range of spectral model'\n",
      nerr_Jmodel_wrong_freq);
 
   /* zero the counters which record diagnostics from the function mean_intensity */
@@ -331,11 +350,15 @@ wind_update (WindPtr w)
     ("!!wind_update: Wind cooling     %8.2e (recomb %8.2e ff %8.2e compton %8.2e DR %8.2e DI %8.2e lines %8.2e adiabatic %8.2e) after update\n",
      cool_sum, geo.cool_rr, geo.lum_ff, geo.cool_comp, geo.cool_dr, geo.cool_di, geo.lum_lines, geo.cool_adiabatic);
 
-  if (modes.use_upweighting_of_simple_macro_atoms)
+  if (geo.rt_mode == RT_MODE_MACRO)
   {
-    /* If we have "indivisible packet" mode on but are using the
-       upweighting scheme for simple atoms then we report the flows into and out of the ion pool */
-    if (geo.rt_mode == RT_MODE_MACRO)
+    Log ("!!wind_update: macro-atom heating: photoionization %8.2e three body recomb %8.2e lines %8.2e\n", heat_macro_photo_sum,
+         heat_macro_qrecomb_sum, heat_macro_lines_sum);
+    Log ("!!wind_update: macro-atom cooling: photoionization %8.2e collisional ionization %8.2e lines %8.2e\n", cool_macro_photo_sum,
+         cool_macro_di_sum, cool_macro_lines_sum);
+    Log ("!!wind_update: macro-atom energy flow: in %8.2e out %8.2e\n", macro_energy_in, macro_energy_out);
+
+    if (modes.use_upweighting_of_simple_macro_atoms)
     {
       report_bf_simple_ionpool ();
     }
@@ -385,7 +408,7 @@ wind_update (WindPtr w)
   /* Summarize the radiative temperatures (ksl 04 mar) */
   xtemp_rad (w);
 
-/* This next block is to allow the output of data relating to the abundances of ions when python is being tested
+/* This next block is to allow the output of data relating to the abundances of ions when sirocco is being tested
  * with thin shell mode.
  */
   shell_output_wind_update_diagnostics (xsum, psum, fsum, csum, icsum, lsum, ausum, chexsum, cool_sum, lum_sum);
@@ -558,6 +581,8 @@ init_plasma_rad_properties (void)
     plasmamain[i].ntot_bl = 0;
     plasmamain[i].nscat_es = 0;
     plasmamain[i].nscat_res = 0;
+    plasmamain[i].nscat_bf = 0;
+    plasmamain[i].nscat_ff = 0;
     plasmamain[i].ntot_wind = 0;
     plasmamain[i].nrad = 0;
     plasmamain[i].nioniz = 0;
@@ -634,14 +659,24 @@ init_plasma_rad_properties (void)
     }
 
     /* Initialise  the frequency banded radiation estimators used for estimating the coarse spectra in each i */
-    for (j = 0; j < NXBANDS; j++)
+    for (j = 0; j < plasmamain[i].nbands; j++)
     {
       plasmamain[i].nxtot[j] = 0;
       plasmamain[i].xj[j] = 0.0;
       plasmamain[i].xave_freq[j] = 0.0;
       plasmamain[i].xsd_freq[j] = 0.0;
-      plasmamain[i].fmin[j] = geo.xfreq[j + 1]; /* Set the minium frequency to the max frequency in the band */
-      plasmamain[i].fmax[j] = geo.xfreq[j];     /* Set the maximum frequency to the min frequency in the band */
+      plasmamain[i].fmin[j] = plasmamain[i].f2[j];      /* Set the minium frequency to the max frequency in the band */
+      plasmamain[i].fmax[j] = plasmamain[i].f1[j];      /* Set the maximum frequency to the min frequency in the band */
+    }
+    /* Initialize unused band elements to safe values for MPI communication */
+    for (j = plasmamain[i].nbands; j < NXBANDS; j++)
+    {
+      plasmamain[i].nxtot[j] = 0;
+      plasmamain[i].xj[j] = 0.0;
+      plasmamain[i].xave_freq[j] = 0.0;
+      plasmamain[i].xsd_freq[j] = 0.0;
+      plasmamain[i].fmin[j] = 0.0;
+      plasmamain[i].fmax[j] = 0.0;
     }
     for (j = 0; j < NBINS_IN_CELL_SPEC; ++j)
     {
@@ -705,6 +740,13 @@ init_macro_rad_properties (void)
     plasmamain[n_plasma].kpkt_emiss = 0.0;
     plasmamain[n_plasma].kpkt_abs = 0.0;
 
+
+    if (geo.rt_mode == RT_MODE_MACRO)   /* macromain is only allocated if geo.rt_mode == RT_MODE_MACRO */
+    {
+      macromain[n_plasma].energy_flow_out = 0.0;
+      macromain[n_plasma].energy_flow_in = 0.0;
+    }
+
     for (macro_level = 0; macro_level < nlevels_macro; ++macro_level)
     {
       macromain[n_plasma].matom_abs[macro_level] = 0.0;
@@ -726,7 +768,6 @@ init_macro_rad_properties (void)
 
   /* calculating recomb_sp and recomb_simple is expensive due to calls to
    * `alpha_sp()` , so we do this part of the initialisation in parallel */
-
 #ifdef MPI_ON
   n_cells = get_parallel_nrange (rank_global, NPLASMA, np_mpi_global, &n_start, &n_stop);
 #else
@@ -818,11 +859,11 @@ shell_output_wind_update_diagnostics (double xsum, double psum, double fsum, dou
       nshell = wmain[zdom[ndom].nstart + 1].nplasma;
       n = plasmamain[nshell].nwind;
       WindPtr w = &wmain[n];
-      for (i = 0; i < geo.nxfreq; i++)
+      for (i = 0; i < plasmamain[nshell].nbands; i++)
       {                         /*loop over number of bands */
         Log
           ("Band %i f1 %e f2 %e model %i pl_alpha %f pl_log_w %e exp_t %e exp_w %e\n",
-           i, geo.xfreq[i], geo.xfreq[i + 1],
+           i, plasmamain[nshell].f1[i], plasmamain[nshell].f2[i],
            plasmamain[nshell].spec_mod_type[i],
            plasmamain[nshell].pl_alpha[i], plasmamain[nshell].pl_log_w[i], plasmamain[nshell].exp_temp[i], plasmamain[nshell].exp_w[i]);
       }

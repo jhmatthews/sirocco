@@ -1,13 +1,13 @@
 Atomic_data
 ===========
-Python uses an atomic data file, as found in the `agnwinds/data` repository.
+SIROCCO uses an atomic data file, as found in the `agnwinds/data` repository.
 This is the relative path to the Atomic Data header file on disk. See :ref:`Atomic data`
 
 Type
   String
 
 File
-  `setup_line_transfer.c <https://github.com/agnwinds/python/blob/master/source/setup_line_transfer.c>`_
+  `setup_line_transfer.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup_line_transfer.c>`_
 
 
 Parent(s)

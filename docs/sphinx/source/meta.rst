@@ -1,8 +1,8 @@
 Meta-documentation
 ##################
 
-How to document Python
-======================
+How to document SIROCCO
+=================================
 
 This documentation is written in **ReStructured Text**, and parsed by **Sphinx**.
 A general guide to **ReStructured Text** can be found `here <http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html>`_.
@@ -12,7 +12,7 @@ Installing the documentation tools
 ----------------------------------
 
 This guide is produced using **Sphinx**.
-**Sphinx** is written in **python** and available from the **pip** package manager.
+**Sphinx** is written in SIROCCO and available from the **pip** package manager.
 We require the **Python 3** version of **Sphinx**. Install it, and the other modules required, as:
 
 .. code :: bash
@@ -20,7 +20,33 @@ We require the **Python 3** version of **Sphinx**. Install it, and the other mod
     cd docs/sphinx
     pip3 install -r requirements.txt
 
-Building the documentation
+If you use conda/minconda or a similar environment management tool, we recommend you create a new enviroment 
+for compoling the sphinx documentation.  This is because there are some version dependences (which are probably a little strict)
+in the package `pysi <https://pysi.readthedocs.io/en/stable/>`_ which is used in some of the Jupyter scripts. 
+
+An example that is known to work, if you are in the sphinx directory:
+
+.. code :: bash
+
+    conda create -n xsphinx python=3.10
+    conda activate xsphinx
+    pip3 install -r requirements.txt
+
+or similar, with a virtual env that is not conda-based:
+
+.. code :: bash
+
+    python3 -m venv xsphinx
+    source xsphinx/bin/activate
+    pip3 install -r requirements.txt
+
+Alternatively, you can install pysi separately (for example, downloading from github yourself and installing it with pip. 
+A version of the requirements.txt file without pysi is provided as ``requirements_nopysi.txt``.
+
+In the absence of installing this package, you can still edit and recompile the sphinx documentation, but
+you will see errors associated with this missing package.  This should not prevent you from improving other
+parts of the documentation. A version of the requirements.txt file without pysi is provided as ``requirements_nopysi.txt``.
+
 --------------------------
 
 Once **Sphinx** is installed, you can make the documentation using a **Makefile** as:
@@ -28,6 +54,8 @@ Once **Sphinx** is installed, you can make the documentation using a **Makefile*
 .. code :: bash
 
     make html
+
+
 
 You can tell if the documentation was built successfully by looking at the output of ``make html``.
 You should see:
@@ -50,6 +78,15 @@ Do this via:
 
     make clean
     make html
+
+Alternatively, you can use ``sphinx-autobuild`` to automatically rebuild the documentation when changes are detected.
+To do this run:
+
+.. code :: bash
+
+    make livehtml
+
+This will start a local server (usually at http://127.0.0.1:8000) where you can view the documentation.
 
 General documentation
 =====================
@@ -91,7 +128,7 @@ When referring to a library or program name, render it in **bold** as:
 
 .. code :: rst
 
-    Though this program is called **Python**, it is written in **C**, using the **GSL** library.
+    Though this program is called *SIROCCO*, it is written in **C**, using the **GSL** library.
 
 Content of interest to developers but not users should be broken out into a callout as:
 
@@ -149,7 +186,7 @@ A definition list consists of titles followed by a definition block indented by 
 The headings, in the order we expect, are:
 
 Name
-  The parameter name, as used by Python input files.
+  The parameter name, as used by SIROCCO input files.
 
 Description
   A description of the parameter and its function.
@@ -286,7 +323,7 @@ Documenting Python Scripts
 
 The :doc:`py_progs` page is intended to document various python scripts contained within the py_progs folder. The aim is to do this using Sphinx's `autodoc extension <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_, invoked by adding ``sphinx.ext.autodoc`` to extensions list in the conf.py file. py_progs is also added to the path using ``sys.path.insert(0, '../../py_progs/')``.
 
-The above link contains full documentation of the commands. A module in py_progs can be documented by adding the following text to the rst file, where module.py is the name of the module you wish to document. 
+The above link contains full documentation of the commands. A module in py_progs can be documented by adding the following text to the rst file, where module.py is the name of the module you wish to document.
 
 .. code :: rst
 

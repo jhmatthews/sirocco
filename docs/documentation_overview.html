@@ -5,7 +5,8 @@
     <title>index</title>
   </head>
   <body>
-    <h1>Documentation Overview</h1>
+    <h1>Documentation Overview for Sirocco<br>
+    </h1>
     <p> Note:&nbsp; Documentation is an ongoing effort, and is not
       always up to date. If you notice a problem, please open an<a
         moz-do-not-send="true"
@@ -16,20 +17,37 @@
     <p> At present the main resources are as follows: </p>
     <ul>
       <li>A draft version of a <a href="cookbook.pdf">cookbook</a>
-        which describes how to install&nbsp; and update Python and run a
-        first model</li>
+        which describes how to install&nbsp; and update Sirocco and run
+        a first model</li>
       <li> A <a href="sphinx/html/index.html">Sphinx</a> repository,
-        which provides the main documentation for Python</li>
+        which provides the main documentation for Sirocco</li>
       <ul>
         <li>A fairly up-to-date version of this documentation may be
           found on Readthedocs <a
-            href="https://agnwinds.readthedocs.io/en/readthedocs/">here</a></li>
+            href="https://sirocco-rt.readthedocs.io/en/latest/"
+            moz-do-not-send="true">here</a></li>
         <li>However, if one wishes to have the latest/local version, or
           the version for a particular branch, one needs to generate the
           html files locally from the source (.rst) files which are
           tracked in git.</li>
         <li>To generate the Sphinx documentation one needs <a
             href="http://www.sphinx-doc.org/en/master/">sphinx</a></li>
+        <li>Because we use an package called <a moz-do-not-send="true"
+            href="https://pysi.readthedocs.io/en/stable/">PySi</a> in
+          conjunction with some of the Jupyter scripts and because this
+          code has some verison dependences, we recommend creating an
+          environment to encapsulate the version needed to compile all
+          of the documention.&nbsp; In conda, one can create this with:</li>
+        <ul>
+          <li>conda<span class="w"> </span>create<span class="w"> </span>-n<span
+              class="w"> </span>xsphinx<span class="w"> </span><span
+              class="nv">python</span><span class="o">=</span><span
+              class="m">3</span>.1</li>
+          <li>conda<span class="w"> </span>activate<span class="w"> </span>xsphinx</li>
+          <li>cd docs/sphinx</li>
+          <li>pip3<span class="w"> </span>install<span class="w"> </span>-r<span
+              class="w"> </span>requirements.txt</li>
+        </ul>
       </ul>
       <ul>
       </ul>
@@ -46,7 +64,7 @@
       </ul>
       <li> A <a href="pydocs/doc_py_progs.html">pydocs repository</a>
         which provides information about the python scripts contained in
-        $PYTHON/py_progs</li>
+        $SIROCCO/py_progs</li>
       <ul>
         <li>These files are also tracked by git.&nbsp; <br>
         </li>
@@ -75,6 +93,8 @@
 
 
 
+
+
         provides information about the source code.</li>
       <ul>
         <li>Like the other documentation, the Doxygen information is not
@@ -99,6 +119,8 @@
         </li>
         <ul>
           <li>The Doxygen home page is <a href="http://www.doxygen.nl/">here</a>.&nbsp;
+
+
 
 
 

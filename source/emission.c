@@ -14,7 +14,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 /**********************************************************/
 /**
@@ -189,23 +189,27 @@ total_emission (xplasma, f1, f2)
   {
     if (geo.rt_mode == RT_MODE_MACRO)
     {
-      xplasma->lum_rr = (total_fb_matoms (xplasma, t_e, f1, f2) + total_fb (xplasma, t_e, f1, f2, FB_FULL, OUTER_SHELL));       //outer shellrecombinations
-
       /*
        *The first term here is the fb cooling due to macro ions and the second gives
        *the fb cooling due to simple ions.
        *total_fb has been modified to exclude recombinations treated using macro atoms.
        */
+      xplasma->lum_rr = (total_fb_matoms (xplasma, t_e, f1, f2) + total_fb (xplasma, t_e, f1, f2, FB_FULL, OUTER_SHELL));       //outer shellrecombinations
+      /* historically we include macro collisional ionization cooling (this used to be part of total_fb_matoms) */
+      xplasma->lum_rr += cooling_di_matoms (xplasma, t_e, f1, f2);
+
+
       xplasma->lum_tot = xplasma->cool_rr;
-      /* Note: This the fb_matom call makes no use of f1 or f2. They are passed for
+      /* Note: the fb_matom call makes no use of f1 or f2. They are passed for
        * now in case they should be used in the future. But they could
-       * also be removed.
-       * (SS)
+       * also be removed. (SS)
        */
+
       xplasma->lum_lines = total_bb_cooling (xplasma, t_e);
       xplasma->lum_tot += xplasma->lum_lines;
       /* total_bb_cooling gives the total cooling rate due to bb transisions whether they
          are macro atoms or simple ions. */
+
       xplasma->lum_ff = total_free (xplasma, t_e, f1, f2);
       xplasma->lum_tot += xplasma->lum_ff;
 
@@ -295,7 +299,8 @@ photo_gen_wind (p, weight, freqmin, freqmax, photstart, nphot)
   limit_lines (freqmin, freqmax);
 
   photstop = photstart + nphot;
-  Log_silent ("photo_gen_wind creates nphot %5d photons from %5d to %5d \n", nphot, photstart, photstop);
+  // Log_silent ("photo_gen_wind creates nphot %5d photons from %5d to %5d \n", nphot, photstart, photstop);
+  Log ("photo_gen_wind creates nphot %5d photons from %5d to %5d \n", nphot, photstart, photstop);
 
   for (kkk = photstart; kkk < photstop; kkk++)
   {
@@ -635,7 +640,7 @@ total_free (xplasma, t_e, f1, f2)
  *
  * ### Notes ###
  *
- * Within python, this routine is accessed through one_ff
+ * Within sirocco, this routine is accessed through one_ff
  *
  * Most of the computation in this routine arises from calculating
  * a the gaunt factor, so this version of the code checks to

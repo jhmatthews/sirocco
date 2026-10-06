@@ -15,7 +15,7 @@ Values
     proportional to its surface area.
 
   models
-    Radiate according to a model. Python can support tabulated models that output with a binned luminosity distribution
+    Radiate according to a model. SIROCCO can support tabulated models that output with a binned luminosity distribution
     depending on system properties like temperature and gravity. See :ref:`Input_spectra.model_file`. The total
     luminosity will be set by :ref:`Boundary_layer.luminosity`.
 
@@ -27,7 +27,7 @@ Values
 
 
 File
-  `python.c <https://github.com/agnwinds/python/blob/master/source/python.c>`_
+  `sirocco.c <https://github.com/sirocco-rt/sirocco/blob/master/source/sirocco.c>`_
 
 
 Parent(s)

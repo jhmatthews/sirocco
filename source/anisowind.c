@@ -8,7 +8,7 @@
  * the wind
  *
  *
- * Python supports two ways to determine a new photon
+ * Sirocco supports two ways to determine a new photon
  * direction when a photon scatters in thie wind.  These
  * include 
  *
@@ -23,7 +23,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/

@@ -14,7 +14,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -54,13 +54,13 @@
  * 	Pc/Pw=12 cos(theta)*(1+b cos(theta)/(3+2b) where b=1.5 corresponds to the
  * Eddington approximation.
  *
- * Usually, Python constructs a spectrum of all photons, but there are
+ * Usually, Sirocco constructs a spectrum of all photons, but there are
  * advanced options which allone to restrict the spectrum created to
  * those produced with a certain number of scatters or from photons
  * that arise from the above or below the disk.  extract enforces
  * those choices before calling extract_one.
  * The parameters for this option all come in through
- * python.h, and are contained in the spectrum structure.
+ * sirocco.h, and are contained in the spectrum structure.
  *
  * The basic choices, some of which can be used in tandom are as follows:
  *
@@ -402,6 +402,8 @@ extract (w, p, itype)
     }
 
     /* If one has reached this point, we extract the photon and increment the spectrum */
+    if (modes.save_extract_photons)
+      save_photons (&pp, "EXT_FIN");
 
 
     extract_one (w, &pp, n);
@@ -432,7 +434,7 @@ extract (w, p, itype)
  *
  * ### Notes ###
  *
- * In Python, and in extract and transphot in particular, tau generally refers to the tau associated
+ * In Sirocco, and in extract and transphot in particular, tau generally refers to the tau associated
  * with scattering processes, and the weight contains the effect of dimunition of the energy of
  * the photon bundle due to pure absorption processes.  So, in extract, we add pp->w * exp(-tau)
  * to the spectrum.

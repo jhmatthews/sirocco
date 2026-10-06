@@ -13,7 +13,7 @@
 #include <stdlib.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 PlasmaPtr xplasma;              /// Pointer to current plasma cell
 
@@ -97,14 +97,14 @@ compton_scatter (p)
     if (v > 0)
     {
       velocity_electron[0] = (-velocity_electron[0]);
-      velocity_electron[2] = (-velocity_electron[1]);
+      velocity_electron[1] = (-velocity_electron[1]);
       velocity_electron[2] = (-velocity_electron[2]);
     }
   }
   else if (v < 0)
   {
     velocity_electron[0] = (-velocity_electron[0]);
-    velocity_electron[2] = (-velocity_electron[1]);
+    velocity_electron[1] = (-velocity_electron[1]);
     velocity_electron[2] = (-velocity_electron[2]);
   }
 
@@ -113,11 +113,11 @@ compton_scatter (p)
 
 
   lorentz_transform (p, p, velocity_electron);
-  if (modes.save_extract_photons)
-    save_photons (p, "BeforeC");
-  f = compton_dir (p);          /* f is the fractional energy change in the rest frame of the electron */
-  if (modes.save_extract_photons)
-    save_photons (p, "AfterC");
+//  if (modes.save_extract_photons)
+//    save_photons (p, "BeforeC");
+  compton_dir (p);
+//  if (modes.save_extract_photons)
+//    save_photons (p, "AfterC");
   rescale (velocity_electron, -1, vel);
   lorentz_transform (p, p, vel);
 
@@ -523,7 +523,7 @@ compton_dir (p)
     stuff_v (lmn, p->lmn);      //Put the new photon direction into the photon structure
 
   }
-  
+
   p->freq = p->freq / f;      //reduce the photon frequency by the fractional energy change
 
   if (geo.rt_mode == RT_MODE_2LEVEL) /* only reduce the weight in classic mode */

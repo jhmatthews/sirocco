@@ -4,7 +4,7 @@
 Post-run parser for error logs from parallel simulation runs.
     
 This is the post-processing code to deal with the error logs in 
-PYTHON's parallel mode. It basically sums the number of errors
+SIROCCO's parallel mode. It basically sums the number of errors
 in the various diagnostic files
 
 usage and arguments:
@@ -20,7 +20,7 @@ returns:
 History:
 
     1307    JM  Coding began -- initial tests conducted successfully
-    1802    ksl Updated to be Python3 compatable, to write the results to an astropy table, and to be callable from another routine
+    1802    ksl Updated to be python3 compatable, to write the results to an astropy table, and to be callable from another routine
 
 '''
 
@@ -129,7 +129,7 @@ def doit(root, diagfolder_name=''):
     except:
         print("Problem creating error counts")
         if n_logs==0:
-           print('No errors were parsed from the diag files, suggesting Python failed to run to completion')
+           print('No errors were parsed from the diag files, suggesting Sirocco failed to run to completion')
         return
 
     print("Recurrences --  number of threads with error -- Description")

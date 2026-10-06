@@ -15,7 +15,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 /* Notes on spherical coordinates
 
@@ -104,7 +104,7 @@ spherical_ds_in_cell (ndom, p)
 /**
  * @brief      defines the cells in a spherical grid
  *
- * @param [in] WindPtr  w   The structure which defines the wind in Python
+ * @param [in] WindPtr  w   The structure which defines the wind in Sirocco
  * @param [in] int  ndom   The domain number
  * @return     Always returns 0
  *
