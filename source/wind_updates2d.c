@@ -57,6 +57,7 @@ wind_update (WindPtr w)
   double apsum, aausum, abstot; //Absorbed photon energy from PI and auger
   double heat_macro_photo_sum, heat_macro_qrecomb_sum, heat_macro_lines_sum;
   double cool_macro_photo_sum, cool_macro_di_sum, cool_macro_lines_sum;
+  double comp_recoil_sum, comp_doppler_sum, comp_sink_sum;
   double macro_energy_in, macro_energy_out;
   double flux_persist_scale;
   double volume;
@@ -223,6 +224,7 @@ wind_update (WindPtr w)
   aausum = 0.0;
   abstot = 0.0;
   chexsum = 0.0;
+  comp_recoil_sum = comp_doppler_sum = comp_sink_sum = 0.0;
   heat_macro_photo_sum = heat_macro_qrecomb_sum = heat_macro_lines_sum = 0.0;
   cool_macro_photo_sum = cool_macro_di_sum = cool_macro_lines_sum = 0.0;
   macro_energy_in = macro_energy_out = 0.0;
@@ -286,6 +288,9 @@ wind_update (WindPtr w)
     {
       macro_energy_in += macromain[n_plasma].energy_flow_in;
       macro_energy_out += macromain[n_plasma].energy_flow_out;
+      comp_recoil_sum += plasmamain[n_plasma].comp_recoil_kpkt;
+      comp_doppler_sum += plasmamain[n_plasma].comp_doppler_gain;
+      comp_sink_sum += plasmamain[n_plasma].comp_sink;
     }
   }
 
@@ -357,6 +362,12 @@ wind_update (WindPtr w)
     Log ("!!wind_update: macro-atom cooling: photoionization %8.2e collisional ionization %8.2e lines %8.2e\n", cool_macro_photo_sum,
          cool_macro_di_sum, cool_macro_lines_sum);
     Log ("!!wind_update: macro-atom energy flow: in %8.2e out %8.2e\n", macro_energy_in, macro_energy_out);
+
+    /* Compton k-packet energy flows, summed over cells after the MPI reduction. Recoil into k-packets should
+       match heat_comp, and the Doppler gain should match the sink, and both should be close to cool_comp. Note
+       that cool_comp has been recalculated at the updated temperature, whereas the Doppler gain used the old one */
+    Log ("!!wind_update: Compton kpkt: recoil %8.2e (heat_comp %8.2e) doppler_gain %8.2e sink %8.2e (cool_comp %8.2e)\n",
+         comp_recoil_sum, csum, comp_doppler_sum, comp_sink_sum, geo.cool_comp);
 
     if (modes.use_upweighting_of_simple_macro_atoms)
     {
@@ -489,7 +500,6 @@ report_bf_simple_ionpool (void)
 void
 wind_rad_init ()
 {
-  geo.heat_comp_kpkt = geo.cool_comp_kpkt = 0.0;
   init_plasma_rad_properties ();
   init_macro_rad_properties ();
 }
@@ -619,6 +629,9 @@ init_plasma_rad_properties (void)
     plasmamain[i].comp_nujnu = -1e99;
     plasmamain[i].cool_comp = 0.0;
     plasmamain[i].heat_comp = 0.0;
+    plasmamain[i].comp_recoil_kpkt = 0.0;
+    plasmamain[i].comp_doppler_gain = 0.0;
+    plasmamain[i].comp_sink = 0.0;
     plasmamain[i].heat_ind_comp = 0.0;
     plasmamain[i].heat_auger = 0.0;
     plasmamain[i].heat_ch_ex = 0.0;

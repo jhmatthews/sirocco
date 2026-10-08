@@ -656,7 +656,6 @@ struct geometry
   double heat_adiabatic;        /**< The heating of the wind due to adiabatic heating - split out
                                   * from cool_adiabatic to get an accurate idea of whether it is important */
   double heat_shock;            /**< The amount of extra heating going into the wind due to shock heating. Added for FU Ori project */
-  double cool_comp_kpkt, heat_comp_kpkt;
   double f1, f2;                /**<  The freguency minimum and maximum for which the band limted luminosities have been calculated */
   double f_tot, f_star, f_disk, f_bl, f_agn, f_wind;    /**<  The integrated specific L between a freq min and max which are
                                                            used to establish the band limited luminosity  of photons of various types.
@@ -937,6 +936,9 @@ typedef struct plasma
   double abs_tot;
   double heat_lines, heat_ff;
   double heat_comp;             /**<  The compton heating for the cell */
+  double comp_recoil_kpkt;      /**<  Energy put into k-packets by Compton recoil at electron scatters (ionisation cycles) */
+  double comp_doppler_gain;     /**<  Energy gained by surviving r-packets from thermal Doppler shifts at electron scatters */
+  double comp_sink;             /**<  Energy removed from k-packets by the Compton cooling sink (P_COMP_COOL) */
   double heat_ind_comp;         /**<  The induced compton heatingfor the cell */
   double heat_lines_macro, heat_photo_macro;    /**<  bb and bf heating due to macro atoms. Subset of heat_lines */
 

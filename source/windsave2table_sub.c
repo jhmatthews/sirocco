@@ -539,8 +539,17 @@ create_heat_table (ndom, rootname)
   c[33] = get_one (ndom, "energy_out_macro");
   strcpy (column_name[33], "e_out_macro");
 
+  c[34] = get_one (ndom, "comp_recoil_kpkt");
+  strcpy (column_name[34], "comp_rec");
+
+  c[35] = get_one (ndom, "comp_doppler_gain");
+  strcpy (column_name[35], "comp_dop");
+
+  c[36] = get_one (ndom, "comp_sink");
+  strcpy (column_name[36], "comp_sink");
+
   /* This should be the maximum number above +1 */
-  ncols = 34;
+  ncols = 37;
 
 
   converge = get_one (ndom, "converge");
@@ -1570,6 +1579,18 @@ get_one (ndom, variable_name)
       else if (strcmp (variable_name, "energy_out_macro") == 0)
       {
         x[n] = macromain[nplasma].energy_flow_out;
+      }
+      else if (strcmp (variable_name, "comp_recoil_kpkt") == 0)
+      {
+        x[n] = plasmamain[nplasma].comp_recoil_kpkt;
+      }
+      else if (strcmp (variable_name, "comp_doppler_gain") == 0)
+      {
+        x[n] = plasmamain[nplasma].comp_doppler_gain;
+      }
+      else if (strcmp (variable_name, "comp_sink") == 0)
+      {
+        x[n] = plasmamain[nplasma].comp_sink;
       }
       else if (strcmp (variable_name, "gain") == 0)
       {

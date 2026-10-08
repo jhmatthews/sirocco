@@ -411,7 +411,7 @@ reduce_macro_atom_estimators (void)
   gamma_helper = calloc (sizeof (double), NPLASMA * 4 * size_gamma_est);
   alpha_helper = calloc (sizeof (double), NPLASMA * 2 * size_alpha_est);
   level_helper = calloc (sizeof (double), NPLASMA * nlevels_macro);
-  cell_helper = calloc (sizeof (double), 10 * NPLASMA);
+  cell_helper = calloc (sizeof (double), 13 * NPLASMA);
   cooling_bf_helper = calloc (sizeof (double), NPLASMA * 2 * nphot_total);
   cooling_bb_helper = calloc (sizeof (double), NPLASMA * nlines);
 
@@ -419,7 +419,7 @@ reduce_macro_atom_estimators (void)
   gamma_helper2 = calloc (sizeof (double), NPLASMA * 4 * size_gamma_est);
   alpha_helper2 = calloc (sizeof (double), NPLASMA * 2 * size_alpha_est);
   level_helper2 = calloc (sizeof (double), NPLASMA * nlevels_macro);
-  cell_helper2 = calloc (sizeof (double), 10 * NPLASMA);
+  cell_helper2 = calloc (sizeof (double), 13 * NPLASMA);
   cooling_bf_helper2 = calloc (sizeof (double), NPLASMA * 2 * nphot_total);
   cooling_bb_helper2 = calloc (sizeof (double), NPLASMA * nlines);
 
@@ -440,6 +440,11 @@ reduce_macro_atom_estimators (void)
     cell_helper[mpi_i + 7 * NPLASMA] = macromain[mpi_i].cooling_adiabatic / np_mpi_global;
     cell_helper[mpi_i + 8 * NPLASMA] = macromain[mpi_i].cooling_compton / np_mpi_global;
     cell_helper[mpi_i + 9 * NPLASMA] = macromain[mpi_i].energy_flow_out / np_mpi_global;
+
+    /* Compton k-packet energy flow counters */
+    cell_helper[mpi_i + 10 * NPLASMA] = plasmamain[mpi_i].comp_recoil_kpkt / np_mpi_global;
+    cell_helper[mpi_i + 11 * NPLASMA] = plasmamain[mpi_i].comp_doppler_gain / np_mpi_global;
+    cell_helper[mpi_i + 12 * NPLASMA] = plasmamain[mpi_i].comp_sink / np_mpi_global;
 
 
     for (n = 0; n < nlevels_macro; n++)
@@ -480,7 +485,7 @@ reduce_macro_atom_estimators (void)
 
   /* because in the above loop we have already divided by number of processes, we can now do a sum
      with MPI_Reduce, passing it MPI_SUM as an argument. This will give us the mean across threads */
-  MPI_Allreduce (cell_helper, cell_helper2, NPLASMA * 9, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce (cell_helper, cell_helper2, NPLASMA * 13, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce (level_helper, level_helper2, NPLASMA * nlevels_macro, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce (jbar_helper, jbar_helper2, NPLASMA * size_Jbar_est, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce (gamma_helper, gamma_helper2, NPLASMA * 4 * size_gamma_est, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -506,6 +511,11 @@ reduce_macro_atom_estimators (void)
     macromain[mpi_i].cooling_adiabatic = cell_helper2[mpi_i + 7 * NPLASMA];
     macromain[mpi_i].cooling_compton = cell_helper2[mpi_i + 8 * NPLASMA];
     macromain[mpi_i].energy_flow_out = cell_helper2[mpi_i + 9 * NPLASMA];
+
+    /* Compton k-packet energy flow counters */
+    plasmamain[mpi_i].comp_recoil_kpkt = cell_helper2[mpi_i + 10 * NPLASMA];
+    plasmamain[mpi_i].comp_doppler_gain = cell_helper2[mpi_i + 11 * NPLASMA];
+    plasmamain[mpi_i].comp_sink = cell_helper2[mpi_i + 12 * NPLASMA];
 
 
     for (n = 0; n < nlevels_macro; n++)

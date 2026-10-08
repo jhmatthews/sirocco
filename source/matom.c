@@ -1124,6 +1124,8 @@ kpkt (p, nres, escape, mode)
     {
       Error ("kpkt: Destroying kpkt by Compton cooling in mode KPKT_MODE_CONTINUUM (used in spectral cycles).\n");
     }
+    if (geo.ioniz_or_extract == CYCLE_IONIZ)
+      xplasma->comp_sink += p->w;
     *escape = TRUE;
     *nres = NRES_FF;
     p->istat = P_COMP_COOL;

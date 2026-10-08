@@ -68,7 +68,6 @@ init_geo ()
   geo.hydro_domain_number = -1;
   geo.nplasma = 0;
   geo.nmacro = 0;
-  geo.heat_comp_kpkt = geo.cool_comp_kpkt = 0.0;
 
   if (geo.system_type == SYSTEM_TYPE_CV || geo.system_type == SYSTEM_TYPE_BH)
   {

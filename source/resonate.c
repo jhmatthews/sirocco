@@ -1176,7 +1176,10 @@ scatter (p, nres, nnscat)
       /* The Compton recoil (k-packet) and Doppler-gain channels are only switched on once an
          ionisation cycle has completed, because the Compton sink rate (cooling_compton) is not
          known until the first wind_update. Before then, treat this as a pure scatter so that
-         no energy is created by the thermal Doppler shifts */
+         no energy is created by the thermal Doppler shifts. */
+      /* In spectral cycles, we have kpkt_abs which includes a heat_comp contribution, 
+         and the k-packet emissivities are already adjusted to account for the sink term,
+         but we still need to account for recoil energy loss and Doppler gain */
       if (geo.wcycle > 0 || geo.ioniz_or_extract == CYCLE_EXTRACT)
       {
         /* we choose whether to go to k-packet based on a factor (f-1)/f, where
@@ -1188,11 +1191,15 @@ scatter (p, nres, nnscat)
         if (prob_kpkt > kpkt_choice)
         {
           p->w = w_before_scatter;      // we need to reset the weight to go to kpkt
+          /* record before macro_gov, which zeroes the weight in spectral cycles */
+          if (geo.ioniz_or_extract == CYCLE_IONIZ)
+            xplasma->comp_recoil_kpkt += w_before_scatter;
           macro_gov (p, nres, 2, &which_out);   //routine to deal with kpkt
-          geo.heat_comp_kpkt += p->w;
         }
-        else
-          geo.cool_comp_kpkt += p->w - w_before_scatter;
+        else if (geo.ioniz_or_extract == CYCLE_IONIZ)
+        {
+          xplasma->comp_doppler_gain += p->w - w_before_scatter;
+        }
         /* if we don't excite a k-packet, we just carry on */
       }
       else
