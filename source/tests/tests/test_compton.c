@@ -120,6 +120,8 @@ test_klein_nishina (void)
  *   recoil = (f - 1) / f, where f is the electron rest-frame energy ratio returned by compton_scatter(), i.e. the
  *            probability of creating a k-packet in macro-atom mode
  *   gain   = w_after / w_before - 1, the fractional change in packet weight (energy)
+ *   surv   = gain / f, the weight gain kept on average by packets that survive the k-packet choice in macro-atom
+ *            mode (a packet survives with probability 1 / f), i.e. the energy the k-packet sink has to remove
  *
  * and return their means and standard errors. The globals that are modified are restored before returning.
  *
@@ -129,6 +131,7 @@ struct compton_mc_stats
 {
   double recoil_mean, recoil_err;
   double gain_mean, gain_err;
+  double surv_mean, surv_err;
 };
 
 static struct compton_mc_stats
@@ -141,7 +144,7 @@ run_compton_scatters (const double t_e, const double freq, const int rt_mode, co
   const int rt_mode_save = geo.rt_mode;
   const int rel_mode_save = rel_mode;
   double f, recoil, gain;
-  double sum_recoil = 0.0, sum_recoil2 = 0.0, sum_gain = 0.0, sum_gain2 = 0.0;
+  double sum_recoil = 0.0, sum_recoil2 = 0.0, sum_gain = 0.0, sum_gain2 = 0.0, sum_surv = 0.0, sum_surv2 = 0.0;
   int i;
 
   wmain = calloc (1, sizeof (wind_dummy));
@@ -169,12 +172,16 @@ run_compton_scatters (const double t_e, const double freq, const int rt_mode, co
     sum_recoil2 += recoil * recoil;
     sum_gain += gain;
     sum_gain2 += gain * gain;
+    sum_surv += gain / f;
+    sum_surv2 += (gain / f) * (gain / f);
   }
 
   stats.recoil_mean = sum_recoil / nscat;
   stats.recoil_err = sqrt (fmax (sum_recoil2 / nscat - stats.recoil_mean * stats.recoil_mean, 0.0) / nscat);
   stats.gain_mean = sum_gain / nscat;
   stats.gain_err = sqrt (fmax (sum_gain2 / nscat - stats.gain_mean * stats.gain_mean, 0.0) / nscat);
+  stats.surv_mean = sum_surv / nscat;
+  stats.surv_err = sqrt (fmax (sum_surv2 / nscat - stats.surv_mean * stats.surv_mean, 0.0) / nscat);
 
   free (wmain);
   free (plasmamain);
@@ -357,6 +364,106 @@ test_compton_scatter_2level (void)
 
 /** *******************************************************************************************************************
  *
+ * @brief Test that the thermal part of the net Compton energy exchange matches the Hazy/Guilbert alpha * beta
+ *
+ * @details
+ *
+ * Hazy (eq 6.5-6.7, fits to Guilbert 1986) gives the net photon energy change per unit path length as
+ * sigma_T n_e (4 theta alpha beta - x alpha). We measure the temperature-dependent part of the net exchange from
+ * two-level mode scatters off hot and cold electrons,
+ *
+ *   C_net = (sigma_KN / sigma_T) [<w'/w - 1>(T) - <w'/w - 1>(cold)] / 4 theta,
+ *
+ * and compare with alpha beta, multiplied by (4/3) <gamma^2 beta^2> / 4 theta to allow for the relativistic thermal
+ * correction (about 4% at 5e7 K) that the non-relativistic Hazy expression leaves out. This is the coefficient that
+ * total_comp() uses for the Compton cooling rate.
+ *
+ * ****************************************************************************************************************** */
+
+void
+test_compton_net_exchange_vs_hazy (void)
+{
+  const double t_e = 5e7;
+  const double x_values[] = { 1e-2, 3e-2, 0.1 };
+  const int n_x = sizeof (x_values) / sizeof (x_values[0]);
+  const int nscat = 500000;
+  struct compton_mc_stats cold, hot;
+  double theta4, rel, x, freq, sk, c_net, c_net_err, expected;
+  int i;
+
+  theta4 = 4.0 * BOLTZMANN * t_e / (MELEC * VLIGHT * VLIGHT);
+  rel = thermal_doppler_mean_gain (t_e) / theta4;
+
+  for (i = 0; i < n_x; i++)
+  {
+    x = x_values[i];
+    freq = x * MELEC * VLIGHT * VLIGHT / PLANCK;
+    sk = klein_nishina (freq) / THOMPSON;
+    cold = run_compton_scatters (1.0, freq, RT_MODE_2LEVEL, nscat);
+    hot = run_compton_scatters (t_e, freq, RT_MODE_2LEVEL, nscat);
+    c_net = sk * (hot.gain_mean - cold.gain_mean) / theta4;
+    c_net_err = sk * sqrt (hot.gain_err * hot.gain_err + cold.gain_err * cold.gain_err) / theta4;
+    expected = compton_alpha (freq) * compton_beta (freq) * rel;
+    printf ("\n  net exchange: T = %8.2e x = %6.3f  C_net = %7.4f +/- %6.4f  alpha*beta*rel = %7.4f  ratio = %7.4f", t_e, x,
+            c_net, c_net_err, expected, c_net / expected);
+    CU_ASSERT_DOUBLE_EQUAL (c_net, expected, 5.0 * c_net_err + 0.02 * expected);
+  }
+  printf ("\n");
+}
+
+/** *******************************************************************************************************************
+ *
+ * @brief Test that the Compton cooling rate (k-packet sink) balances the Doppler gain kept by surviving packets
+ *
+ * @details
+ *
+ * In macro-atom mode a packet survives an electron scatter with probability 1 / f and keeps the Doppler weight gain,
+ * so the energy created per unit path length is sigma_KN n_e <(w'/w - 1) / f>. This is balanced by the k-packet sink,
+ * whose rate is the Compton cooling rate from total_comp(), sigma_T n_e alpha beta 4 theta. The surviving gain exceeds
+ * the net thermal coefficient (see above) by the growth of the electron rest-frame recoil with temperature, which goes
+ * into k-packets instead, so we expect
+ *
+ *   C_surv / (alpha beta rel) = 1 + a few percent,
+ *
+ * where C_surv = (sigma_KN / sigma_T) <(w'/w - 1) / f> / 4 theta. Before total_comp() included alpha this ratio was
+ * about 0.75 at x = 0.1.
+ *
+ * ****************************************************************************************************************** */
+
+void
+test_compton_survivor_gain_vs_cooling (void)
+{
+  const double t_e = 5e7;
+  const double x_values[] = { 1e-2, 3e-2, 0.1, 0.3 };
+  const int n_x = sizeof (x_values) / sizeof (x_values[0]);
+  const int nscat = 500000;
+  struct compton_mc_stats stats;
+  double theta4, rel, x, freq, sk, c_surv, c_surv_err, cooling, ratio, ratio_err;
+  int i;
+
+  theta4 = 4.0 * BOLTZMANN * t_e / (MELEC * VLIGHT * VLIGHT);
+  rel = thermal_doppler_mean_gain (t_e) / theta4;
+
+  for (i = 0; i < n_x; i++)
+  {
+    x = x_values[i];
+    freq = x * MELEC * VLIGHT * VLIGHT / PLANCK;
+    sk = klein_nishina (freq) / THOMPSON;
+    stats = run_compton_scatters (t_e, freq, RT_MODE_MACRO, nscat);
+    c_surv = sk * stats.surv_mean / theta4;
+    c_surv_err = sk * stats.surv_err / theta4;
+    cooling = compton_alpha (freq) * compton_beta (freq) * rel;
+    ratio = c_surv / cooling;
+    ratio_err = c_surv_err / cooling;
+    printf ("\n  survivor gain: T = %8.2e x = %6.3f  C_surv = %7.4f +/- %6.4f  alpha*beta*rel = %7.4f  ratio = %7.4f", t_e, x,
+            c_surv, c_surv_err, cooling, ratio);
+    CU_ASSERT (ratio > 0.98 - 5.0 * ratio_err && ratio < 1.10 + 5.0 * ratio_err);
+  }
+  printf ("\n");
+}
+
+/** *******************************************************************************************************************
+ *
  * @brief Create a CUnit test suite for Compton processes
  *
  * @details
@@ -385,7 +492,9 @@ create_compton_test_suite (void)
       (CU_add_test (suite, "Compton Formula", test_compton_func) == NULL) ||
       (CU_add_test (suite, "Compton Scatter - recoil vs Klein-Nishina", test_compton_scatter_recoil) == NULL) ||
       (CU_add_test (suite, "Compton Scatter - Doppler gain (macro)", test_compton_scatter_doppler_macro) == NULL) ||
-      (CU_add_test (suite, "Compton Scatter - energy change (2level)", test_compton_scatter_2level) == NULL))
+      (CU_add_test (suite, "Compton Scatter - energy change (2level)", test_compton_scatter_2level) == NULL) ||
+      (CU_add_test (suite, "Compton Scatter - net exchange vs Hazy alpha*beta", test_compton_net_exchange_vs_hazy) == NULL) ||
+      (CU_add_test (suite, "Compton Scatter - survivor gain vs cooling rate", test_compton_survivor_gain_vs_cooling) == NULL))
   {
     fprintf (stderr, "Failed to add tests to `Compton Processes` suite\n");
     CU_cleanup_registry ();
