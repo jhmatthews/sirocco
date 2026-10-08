@@ -1,5 +1,5 @@
-# This is the git ignore for python
-# ignore binaries in bin/ such as e.g. py78a
+# This is the git ignore for sirocco
+# ignore binaries in bin/ such as e.g. py78a, sirocco-1.3
 bin/sirocco*
 bin/swind*
 bin/py*
@@ -7,13 +7,7 @@ bin/windsave2table*
 bin/rad_hydro*
 bin/inspect_wind*
 bin/modify_wind*
-
-
-# Run files
-*.spec*
-*.pf.old
-*.out.pf
-mod.pf
+bin/hydro2sirocco*
 
 # Object files
 *.o
@@ -90,7 +84,7 @@ wiki/
 data/
 xmod/
 
-# avoid tracking symbolic links errenously put in xdata
+# avoid tracking symbolic links erronously put in xdata
 xdata/xdata
 
 # we shouldn't be tracking version.h either
@@ -100,11 +94,12 @@ source/version.h
 source/templates.h.old
 
 # sirocco output files
+# Run files
+*.spec*
+*.log_spec*
+*.pf.old
+mod.pf
 *.diag
-*.spec
-*.log_spec
-*.spec_tot
-*.log_spec_tot
 *.rdpar
 *.sig
 *.out.pf
@@ -122,3 +117,10 @@ scratch/
 *-e 
 
 
+# Code coverage files
+*.gcno
+*.gcda
+*.gcov
+
+*.ipynb_checkpoints*
+diffout*
