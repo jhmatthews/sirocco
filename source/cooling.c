@@ -444,10 +444,13 @@ wind_cooling (void)
 
     /* for macro-atoms, we want to store the current Compton cooling to use for k-packets */
     /* the units are different for these quantities so its stored as per unit vol per unit electron density */
-    if (plasmamain[n_plasma].ne > 0.0)
-      macromain[n_plasma].cooling_compton = plasmamain[n_plasma].cool_comp / plasmamain[n_plasma].vol / plasmamain[n_plasma].ne;
-    else
-      macromain[n_plasma].cooling_compton = 0.0;
+    if (geo.rt_mode == RT_MODE_MACRO)   /* macromain is only allocated if geo.rt_mode == RT_MODE_MACRO */
+    {
+      if (plasmamain[n_plasma].ne > 0.0)
+        macromain[n_plasma].cooling_compton = plasmamain[n_plasma].cool_comp / plasmamain[n_plasma].vol / plasmamain[n_plasma].ne;
+      else
+        macromain[n_plasma].cooling_compton = 0.0;
+    }
   }
 
   /* Store the total/global results into the geo structure */
