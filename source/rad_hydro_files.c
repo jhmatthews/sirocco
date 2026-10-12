@@ -128,9 +128,7 @@ xparse_arguments (int argc, char *argv[], char root[], int *ion_switch)
  **********************************************************/
 
 int
-main (argc, argv)
-     int argc;
-     char *argv[];
+main (int argc, char *argv[])
 {
   char root[LINELENGTH];
   char outputfile[LINELENGTH];
@@ -145,10 +143,12 @@ main (argc, argv)
 
   struct photon ptest;          //We need a test photon structure in order to compute t
 
-  FILE *fptr_hc, *fptr_drive, *fptr_ion, *fptr_spec, *fptr_pcon, *fptr_debug, *fptr_flux, *fptr_flux_theta, *fptr_flux_phi, *fptr_flux_r, *fopen ();    /*This is the file to communicate with zeus */
+  FILE *fptr_hc, *fptr_drive, *fptr_ion, *fptr_spec, *fptr_pcon, *fptr_debug, *fptr_flux, *fptr_flux_theta, *fptr_flux_phi, *fptr_flux_r;       /*This is the file to communicate with zeus */
   domain = geo.hydro_domain_number;
 
   /* Initialize  MPI, which is needed because some of the routines are MPI enabled */
+
+  double fill, rho_smooth, ne_smooth;
 
   int my_rank;                  // these two variables are used regardless of parallel mode
   int np_mpi;                   // rank and number of processes, 0 and 1 in non-parallel
@@ -194,7 +194,7 @@ main (argc, argv)
   if (wind_read (windsavefile) < 0)
   {
     Error ("swind: Could not open %s", windsavefile);
-    exit (0);
+    Exit (0);
   }
 
 
@@ -204,21 +204,21 @@ main (argc, argv)
   wind_luminosity (0.0, VERY_BIG, MODE_CMF_TIME);       /*and we also call wind_luminosity to get the luminosities */
 
 
-  fptr_hc = fopen ("py_heatcool.dat", "w");
-  fptr_drive = fopen ("py_driving.dat", "w");
-  fptr_ion = fopen ("py_ion_data.dat", "w");
-  fptr_spec = fopen ("py_spec_data.dat", "w");
-  fptr_pcon = fopen ("py_pcon_data.dat", "w");
-  fptr_debug = fopen ("py_debug_data.dat", "w");
-  fptr_flux = fopen ("py_fluxes.dat", "w");
+  fptr_hc = fopen ("sirocco_heatcool.dat", "w");
+  fptr_drive = fopen ("sirocco_driving.dat", "w");
+  fptr_ion = fopen ("sirocco_ion_data.dat", "w");
+  fptr_spec = fopen ("sirocco_spec_data.dat", "w");
+  fptr_pcon = fopen ("sirocco_pcon_data.dat", "w");
+  fptr_debug = fopen ("sirocco_debug_data.dat", "w");
+  fptr_flux = fopen ("sirocco_fluxes.dat", "w");
 
 //  fptr11 = fopen ("idomega.dat", "w");
 
 
   if (zdom[domain].coord_type == SPHERICAL || zdom[domain].coord_type == RTHETA)
-    fprintf (fptr_hc, "i j rcen thetacen vol temp xi ne heat_xray heat_comp heat_lines heat_ff cool_comp cool_lines cool_ff rho n_h\n");
+    fprintf (fptr_hc, "i j rcen thetacen vol t_e t_r xi ne heat_xray heat_comp heat_lines heat_ff cool_comp cool_lines cool_ff rho n_h\n");
   else if (zdom[domain].coord_type == CYLIND)
-    fprintf (fptr_hc, "i j rcen zcen vol temp xi ne heat_xray heat_comp heat_lines heat_ff cool_comp cool_lines cool_ff rho n_h\n");
+    fprintf (fptr_hc, "i j rcen zcen vol t_e t_r xi ne heat_xray heat_comp heat_lines heat_ff cool_comp cool_lines cool_ff rho n_h\n");
 
 
 
@@ -349,6 +349,15 @@ main (argc, argv)
     if (wmain[nwind].vol > 0.0)
     {
       nplasma = wmain[nwind].nplasma;
+      /* Export volume-averaged CMF densities; never alter the native clump state. */
+      fill = zdom[domain].fill;
+      if (!isfinite (fill) || fill <= 0.0 || fill > 1.0)
+      {
+        Error ("rad_hydro_files: invalid filling factor %e in domain %d\n", fill, domain);
+        Exit (EXIT_FAILURE);
+      }
+      rho_smooth = plasmamain[nplasma].rho * fill;
+      ne_smooth = plasmamain[nplasma].ne * fill;
       wind_n_to_ij (domain, plasmamain[nplasma].nwind, &i, &j);
 
       if (zdom[domain].coord_type == SPHERICAL)
@@ -359,7 +368,7 @@ main (argc, argv)
       else if (zdom[domain].coord_type == CYLIND)
         fprintf (fptr_hc, "%d %d %e %e %e ", i, j, wmain[nwind].xcen[0], wmain[nwind].xcen[2], vol);    //output geometric things
 
-      fprintf (fptr_hc, "%e %e %e ", plasmamain[nplasma].t_e, plasmamain[nplasma].xi, plasmamain[nplasma].ne);  //output temp, xi and ne to ease plotting of heating rates
+      fprintf (fptr_hc, "%e %e %e %e ", plasmamain[nplasma].t_e, plasmamain[nplasma].t_r, plasmamain[nplasma].xi, ne_smooth);   //output t_e, t_r, xi and ne to ease plotting of heating rates
       fprintf (fptr_hc, "%e ", (plasmamain[nplasma].heat_photo + plasmamain[nplasma].heat_auger) / vol);        //Xray heating - or photoionization
       fprintf (fptr_hc, "%e ", (plasmamain[nplasma].heat_comp) / vol);  //Compton heating
       fprintf (fptr_hc, "%e ", (plasmamain[nplasma].heat_lines) / vol); //Line heating 28/10/15 - not currently used in zeus
@@ -367,23 +376,23 @@ main (argc, argv)
       fprintf (fptr_hc, "%e ", (plasmamain[nplasma].cool_comp) / vol);  //Compton cooling
       fprintf (fptr_hc, "%e ", (plasmamain[nplasma].lum_lines + plasmamain[nplasma].cool_rr + plasmamain[nplasma].cool_dr) / vol);      //Line cooling must include all recombination cooling
       fprintf (fptr_hc, "%e ", (plasmamain[nplasma].lum_ff) / vol);     //ff cooling
-      fprintf (fptr_hc, "%e ", plasmamain[nplasma].rho);        //density
-      fprintf (fptr_hc, "%e \n", plasmamain[nplasma].rho * rho2nh);     //hydrogen number density
+      fprintf (fptr_hc, "%e ", rho_smooth);     //density
+      fprintf (fptr_hc, "%e \n", rho_smooth * rho2nh);  //hydrogen number density
 
       if (zdom[domain].coord_type == SPHERICAL || zdom[domain].coord_type == RTHETA)
       {
         fprintf (fptr_drive, "%d %d %e %e %e ", i, j, wmain[nwind].rcen, wmain[nwind].thetacen / RADIAN, vol);  //output geometric things
         fprintf (fptr_pcon, "%d %d %e %e ", i, j, wmain[nwind].rcen, wmain[nwind].thetacen / RADIAN);   //output geometric things
-        fprintf (fptr_drive, "%e ", plasmamain[nplasma].rho);   //density
-        fprintf (fptr_drive, "%e ", plasmamain[nplasma].ne);
+        fprintf (fptr_drive, "%e ", rho_smooth);        //density
+        fprintf (fptr_drive, "%e ", ne_smooth);
         fprintf (fptr_flux, "%d %d %e %e ", i, j, wmain[nwind].rcen, wmain[nwind].thetacen / RADIAN);   //output geometric things
       }
       else if (zdom[domain].coord_type == CYLIND)
       {
         fprintf (fptr_drive, "%d %d %e %e %e ", i, j, wmain[nwind].xcen[0], wmain[nwind].xcen[2], vol); //output geometric things
         fprintf (fptr_pcon, "%d %d %e %e ", i, j, wmain[nwind].xcen[0], wmain[nwind].xcen[2]);  //output geometric things
-        fprintf (fptr_drive, "%e ", plasmamain[nplasma].rho);   //density
-        fprintf (fptr_drive, "%e ", plasmamain[nplasma].ne);
+        fprintf (fptr_drive, "%e ", rho_smooth);        //density
+        fprintf (fptr_drive, "%e ", ne_smooth);
         fprintf (fptr_flux, "%d %d %e %e ", i, j, wmain[nwind].xcen[0], wmain[nwind].xcen[2]);  //output geometric things
       }
       if (zdom[domain].coord_type == SPHERICAL)
@@ -418,16 +427,16 @@ main (argc, argv)
       }
       fprintf (fptr_ion, "%d %d ", i, j);       //output geometric things               
       for (ii = 0; ii < nions; ii++)
-        fprintf (fptr_ion, "%e ", plasmamain[nplasma].density[ii]);
+        fprintf (fptr_ion, "%e ", plasmamain[nplasma].density[ii] * fill);
       fprintf (fptr_ion, "\n");
       fprintf (fptr_spec, "%d %d ", i, j);      //output geometric things 
       if (geo.ioniz_mode == IONMODE_MATRIX_SPECTRALMODEL)
       {
         for (ii = 0; ii < geo.nxfreq; ii++)
           fprintf (fptr_spec, "%e %e %i %e %e %e %e ",
-                   plasmamain[nplasma].fmin_mod[ii], plasmamain[nplasma].fmax_mod[ii], plasmamain[nplasma].spec_mod_type[ii],
-                   plasmamain[nplasma].pl_log_w[ii], plasmamain[nplasma].pl_alpha[ii], plasmamain[nplasma].exp_w[ii],
-                   plasmamain[nplasma].exp_temp[ii]);
+                   plasmamain[nplasma].fmin_mod[ii], plasmamain[nplasma].fmax_mod[ii],
+                   plasmamain[nplasma].spec_mod_type[ii], plasmamain[nplasma].pl_log_w[ii],
+                   plasmamain[nplasma].pl_alpha[ii], plasmamain[nplasma].exp_w[ii], plasmamain[nplasma].exp_temp[ii]);
       }
       else if (geo.ioniz_mode == IONMODE_MATRIX_BB)
         fprintf (fptr_spec, "%e %e ", plasmamain[nplasma].t_r, plasmamain[nplasma].w);
@@ -464,7 +473,7 @@ main (argc, argv)
         else
         {
           stuff_v (fhat, ptest.lmn);    //place our test photon at the centre of the cell            
-          t_opt = kappa_es * plasmamain[nplasma].rho * v_th / fabs (dvwind_ds_cmf (&ptest));
+          t_opt = kappa_es * rho_smooth * v_th / fabs (dvwind_ds_cmf (&ptest));
         }
       }
       else
@@ -490,7 +499,7 @@ main (argc, argv)
         else
         {
           stuff_v (fhat, ptest.lmn);    //place our test photon at the centre of the cell            
-          t_UV = kappa_es * plasmamain[nplasma].rho * v_th / fabs (dvwind_ds_cmf (&ptest));
+          t_UV = kappa_es * rho_smooth * v_th / fabs (dvwind_ds_cmf (&ptest));
         }
       }
       else
@@ -517,14 +526,17 @@ main (argc, argv)
         else
         {
           stuff_v (fhat, ptest.lmn);    //place our test photon at the centre of the cell            
-          t_Xray = kappa_es * plasmamain[nplasma].rho * v_th / fabs (dvwind_ds_cmf (&ptest));
+          t_Xray = kappa_es * rho_smooth * v_th / fabs (dvwind_ds_cmf (&ptest));
         }
       }
       else
         t_Xray = 0.0;           //Essentually a flag that there is no way of computing t (and hence M) in this cell.                
 
-      fprintf (fptr_pcon, " %e %e %e %e %e %e %e\n", plasmamain[nplasma].t_e, plasmamain[nplasma].rho,
-               plasmamain[nplasma].rho * rho2nh, plasmamain[nplasma].ne, t_opt, t_UV, t_Xray);
+      /* t uses full-path microclumped opacity, consistent with rho_smooth.
+       * The fixed kappa_es convention above is retained for the CAK interface. */
+
+      fprintf (fptr_pcon, " %e %e %e %e %e %e %e\n", plasmamain[nplasma].t_e, rho_smooth,
+               rho_smooth * rho2nh, ne_smooth, t_opt, t_UV, t_Xray);
 
       fprintf (fptr_debug, "%d %d %e %e %e %e %e\n", i, j, wmain[nwind].rcen, wmain[nwind].thetacen / RADIAN, v_th, fabs (dvwind_ds_cmf (&ptest)), plasmamain[nplasma].j);      //output geometric things
     }
@@ -540,5 +552,5 @@ main (argc, argv)
   fclose (fptr_flux_phi);
   fclose (fptr_flux_r);
 
-  exit (0);
+  Exit (0);
 }

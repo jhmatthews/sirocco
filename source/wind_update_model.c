@@ -184,11 +184,11 @@ update_wind_from_model (int ndom, char *filename)
     nplasma = cell->nplasma;
     xplasma = &plasmamain[nplasma];
 
-    xplasma->state.xgamma = cell->xgamma_cen;
-    xplasma->state.vol = cell->vol * fill;
+    xplasma->xgamma = cell->xgamma_cen;
+    xplasma->vol = cell->vol * fill;
 
-    old_rho = xplasma->state.rho;
-    new_rho = model_rho (ndom, cell->xcen) / (fill * xplasma->state.xgamma);
+    old_rho = xplasma->rho;
+    new_rho = model_rho (ndom, cell->xcen) / (fill * xplasma->xgamma);
 
     if (old_rho <= 0.0)
     {
@@ -199,15 +199,15 @@ update_wind_from_model (int ndom, char *filename)
     /* Keep the ion fractions, but scale the ion densities to the new density */
     for (nion = 0; nion < nions; nion++)
     {
-      xplasma->state.density[nion] *= new_rho / old_rho;
+      xplasma->density[nion] *= new_rho / old_rho;
     }
-    xplasma->state.rho = new_rho;
-    xplasma->state.ne = get_ne (xplasma->state.density);
+    xplasma->rho = new_rho;
+    xplasma->ne = get_ne (xplasma->density);
 
     if (imported_model[ndom].init_temperature == FALSE)
     {
-      xplasma->state.t_r = import_temperature (ndom, cell->xcen, FALSE);
-      xplasma->state.t_e = import_temperature (ndom, cell->xcen, TRUE);
+      xplasma->t_r = import_temperature (ndom, cell->xcen, FALSE);
+      xplasma->t_e = import_temperature (ndom, cell->xcen, TRUE);
 
       /* As in hydro_restart, set the level populations to those of the
        * ground state for the new temperature */
