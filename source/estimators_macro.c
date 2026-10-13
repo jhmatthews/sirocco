@@ -511,9 +511,10 @@ normalise_macro_estimators (PlasmaPtr xplasma)
         /* check for population inversions. We don't worry about this if the densities are extremely low or if the
            upper level has hit the density floor - the lower level is still allowed to hit this floor because it
            should never cause an inversion */
-        Error ("normalise_macro_estimators: bb stimulated correction factor is out of bounds, 0 <= stim_correction < 1 but got %g\n", stim_correction);
-        Error ("normalise_macro_estimators: upper_density %g lower_density %g xplasma->levden[config[nlev_upper].nden] %g\n",
-               upper_density, lower_density, xplasma->levden[xconfig[nlev_upper].nden]);
+        Error ("normalise_macro_estimators: bb stimulated correction factor is out of bounds, 0 <= stim_correction < 1 but got %g\n",
+               stim_correction);
+        Error ("normalise_macro_estimators: upper_density %g lower_density %g xplasma->levden[config[nlev_upper].nden] %g\n", upper_density,
+               lower_density, xplasma->levden[xconfig[nlev_upper].nden]);
         stim_correction = 0.0;
       }
       else
@@ -550,10 +551,8 @@ normalise_macro_estimators (PlasmaPtr xplasma)
   /* ensure the total heating is incremented too, for line and bound-free */
   xplasma->heat_tot += xplasma->heat_lines_macro + xplasma->heat_photo_macro + xplasma->heat_qrecomb_macro;
 
-  /* finally, check if we have any places where stimulated recombination wins over
-     photoionization */
-
-  check_stimulated_recomb (xplasma);
+  /* check_stimulated_recomb is called from wind_update once the populations have been solved and
+     the alpha_st estimators rescaled to the new t_e (see rescale_alpha_st_estimators) */
 
   /* Now that we have estimators, set the flag to use them for the level populations */
 
@@ -1420,4 +1419,36 @@ alpha_st_e_integrand (double freq, void *params)
   integrand = x * freq * freq * exp (H_OVER_K * (fthresh - freq) / tt) / (exp (H_OVER_K * freq / ttrr) - 1) * freq / fthresh;
 
   return (integrand);
+}
+
+/**********************************************************/
+/**
+ * @brief rescale the stimulated recombination estimators to the current electron temperature
+ *
+ * @param [in] PlasmaPtr xplasma the plasma cell, with t_e already updated
+ * @param [in] double t_old the electron temperature used in normalise_macro_estimators
+ * @return 0
+ *
+ * @details
+ * alpha_st_old and alpha_st_e_old include the factor stimfac ~ t_e^(-3/2) evaluated at t_old,
+ * but the level populations are solved at the new t_e. Mixing the two can make the net
+ * photoionization rate negative in dense, near-LTE cells, so swap stimfac(t_old) for stimfac(t_e).
+ **********************************************************/
+
+int
+rescale_alpha_st_estimators (PlasmaPtr xplasma, double t_old)
+{
+  int n;
+  double scale;
+  MacroPtr mplasma = &macromain[xplasma->nplasma];
+
+  scale = pow (t_old / xplasma->t_e, 1.5);
+
+  for (n = 0; n < size_gamma_est; n++)
+  {
+    mplasma->alpha_st_old[n] *= scale;
+    mplasma->alpha_st_e_old[n] *= scale;
+  }
+
+  return (0);
 }

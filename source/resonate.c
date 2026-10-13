@@ -22,6 +22,8 @@
 #include "atomic.h"
 #include "sirocco.h"
 
+int nscat_neg_net_photoion = 0; /* bf absorptions this cycle where gamma - alpha_st * stim_fact < 0, clamped to zero */
+
 const double MAXDIFF = VCHECK / VLIGHT;
 
 /**********************************************************/
@@ -1034,7 +1036,8 @@ scatter (p, nres, nnscat)
         prob_kpkt = 0.0;        // initialise value
         if (gamma_twiddle < 0 || gamma_twiddle_e < 0)
         {
-          Error ("scatter (resonate.c): negative net photoionization rate (stimulated recombination), set to zero\n");
+          /* counted rather than logged per photon, which can exceed max_errors in dense cells; reported in wind_update */
+          nscat_neg_net_photoion++;
           gamma_twiddle = fmax (gamma_twiddle, 0.);
           gamma_twiddle_e = fmax (gamma_twiddle_e, 0.);
         }
