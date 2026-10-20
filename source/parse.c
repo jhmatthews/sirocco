@@ -213,6 +213,12 @@ parse_command_line (int argc, char *argv[])
         Log ("Cells partially in the wind will be ingnored.\n");
         j = i;
       }
+      else if (strcmp (argv[i], "-coupled_te") == 0)
+      {
+        modes.coupled_te = TRUE;
+        Log ("Re-solving ionization and level populations at each trial temperature\n");
+        j = i;
+      }
       else if (strcmp (argv[i], "-f") == 0)
       {
         modes.fixed_temp = 1;
