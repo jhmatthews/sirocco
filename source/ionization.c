@@ -908,8 +908,10 @@ calc_te_coupled (PlasmaPtr xplasma, double tmin, double tmax, int mode)
       Error ("calc_te_coupled: zero_find failed to find a temperature\n");
     }
   }
-  else if (fabs (z1) < fabs (z2))
+  else if (z1 < 0.0)
   {
+    /* Net cooling at both ends: move to the cold end. Choosing the end with the smaller
+       |H-C| can walk a net-cooling cell up to very high T at high density */
     xplasma->state.t_e = tmin;
   }
   else
