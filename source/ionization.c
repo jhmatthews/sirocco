@@ -351,7 +351,8 @@ convergence (PlasmaPtr xplasma)
    * can cause self-reinforcing oscillations where increasing the gain makes things worse.
    */
   if (xplasma->derived.dt_e_old * xplasma->derived.dt_e < 0
-      && (fabs (xplasma->derived.dt_e) < fabs (xplasma->derived.dt_e_old) || geo.ioniz_mode == IONMODE_LTE_ITERATE))
+      && (fabs (xplasma->derived.dt_e) < fabs (xplasma->derived.dt_e_old) || geo.ioniz_mode == IONMODE_LTE_ITERATE
+          || modes.coupled_te == TRUE))
   {
     xplasma->derived.converging = CELL_CONVERGING;
 
