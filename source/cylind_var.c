@@ -931,7 +931,7 @@ cylvar_allocate_domain (int ndom)
   }
   zdom[ndom].wind_z_var[0] = calloc (zdom[ndom].ndim * zdom[ndom].mdim, sizeof (double));
   zdom[ndom].wind_midz_var[0] = calloc (zdom[ndom].ndim * zdom[ndom].mdim, sizeof (double));
-  if (zdom[ndom].wind_z_var[0] == NULL || zdom[ndom].wind_midz_var[0])
+  if (zdom[ndom].wind_z_var[0] == NULL || zdom[ndom].wind_midz_var[0] == NULL)
   {
     Error ("cylvar_allocate_domain: failed to allocate memory for cylvar domain coordinates\n");
     Exit (EXIT_FAILURE);
