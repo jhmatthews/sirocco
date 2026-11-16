@@ -1,0 +1,16 @@
+# He I (he_top) n=2 transitions missing from he_top_lines.dat: one forbidden radiative
+# line and four collision-only (f = 0) entries.  They exist so that collisional
+# excitation/de-excitation couples these levels; the matching collision strengths are in
+# he_top_upsilon_coll.dat, which must be read after this file.
+#   1-2  1s2 1S  - 1s2s 3S   M1, A = 1.27e-4 s^-1 (f from A, he_top energies)
+#   2-3  1s2s 3S - 1s2s 1S   collision only
+#   2-5  1s2s 3S - 1s2p 1P   collision only
+#   3-4  1s2s 1S - 1s2p 3P   collision only
+#   4-5  1s2p 3P - 1s2p 1P   collision only
+# Wavelengths are from the he_top level energies so that the CSTREN records match exactly.
+#        z ion       lambda      f         gl  gu    el          eu        ll   lu
+LinMacro   2  1   634.383996  2.296362e-14  1   3   0.00000   19.54403  1  2
+LinMacro   2  1   15032.396328  0.000000e+00  3   1   19.54403   20.36881  2  3
+LinMacro   2  1   8861.014317  0.000000e+00  3   3   19.54403   20.94324  2  5
+LinMacro   2  1   38711.189718  0.000000e+00  1   9   20.36881   20.68909  3  4
+LinMacro   2  1   48783.867177  0.000000e+00  9   3   20.68909   20.94324  4  5

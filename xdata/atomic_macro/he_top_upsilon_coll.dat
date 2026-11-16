@@ -1,0 +1,26 @@
+# Effective collision strengths for the he_top_lines_coll.dat transitions (He I, he_top levels).
+# Source: CHIANTI he_1 (Sawey & Berrington 1993, ADNDT 55, 81; Bray et al. 2000, A&AS 146, 481),
+# Burgess & Tully (1992) fits.  J components are summed into he_top terms and re-sampled at the
+# 13 BT nodes of the listed type and C, with the reduced temperature defined by the he_top
+# transition energy.  Accuracy of each record (as Sirocco evaluates it) against the CHIANTI sum:
+# 1s2 1S - 1s2s 3S     he_top 1-2  CHIANTI 1-2             BT type 3 C=0.06  max |dUps/Ups| (1e3-1e6 K) = 1.1%
+# 1s2s 3S - 1s2s 1S    he_top 2-3  CHIANTI 2-3             BT type 2 C=1.6   max |dUps/Ups| (1e3-1e6 K) = 1.2%
+# 1s2s 3S - 1s2p 1P    he_top 2-5  CHIANTI 2-7             BT type 3 C=1.1   max |dUps/Ups| (1e3-1e6 K) = 0.0%
+# 1s2s 1S - 1s2p 3P    he_top 3-4  CHIANTI 3-4+3-5+3-6     BT type 2 C=5     max |dUps/Ups| (1e3-1e6 K) = 2.6%
+# 1s2p 3P - 1s2p 1P    he_top 4-5  CHIANTI 4-7+5-7+6-7     BT type 2 C=6.7   max |dUps/Ups| (1e3-1e6 K) = 1.3%
+# Each CSTREN record must be immediately followed by its SCT and SCUPS lines.
+CSTREN Line   2   1 634.383996 2.296362e-14 1 3 0.00000 19.54403 1 2 1 2 1.436e+00 2.296e-14 -1.000e+00  13   3 6.000e-02
+SCT    0.000e+00 8.333e-02 1.667e-01 2.500e-01 3.333e-01 4.167e-01 5.000e-01 5.833e-01 6.667e-01 7.500e-01 8.333e-01 9.167e-01 1.000e+00
+SCUPS  2.482e-02 3.798e-02 5.117e-02 6.440e-02 6.723e-02 6.973e-02 7.223e-02 7.366e-02 7.506e-02 7.648e-02 8.075e-02 8.523e-02 8.904e-02
+CSTREN Line   2   1 15032.396328 0.000000e+00 3 1 19.54403 20.36881 2 3 2 3 6.062e-02 0.000e+00 -1.000e+00  13   2 1.600e+00
+SCT    0.000e+00 8.333e-02 1.667e-01 2.500e-01 3.333e-01 4.167e-01 5.000e-01 5.833e-01 6.667e-01 7.500e-01 8.333e-01 9.167e-01 1.000e+00
+SCUPS  7.875e-01 1.281e+00 1.772e+00 2.224e+00 2.257e+00 2.288e+00 2.295e+00 2.086e+00 1.877e+00 1.652e+00 1.216e+00 7.816e-01 3.501e-01
+CSTREN Line   2   1 8861.014317 0.000000e+00 3 3 19.54403 20.94324 2 5 2 5 1.028e-01 0.000e+00 -1.000e+00  13   3 1.100e+00
+SCT    0.000e+00 8.333e-02 1.667e-01 2.500e-01 3.333e-01 4.167e-01 5.000e-01 5.833e-01 6.667e-01 7.500e-01 8.333e-01 9.167e-01 1.000e+00
+SCUPS  1.801e-01 4.973e-01 8.145e-01 1.132e+00 1.507e+00 1.882e+00 2.257e+00 2.938e+00 3.618e+00 4.300e+00 5.572e+00 6.845e+00 8.113e+00
+CSTREN Line   2   1 38711.189718 0.000000e+00 1 9 20.36881 20.68909 3 4 3 4 2.354e-02 0.000e+00 -1.000e+00  13   2 5.000e+00
+SCT    0.000e+00 8.333e-02 1.667e-01 2.500e-01 3.333e-01 4.167e-01 5.000e-01 5.833e-01 6.667e-01 7.500e-01 8.333e-01 9.167e-01 1.000e+00
+SCUPS  7.120e-01 1.135e+00 1.397e+00 1.576e+00 1.695e+00 1.739e+00 1.728e+00 1.677e+00 1.550e+00 1.360e+00 1.033e+00 6.069e-01 1.104e-01
+CSTREN Line   2   1 48783.867177 0.000000e+00 9 3 20.68909 20.94324 4 5 4 5 1.868e-02 0.000e+00 -1.000e+00  13   2 6.700e+00
+SCT    0.000e+00 8.333e-02 1.667e-01 2.500e-01 3.333e-01 4.167e-01 5.000e-01 5.833e-01 6.667e-01 7.500e-01 8.333e-01 9.167e-01 1.000e+00
+SCUPS  2.801e-01 7.592e-01 1.234e+00 1.687e+00 1.994e+00 2.299e+00 2.565e+00 2.621e+00 2.676e+00 2.674e+00 2.220e+00 1.770e+00 1.322e+00
