@@ -2,8 +2,7 @@ KWD
 ===
 
 
-.. todo::
-   Fill in
+All parameters that define the :ref:`KWD biconical wind prescription`.
 
 
 .. toctree::

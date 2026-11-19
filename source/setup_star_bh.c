@@ -15,7 +15,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 #include "models.h"
 
 
@@ -38,7 +38,7 @@
  * sense that for an AGN we cannot estimate a luminosity. This
  * reflects the fact that we have not completely setlled on how
  * to homogenize inputs for diffent system types.  It's not 
- * clear that we need to retun anything.
+ * clear that we need to rerun anything.
  *
  **********************************************************/
 
@@ -109,7 +109,7 @@ get_stellar_params ()
     strcpy (answer, "yes");
     geo.star_radiation = rdchoice ("Central_object.radiation(yes,no)", "1,0", answer);
     get_spectype (geo.star_radiation, "Central_object.rad_type_to_make_wind(bb,models)", &geo.star_ion_spectype);
-    
+
     if (geo.star_ion_spectype == SPECTYPE_BB_FCOL)
     {
       Error ("Colour corrected BB not implemented for star at this stage. Exiting.");
@@ -182,8 +182,7 @@ get_stellar_params ()
  **********************************************************/
 
 int
-get_bl_and_agn_params (lstar)
-     double lstar;
+get_bl_and_agn_params (double lstar)
 {
   double xbl;
   double temp_const_agn;
@@ -215,7 +214,7 @@ get_bl_and_agn_params (lstar)
 
     if (geo.bl_radiation)
       get_spectype (geo.bl_radiation, "Boundary_layer.rad_type_to_make_wind(bb,models,power)", &geo.bl_ion_spectype);
-  
+
     if (geo.bl_ion_spectype == SPECTYPE_BB_FCOL)
     {
       Error ("Colour corrected BB not implemented for boundary layer. Exiting.");
@@ -337,7 +336,7 @@ get_bl_and_agn_params (lstar)
       rddoub ("@Central_object.power_law_cutoff", &geo.pl_low_cutoff);
 
     strcpy (answer, "sphere");
-    geo.pl_geometry = rdchoice ("Central_object.geometry_for_source(sphere,lamp_post,bubble)", "0,1,2", answer);
+    geo.pl_geometry = rdchoice ("Central_object.geometry_for_source(sphere,lamp_post,bubble,iso)", "0,1,2,3", answer);
 
 
     if (geo.pl_geometry == PL_GEOMETRY_LAMP_POST)
@@ -352,7 +351,7 @@ get_bl_and_agn_params (lstar)
       geo.bubble_size *= GRAV * geo.mstar / VLIGHT / VLIGHT;    //get it in CGS units
       Log ("bubble size  in cm is %g\n", geo.bubble_size);
     }
-    else if (geo.pl_geometry != PL_GEOMETRY_SPHERE)     // only three options at the moment
+    else if (geo.pl_geometry != PL_GEOMETRY_SPHERE && geo.pl_geometry != PL_GEOMETRY_ISO)       // only four options at the moment
     {
       Error ("Did not understand power law geometry %i. Fatal.\n", geo.pl_geometry);
       Exit (0);

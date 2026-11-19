@@ -1,6 +1,7 @@
 Stellar_wind.vbase
 ==================
-Multi-line description, must keep indentation.
+
+The parameter setting the velocity at the base of the wind (at :math:`r_{min}`).
 
 Type
   Double
@@ -9,13 +10,13 @@ Unit
   cm/s
 
 Values
-  Condition e.g. greater than 0 or list e.g. [1, 2, 5]
+  Greater than 0
 
 File
-  `stellar_wind.c <https://github.com/agnwinds/python/blob/master/source/stellar_wind.c>`_
+  `stellar_wind.c <https://github.com/sirocco-rt/sirocco/blob/master/source/stellar_wind.c>`_
 
 
 Parent(s)
-  * :ref:`Wind.type`: star
+  * :ref:`Wind.type`: ``star``
 
 

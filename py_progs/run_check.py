@@ -1,8 +1,6 @@
 #!/usr/bin/env python 
 '''
-Synopsis:  
-    Sumarize a model run with python, ultimately generating
-    an html file with various plots, etc.
+Sumarize a model run with python, ultimately generating an html file with various plots, etc.
 
 
 Command line usage (if any):
@@ -43,6 +41,7 @@ import sys
 from glob import glob
 import os
 from astropy.io import ascii
+from astropy.table import Table
 import numpy
 import subprocess
 import matplotlib.pyplot as pylab
@@ -51,6 +50,7 @@ import plot_wind
 import plot_wind_1d
 import plot_spec
 import plot_tot
+import numpy as np
 
 
 def read_diag(root):
@@ -114,6 +114,10 @@ def read_diag(root):
             print('Read diag file, but there is not evidence of ionization cycles')
 
 
+        ncycle=np.arange(len(converged))
+        x=Table([ncycle,converged,converging,t_r,t_e,hc],names=['Ncycle','Converged','Converging','T_r_converged','T_e_converged','hc_converged'])
+        x.write('%s.convergence.txt' % root,format='ascii.fixed_width_two_line',overwrite=True)
+
         return converged,converging,t_r,t_e,hc
 
 
@@ -134,12 +138,15 @@ def xwindsave2table(root):
     if len(sfiles):
         foo=open(sfiles[0])
         line=foo.readline()
+        foo.close()
         words=line.split()
-        if words[1]=='Python':
+        if words[1] in ('Python', 'Sirocco'):
             xver=words[3]
-            command='windsave2table%s %s' % (xver,root)
+            command='windsave2table-%s %s' % (xver,root)
         else:
-            return FALSE
+            return True
+    else:
+        return True
 
 
     print('We will try this command instead :', command)
@@ -148,12 +155,12 @@ def xwindsave2table(root):
     proc=subprocess.Popen(command,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     stdout,stderr=proc.communicate()
     if proc.returncode:
-        print('Error: also failed trying to run %s ' % xver,proc.returncode)
+        print('Error: also failed trying to run %s ' % command,proc.returncode)
         return True
     elif len(stderr):
-        print('Error: also failed with ' %s)
+        print('Error: also failed with %s' % command)
         print(stderr.decode())
-        return True 
+        return True
     else:
         return False
 
@@ -345,8 +352,13 @@ spec_plot_description='''
 This plot is from the .spec file, and shows the expected spectra (at 100 pc) as a function of the various inclination angles requested. Note
 that the y-axis scale varies for different inclination angles.
 '''
+
+ne_plot_description='''
+This plot shows the electron density (ne) throughout the wind. The electron density traces the density structure of the outflow and is 
+directly related to the optical depth of the wind.
+'''
     
-def make_html(root,converge_plot,te_plot,tr_plot,spec_tot_plot,spec_plot,nspectra=3,complete_message=['test'],errors=['test','test2']):
+def make_html(root,converge_plot,te_plot,tr_plot,ne_plot,spec_tot_plot,spec_plot,nspectra=3,complete_message=['test'],errors=['test','test2']):
     '''
     Make an html file that collates all the results
     '''
@@ -377,6 +389,11 @@ def make_html(root,converge_plot,te_plot,tr_plot,spec_tot_plot,spec_plot,nspectr
     string+=xhtml.image('file:%s' % (tr_plot))
     # string+=xhtml.image('file:./diag_%s/%s_t_e.png' % (root,root))
     # string+=xhtml.image('file:./diag_%s/%s_t_r.png' % (root,root))
+    string+=xhtml.hline()
+
+    string+=xhtml.h2('What does the electron density look like?')
+    string+=xhtml.image('file:%s' % (ne_plot))
+    string+=xhtml.paragraph(ne_plot_description)
     string+=xhtml.hline()
     string+=xhtml.h2('What do the total spectra look like (somewhat smoothed)?')
 
@@ -468,16 +485,32 @@ def doit(root='ixvel',outputfile='out.txt'):
     for one in complete_message:
         print(one)
 
-    xdim=how_many_dimensions('%s.master.txt' % root)
+    master_file='%s.master.txt' % root
+
+    if os.path.exists(master_file)==False:
+        master_file=master_file.replace('master','0.master')
+
+        try:
+            os.path.exists(master_file)
+            print('Warning: this run had multiple domains, reporting results for domain 0')
+        except:
+            print('Error: could not find master_file.txt')
+            return 
+
+
+    
+    xdim=how_many_dimensions(master_file)
 
     if xdim==2:
-        converge_plot=plot_wind.doit('%s.master.txt' % root,'converge',plot_dir='./diag_%s' % root)
-        te_plot=plot_wind.doit('%s.master.txt' % root,'t_e',plot_dir='./diag_%s' % root)
-        tr_plot=plot_wind.doit('%s.master.txt' % root,'t_r',plot_dir='./diag_%s' % root)
+        converge_plot=plot_wind.doit(master_file,'converge',plot_dir='./diag_%s' % root)
+        te_plot=plot_wind.doit(master_file,'t_e',plot_dir='./diag_%s' % root)
+        tr_plot=plot_wind.doit(master_file,'t_r',plot_dir='./diag_%s' % root)
+        ne_plot=plot_wind.doit(master_file,'ne',plot_dir='./diag_%s' % root)
     else:
-        converge_plot=plot_wind_1d.doit('%s.master.txt' % root,'converge',plot_dir='./diag_%s' % root)
-        te_plot=plot_wind_1d.doit('%s.master.txt' % root,'t_e',plot_dir='./diag_%s' % root)
-        tr_plot=plot_wind_1d.doit('%s.master.txt' % root,'t_r',plot_dir='./diag_%s' % root)
+        converge_plot=plot_wind_1d.doit(master_file,'converge',plot_dir='./diag_%s' % root)
+        te_plot=plot_wind_1d.doit(master_file,'t_e',plot_dir='./diag_%s' % root)
+        tr_plot=plot_wind_1d.doit(master_file,'t_r',plot_dir='./diag_%s' % root)
+        ne_plot=plot_wind_1d.doit(master_file,'ne',plot_dir='./diag_%s' % root)
 
 
     converged,converging,t_r,t_e,hc=read_diag(root)
@@ -502,7 +535,7 @@ def doit(root='ixvel',outputfile='out.txt'):
     errors=py_error(root)
      
 
-    make_html(root,converge_plot,te_plot,tr_plot,spec_tot_plot,spec_plot,nspectra,complete_message,errors)
+    make_html(root,converge_plot,te_plot,tr_plot,ne_plot,spec_tot_plot,spec_plot,nspectra,complete_message,errors)
 
 
     return

@@ -1,9 +1,7 @@
 Stellar_wind
 ============
 
-
-.. todo::
-   Fill in
+All parameters that defines :ref:`the stellar wind model`. 
 
 
 .. toctree::

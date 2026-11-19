@@ -5,11 +5,15 @@ Standard functions used for manipulating arrays, e.g. to calculate full width ha
 """
 
 from typing import Union, Tuple
-
+from numpy.typing import NDArray
+from numpy import floating
 import numpy as np
 
 
-def calculate_fwhm(midpoints: np.ndarray, vals: np.ndarray) -> float:
+def calculate_fwhm(
+        midpoints: NDArray[floating],
+        vals: NDArray[floating]
+) -> float:
     """
     Calculate FWHM from arrays
 
@@ -18,11 +22,11 @@ def calculate_fwhm(midpoints: np.ndarray, vals: np.ndarray) -> float:
     peak within it. Doublets will calculate FWHM from the HM of both!
 
     Args:
-        midpoints (np.ndarray): Array of bin midpoints
-        vals (np.ndarray): Array of bin values
+        midpoints: Array of bin midpoints
+        vals: Array of bin values
 
     Returns:
-        float: FWHM of the peak (should it exist!)
+        FWHM of the peak (should it exist!)
     """
     # Create 'difference' array by subtracting half maximum
     difference = vals - (np.amax(vals) / 2)
@@ -39,14 +43,15 @@ def calculate_centroid(
     Returns the centroid position, with optional percentile bounds.
 
     Args:
-        bins (np.ndarray): Array of bin bounds
-        vals (np.ndarray): Array of bin values
-        bounds (float):    Fraction from 0-0.5. Percentile either side of the
-                           centroid to find (e.g. .2 -> 30%, 70%)
+        bins (np.ndarray):
+            Array of bin bounds
+        vals (np.ndarray):
+            Array of bin values
+        bounds (float):
+            Fraction from 0-0.5. Percentile either side of the centroid to find (e.g. .2 -> 30%, 70%)
 
     Returns:
-        Union[float, Tuple(float, float, float)]:
-            Flux-weighted centroid, and if 'bounds' passed both lower and upper percentile bounds
+        Flux-weighted centroid, and if 'bounds' passed both lower and upper percentile bounds
     """
     centroid_total = np.sum(vals)
     centroid_position = np.sum(np.multiply(bins, vals))/centroid_total
@@ -87,15 +92,17 @@ def calculate_centroid(
         return centroid_position
 
 
-def calculate_midpoints(bins: np.ndarray) -> np.ndarray:
+def calculate_midpoints(
+        bins: NDArray[floating]
+) -> NDArray[floating]:
     """
     Converts bin boundaries into midpoints
 
     Args:
-        bins (np.ndarray):    Array of bin boundaries
+        bins: Array of bin boundaries
 
     Returns:
-        np.ndarray:        Array of bin midpoints (1 shorter!)
+        Array of bin midpoints (1 shorter!)
     """
     midpoints = np.zeros(shape=len(bins)-1)
     for i in range(0, len(bins)-1):

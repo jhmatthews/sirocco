@@ -12,9 +12,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <sys/stat.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -26,7 +27,7 @@
  * @return      restart_stat   1 if restarting a previous model,
  * 0 in all other cases.
  *
- * Python has a fairly rich set of command line options, which
+ * Sirocco has a fairly rich set of command line options, which
  * are parsed by this routine
  *
  * The routine also creates the diag folder, which is where most
@@ -47,14 +48,11 @@
  **********************************************************/
 
 int
-parse_command_line (argc, argv)
-     int argc;
-     char *argv[];
+parse_command_line (int argc, char *argv[])
 {
   int restart_stat, verbosity, max_errors, i;
   int j = 0;
   char dummy[LINELENGTH];
-  int mkdir ();
   double time_max;
   char *fgets_rc;
   double x;
@@ -92,7 +90,7 @@ parse_command_line (argc, argv)
       {
         if (sscanf (argv[i + 1], "%lf", &time_max) != 1)
         {
-          Error ("python: Expected time after -t switch\n");
+          Error ("sirocco: Expected time after -t switch\n");
           exit (1);
         }
         set_max_time (files.root, time_max);
@@ -105,7 +103,7 @@ parse_command_line (argc, argv)
       {
         if (sscanf (argv[i + 1], "%d", &verbosity) != 1)
         {
-          Error ("python: Expected verbosity after -v switch\n");
+          Error ("sirocco: Expected verbosity after -v switch\n");
           exit (0);
         }
         Log_set_verbosity (verbosity);
@@ -118,7 +116,7 @@ parse_command_line (argc, argv)
       {
         if (sscanf (argv[i + 1], "%lf", &x) != 1)
         {
-          Error ("python: Expected max errors after -e switch\n");
+          Error ("sirocco: Expected max errors after -e switch\n");
           exit (1);
         }
         max_errors = x;
@@ -132,7 +130,7 @@ parse_command_line (argc, argv)
       {
         if (sscanf (argv[i + 1], "%lf", &x) != 1)
         {
-          Error ("python: Expected max errors after -e switch\n");
+          Error ("sirocco: Expected max errors after -e switch\n");
           exit (1);
         }
         max_errors = x;
@@ -154,13 +152,13 @@ parse_command_line (argc, argv)
         Log ("Using special relativity for Doppler shifts, etc., and including co-moving frame effects.\n");
         j = i;
       }
-      else if (strcmp (argv[i], "-srclassic") == 0)
+      else if (strcmp (argv[i], "-sr_doppler_only") == 0)
       {
         rel_mode = REL_MODE_SR_FREQ;
         Log ("Using full special relativity only for Doppler shifts, etc., and not considering co-moving frame effects.");
         j = i;
       }
-      else if (strcmp (argv[i], "-classic") == 0)
+      else if (strcmp (argv[i], "-nonrel") == 0)
       {
         rel_mode = REL_MODE_LINEAR;
         Log ("Using only old approach with linear Doppler shifts, etc. and not considering co-moving frame effects.\n");
@@ -172,11 +170,17 @@ parse_command_line (argc, argv)
         Log ("Not storing the macro-atom matrix (on-the-fly method) if Matom.ransition_mode is matrix.\n");
         j = i;
       }
+      else if (strcmp (argv[i], "-no-shared-memory") == 0)
+      {
+        /* this is dealt with in main() before the command line is parsed; see no_shared_memory_requested */
+        Log ("MPI shared memory disabled: each rank holds its own copy of the wind, plasma and macro-atom grids.\n");
+        j = i;
+      }
 
       else if (strcmp (argv[i], "--version") == 0)
       {
-        /* give information about the python version, such as commit hash */
-        Log ("Python Version %s \n", VERSION);  //54f -- ksl -- Now read from version.h
+        /* give information about the sirocco version, such as commit hash */
+        Log ("Sirocco Version %s \n", VERSION); //54f -- ksl -- Now read from version.h
         Log ("Built from git commit hash %s\n", GIT_COMMIT_HASH);
         /* warn the user if there are uncommited changes */
         int git_diff_status = GIT_DIFF_STATUS;
@@ -188,13 +192,20 @@ parse_command_line (argc, argv)
       else if (strcmp (argv[i], "-xtest") == 0)
       {
         run_xtest = TRUE;
-        Log ("Run xstest, usually instead of normal Python.\n");
+        Log ("Run xstest, usually instead of normal Sirocco.\n");
+        j = i;
+      }
+      else if (strcmp (argv[i], "-xdev") == 0)
+      {
+        xdev = TRUE;
+        Log ("Running with development switch turned on, instead of normal Sirocco.\n");
         j = i;
       }
       else if (strcmp (argv[i], "-include_partial_cells") == 0)
       {
         modes.partial_cells = PC_INCLUDE;
         Log ("Cells partially in the wind will be included.\n");
+        Log ("Warning: Including partial cells is deprecated, and may be removed in future versions of Sirocco.\n");
         j = i;
       }
       else if (strcmp (argv[i], "-ignore_partial_cells") == 0)
@@ -228,9 +239,31 @@ parse_command_line (argc, argv)
         Log ("Setting zeus_connect to %i\n", modes.zeus_connect);
         j = i;
       }
+      else if (strcmp (argv[i], "-early_stopping") == 0)
+      {
+        modes.early_stopping = 1;
+        Log ("Enabling convergence-based early stopping of ionization cycles\n");
+        j = i;
+      }
       else if (strcmp (argv[i], "-i") == 0)
       {
         modes.quit_after_inputs = 1;
+        j = i;
+      }
+      else if (strcmp (argv[i], "-cell_spec_dim") == 0)
+      {
+        if (sscanf (argv[i + 1], "%d", &geo.nbins_in_cell_spec) != 1)
+        {
+          Error ("parse_command_line: could not parse cell_spec_dim\n");
+          exit (1);
+        }
+        if (geo.nbins_in_cell_spec < 1 || geo.nbins_in_cell_spec > NBINS_IN_CELL_SPEC)
+        {
+          Error ("parse_command_line: cell_spec_dim must be 1-%d\n", NBINS_IN_CELL_SPEC);
+          exit (1);
+        }
+        Log ("parse_command_line: setting cell_spec_dim to %d\n", geo.nbins_in_cell_spec);
+        i++;
         j = i;
       }
       else if (strcmp (argv[i], "-p") == 0)
@@ -262,7 +295,7 @@ parse_command_line (argc, argv)
       else if (strcmp (argv[i], "--version") == 0)
       {
         /* give information about the pyhon version, such as commit hash */
-        Log ("Python Version %s \n", VERSION);  //54f -- ksl -- Now read from version.h
+        Log ("Sirocco Version %s \n", VERSION); //54f -- ksl -- Now read from version.h
         Log ("Built from git commit hash %s\n", GIT_COMMIT_HASH);
         /* warn the user if there are uncommited changes */
         int git_diff_status = GIT_DIFF_STATUS;
@@ -273,7 +306,7 @@ parse_command_line (argc, argv)
 
       else if (strncmp (argv[i], "-", 1) == 0)
       {
-        Error ("python: Unknown switch %s\n", argv[i]);
+        Error ("sirocco: Unknown switch %s\n", argv[i]);
         help ();
       }
     }
@@ -298,7 +331,15 @@ parse_command_line (argc, argv)
 
     sprintf (dummy, "_%02d.diag", rank_global);
 
-    sprintf (files.diag, "%.50s/%.50s%.50s", files.diagfolder, files.root, dummy);
+    sprintf (files.diag, "%.100s/%.100s%.100s", files.diagfolder, files.root, dummy);
+
+    /* Also set the names for extra diagnostics in case these are needed. */
+
+    sprintf (dummy, "_%02d.ext.txt", rank_global);
+
+    sprintf (files.extra, "%.100s%.100s%.100s", files.diagfolder, files.root, dummy);
+
+
 
     /* Set up the directory structure for storing the rng state */
 
@@ -352,7 +393,7 @@ help ()
 \n\
 This program simulates radiative transfer in a (biconical) CV, YSO, quasar, TDE or (spherical) stellar wind \n\
 \n\
-Usage:  py [-h] [-r] [-t time_max] [-v n] [--dry-run] [-i] [--version] [--rseed] [-p n_steps] [-classic] [-srclassic] xxx  or simply py \n\
+Usage:  sirocco [-h] [-r] [-t time_max] [-v n] [--dry-run] [-i] [--version] [--rseed] [-p n_steps] [-nonrel] [-sr_doppler_only] xxx  or simply sirocco \n\
 \n\
 where xxx is the rootname or full name of a parameter file, e. g. test.pf \n\
 \n\
@@ -369,7 +410,7 @@ and the switches have the following meanings \n\
  --dry-run              Create a new .pf file and stop \n\
  -i                     Same as --dry-run \n\
  --grid-only            Define the wind grid and save to wind_save file, then stop \n\
- --version              Print out python version, commit hash and if there were files with uncommitted \n\
+ --version              Print out sirocco version, commit hash and if there were files with uncommitted \n\
                         changes and stop \n\
  --rseed                Set the random number seed to be time-based, rather than fixed. \n\
  --rng                  Save or load the RNG state to file, to allow persistent RNG states between restarts\n\
@@ -377,27 +418,32 @@ and the switches have the following meanings \n\
 Other switches exist but these are not intended for the general user.\n\
 These are largely diagnostic or for special cases. These include\n\
  -d                     Enable advanced/diagnostic inputs (normally for debugging purposes) \n\
-                        Python will then query the user for information about what to do with a series of \n\
+                        Sirocco will then query the user for information about what to do with a series of \n\
                         inputs beginning with @ \n\
  -e                     Change the maximum number of errors of one type (by default 100,000) before the program will quit\n\
  -e_write               Change the maximum number of errors of one type (by default 100) to print out before recording errors silently\n\
  -f                     Invoke a fixed temperature mode, used for runs with Zeus or Plutu \n\
- -z                     Invoke a special mode for that causes Python to start with a run from Zeus or Plutu\n\
+ -z                     Invoke a special mode for that causes Sirocco to start with a run from Zeus or Plutu\n\
  -p [range]             Vary the number of photons in ionization cycles logarthmically building up to the final value\n\
                         Range is in powers of 10, the difference beween the number of photons in the first cycle \n\
                         compared to the last. If range is missing, range is assumed to be 1, in which case the  \n\
                         number of photons will in the first cycle will be one order of magniude less than in the last cycle \n\
- -classic               Use Python in its classic configuration, with linear Doppler shifts, etc., and where co-moving frame\n\
+ -nonrel                Use Sirocco in its old non-relativistic configuration, with linear Doppler shifts, etc., and where co-moving frame\n\
                         effects are not taken into account.\n\
- -srclassic             Use Python with full special relativity for Doppler shifts, etc., but do not include any co-moving frame\n\
+ -sr_doppler_only       Use Sirocco with full special relativity for Doppler shifts, etc., but do not include any co-moving frame\n\
                         effects.\n\
  -ignore_partial_cells  Ignore wind cells that are only partially filled by the wind (This is now the default)  \n\
  -include_partial_cells Include wind cells that are only partially filled by the wind   \n\
  -no-matrix-storage     Do not store macro-atom transition matrices if using the macro-atom line transfer and the matrix matom_transition_mode.\n\
+ -no-shared-memory      Give every MPI process its own copy of the wind, plasma and macro-atom grids instead of sharing one\n\
+                        copy per node.  Results are identical; only memory use changes.  Use if shared memory causes problems.\n\
+ -early_stopping        Enable convergence-based early stopping of ionization cycles. Sirocco will then query\n\
+                        the user for @estop parameters controlling when to stop early.\n\
 \n\
- -xtest                 Instead of running python, call the routine xtest so that one can diagnose issues associted with the \n\
+ -xtest                 Instead of running sirocco, call the routine xtest so that one can diagnose issues associted with the \n\
                         setup.  This is only useful to devlopers \n\
-If one simply types py or pyZZ where ZZ is the version number, one is queried for a name \n\
+  -xdev                 Instead of running in the normal mode, run in a development mode being used for testing new options \n\
+If one simply types sirocco or sirroco-ZZ where ZZ is the version number, one is queried for a name \n\
 of the parameter file and inputs will be requested from the command line. \n\
 \n\
 \n\

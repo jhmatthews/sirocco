@@ -10,7 +10,7 @@
  *
  * CDFs can be generated either from a function using cdf_gen_from_func or from an array using
  * cdf gen_from_array.  The function or the array that is input are used as the proability densities
- * for the cdfs.  The cdfs are stored in a Cdf structure (See python.h)
+ * for the cdfs.  The cdfs are stored in a Cdf structure (See sirocco.h)
  *
  * The procedure is either
  * to call cdf_gen_from_func if you have a function whose probability distribution you
@@ -36,8 +36,8 @@
  * @bug For reasons, which are currently unclear there are differences in the number of points
  * maintained in the cdfs for different generation methods.
  *
- * These routines should be kept SEPARATE from routines that require the Python specific
- * structures in python.h 
+ * These routines should be kept SEPARATE from routines that require the Sirocco specific
+ * structures in sirocco.h 
  *
  ***********************************************************/
 
@@ -53,7 +53,7 @@
 #include "math_struc.h"
 #include "math_proto.h"
 #include "log.h"
-//#include "python.h"
+//#include "sirocco.h"
 //#include "models.h"
 
 /// This is the initial value of PDFSTEPS
@@ -94,12 +94,7 @@ double *pdf_array;
  **********************************************************/
 
 int
-cdf_gen_from_func (cdf, func, xmin, xmax, njumps, jump)
-     CdfPtr cdf;
-     double (*func) (double, void *);
-     double xmin, xmax;
-     double jump[];
-     int njumps;
+cdf_gen_from_func (CdfPtr cdf, double (*func) (double, void *), double xmin, double xmax, int njumps, double jump[])
 {
   double xstep;
   double y;
@@ -173,7 +168,7 @@ cdf_gen_from_func (cdf, func, xmin, xmax, njumps, jump)
   while (n < 3)
   {
     delta = gen_array_from_func (func, xmin, xmax, pdfsteps);
-    if (delta < 0.1 / FUNC_CDF) //FUNC_CDF is set in python.h - it is the number of steps we want in the final CDF
+    if (delta < 0.1 / FUNC_CDF) //FUNC_CDF is set in sirocco.h - it is the number of steps we want in the final CDF
       break;
     pdfsteps *= 10;
     n = n + 1;
@@ -281,10 +276,7 @@ cdf_gen_from_func (cdf, func, xmin, xmax, njumps, jump)
  **********************************************************/
 
 double
-gen_array_from_func (func, xmin, xmax, pdfsteps)
-     double (*func) (double, void *);
-     double xmin, xmax;
-     int pdfsteps;
+gen_array_from_func (double (*func) (double, void *), double xmin, double xmax, int pdfsteps)
 {
 
   double x, z, xstep;
@@ -413,11 +405,7 @@ int pdf_n;
  **********************************************************/
 
 int
-cdf_gen_from_array (cdf, x, y, n_xy, xmin, xmax)
-     CdfPtr cdf;
-     double x[], y[];
-     int n_xy;
-     double xmin, xmax;
+cdf_gen_from_array (CdfPtr cdf, double x[], double y[], int n_xy, double xmin, double xmax)
 {
   int allzero;
   int nmin, nmax, cdf_n;
@@ -684,14 +672,13 @@ cdf_gen_from_array (cdf, x, y, n_xy, xmin, xmax)
  **********************************************************/
 
 double
-cdf_get_rand (cdf)
-     CdfPtr cdf;
+cdf_get_rand (CdfPtr cdf)
 {
   double x, r;
   int i, j;
   double q;
   double a, b, c, s[2];
-  int quadratic ();
+  int quadratic (double a, double b, double c, double r[]);
 
 /* Gnerate a random number and then find the interval n the cdf in which x lies */
   r = random_number (0.0, 1.0); //This *excludes* 0.0 and 1.0.
@@ -780,9 +767,7 @@ cdf_get_rand (cdf)
  **********************************************************/
 
 int
-cdf_limit (cdf, xmin, xmax)
-     CdfPtr cdf;
-     double xmin, xmax;
+cdf_limit (CdfPtr cdf, double xmin, double xmax)
 {
   int i;
   double q;
@@ -862,14 +847,13 @@ cdf_limit (cdf, xmin, xmax)
  **********************************************************/
 
 double
-cdf_get_rand_limit (cdf)
-     CdfPtr cdf;
+cdf_get_rand_limit (CdfPtr cdf)
 {
   double x, r;
   int i, j;
   double q;
   double a, b, c, s[2];
-  int quadratic ();
+  int quadratic (double a, double b, double c, double r[]);
   r = random_number (0.0, 1.0);
 
   r = r * cdf->limit2 + (1. - r) * cdf->limit1;
@@ -919,18 +903,16 @@ int cdf_write_init = 0;
  *
  * This routine should really be parallelized so that it only
  * writes to a file from thread 0, but cdf.c has
- * been written so it can be removed from python as a whole, and
+ * been written so it can be removed from sirocco as a whole, and
  * tested separately
  *
  * ### Notes ###
  **********************************************************/
 
 int
-cdf_to_file (cdf, comment)
-     CdfPtr cdf;
-     char comment[];
+cdf_to_file (CdfPtr cdf, char comment[])
 {
-  FILE *fopen (), *fptr;
+  FILE *fptr;
   int n;
   if (cdf_write_init == 0)
   {
@@ -970,13 +952,9 @@ cdf_to_file (cdf, comment)
  **********************************************************/
 
 int
-cdf_inputs_to_file (x, y, n_xy, xmin, xmax, filename)
-     double x[], y[];
-     int n_xy;
-     double xmin, xmax;
-     char filename[];
+cdf_inputs_to_file (double x[], double y[], int n_xy, double xmin, double xmax, char filename[])
 {
-  FILE *fopen (), *fptr;
+  FILE *fptr;
   int n;
   fptr = fopen (filename, "w");
   fprintf (fptr, "# Number of samples in array %d\n", n_xy);
@@ -1003,8 +981,7 @@ cdf_inputs_to_file (x, y, n_xy, xmin, xmax, filename)
  **********************************************************/
 
 int
-cdf_check (cdf)
-     CdfPtr cdf;
+cdf_check (CdfPtr cdf)
 {
   int n;
   double x, y;
@@ -1116,8 +1093,7 @@ cdf_check (cdf)
  **********************************************************/
 
 int
-calc_cdf_gradient (cdf)
-     CdfPtr cdf;
+calc_cdf_gradient (CdfPtr cdf)
 {
   int n, istat;
   double dx1, dx2, dy1, dy2;
@@ -1200,9 +1176,7 @@ calc_cdf_gradient (cdf)
  **********************************************************/
 
 int
-cdf_array_fixup (x, y, n_xy)
-     double *x, *y;
-     int n_xy;
+cdf_array_fixup (double *x, double *y, int n_xy)
 {
   int n, m;
   size_t *order;

@@ -1,7 +1,7 @@
 Stellar_wind.radmin
 ===================
-Inner edge in cm for a stellar wind, normally the
-radius of the star.
+
+The innermost edge of a stellar wind. This is usually set to the radius of the star.
 
 Type
   Double
@@ -13,10 +13,10 @@ Values
   Greater than or equal to :ref:`Central_object.radius`
 
 File
-  `stellar_wind.c <https://github.com/agnwinds/python/blob/master/source/stellar_wind.c>`_
+  `stellar_wind.c <https://github.com/sirocco-rt/sirocco/blob/master/source/stellar_wind.c>`_
 
 
 Parent(s)
-  * :ref:`Wind.type`: star
+  * :ref:`Wind.type`: ``star``
 
 

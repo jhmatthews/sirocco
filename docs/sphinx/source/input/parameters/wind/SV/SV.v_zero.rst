@@ -1,18 +1,21 @@
 SV.v_zero
 =========
-The velocity at the wind base.
+
+A multiple of the local sound speed or a fixed speed at the base of the wind. This results in
+the initial velocity of the wind being able to be greater or less than the
+local sound speed.
 
 Type
   Double
 
 Unit
-  ['Speed of sound in the wind', 'cm/s']
+  ['Speed of sound in the wind' or 'cm/s']
 
 Values
   Greater than 0
 
 File
-  `sv.c <https://github.com/agnwinds/python/blob/master/source/sv.c>`_
+  `sv.c <https://github.com/sirocco-rt/sirocco/blob/master/source/sv.c>`_
 
 
 Parent(s)

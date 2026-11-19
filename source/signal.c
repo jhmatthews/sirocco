@@ -34,10 +34,11 @@
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "log.h"
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -49,7 +50,7 @@
  * @param [in]   ...   The remaining inputs for the fprintf statement
  * @return     Always  returns 0
  *
- * If one cannot write to the .sig file, Python will exit
+ * If one cannot write to the .sig file, Sirocco will exit
  *
  * @details
  * 
@@ -76,7 +77,7 @@ xsignal (char *root, char *format, ...)
 
   char curtime[LINELENGTH];
   char message[LINELENGTH];
-  FILE *fopen (), *sptr;
+  FILE *sptr;
   char filename[LINELENGTH];
   double elapsed_time;
 
@@ -145,7 +146,7 @@ xsignal (char *root, char *format, ...)
  * @param [in]   ...   The remaining inputs for the fprintf statement
  * @return     Always  returns 0
  *
- * If one cannot write to the .sig file, Python will exit
+ * If one cannot write to the .sig file, Sirocco will exit
  *
  * @details
  *
@@ -201,26 +202,13 @@ xsignal_rm (char *root)
 #endif
 
     char filename[LINELENGTH];
-    char command[LINELENGTH];
-    FILE *tmp_ptr;
-    /* Make the filemne */
+    /* Make the filename */
     strcpy (filename, "");
     strcpy (filename, root);
     strcat (filename, ".sig");
 
-    /* first check if the file exists */
-
-    if ((tmp_ptr = fopen (filename, "r")) == NULL)
-    {
-      return (0);
-    }
-
-
-    strcpy (command, "rm ");
-    strcat (command, filename);
-
-    if (system (command) == -1)
-      Error ("xsignal_rm: '%s' returned error status\n", command);
+    if (remove (filename) != 0 && errno != ENOENT)
+      Error ("xsignal_rm: failed to remove '%s'\n", filename);
 
 #ifdef MPI_ON
   }
@@ -287,14 +275,14 @@ set_max_time (char *root, double t)
  * invoking check_time to record the status of the signal file
  *
  * Bug #518:
- * Previously Python would, on occasion, deadlock when calling this function.
+ * Previously Sirocco would, on occasion, deadlock when calling this function.
  * This was due to some MPI processes exceeding max_time whilst others did not,
  * resulting in some processes not exiting and continuing on with their work.
  * They would then try to communicate with other processes which have already
- * exited, get no response and then Python would deadlock. To avoid this happening,
+ * exited, get no response and then Sirocco would deadlock. To avoid this happening,
  * EP added an MPI_Allreduce operation to find return the largest execution time
  * for a thread. This is then used to check if time > max_time, and if so then
- * MPI is finalised and Python will exit.
+ * MPI is finalised and Sirocco will exit.
  *
  **********************************************************/
 
@@ -315,6 +303,10 @@ check_time (char *root)
     xsignal (root, "\nCOMMENT max_time %.1f seconds exceeded\n", max_time);
 
 #ifdef MPI_ON
+    MPI_Barrier (MPI_COMM_WORLD);
+    MPI_Comm_free (&node_comm);
+    if (leader_comm != MPI_COMM_NULL)
+      MPI_Comm_free (&leader_comm);
     MPI_Finalize ();
 #endif
 

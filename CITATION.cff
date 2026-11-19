@@ -1,6 +1,23 @@
-cff-version: 1.0.3
-message: If you use Python, please cite both the software and the outline paper.
+cff-version: 1.2.0
+title: "Sirocco"
+repository-code: https://github.com/sirocco-rt/sirocco
+abstract: "Simulating Ionization and Radiation in Outflows Created by Compact Objects"
+message: "If you use Sirocco, please cite both the 2002 concept paper and the software release paper."
+version: v0.1
+date-released: 2024-10-22
+doi: 10.1086/342879
+identifiers:
+  - type: doi
+    value: 10.1086/342879
+    description: "2002 concept paper for the Sirocco project."
+  - type: doi
+    value: 10.1234/567890
+    description: "[PLACEHOLDER] Software release paper for this software."
+  - type: doi
+    value: 10.1234/zenodo.5678
+    description: "[PLACEHOLDER] The Zenodo project DOI for the Sirocco code."
 authors:
+  - name: The Sirocco collaboration
   - family-names: Long
     given-names: Knox
     orcid: https://orcid.org/0000-0002-4134-864X
@@ -30,7 +47,7 @@ authors:
     given-names: Sam
     orcid: https://orcid.org/0000-0001-7511-5652
     affiliation: "University of Southampton"
-    email: s.w.mangham@soton.ac.uk
+    email: s.mangham@soton.ac.uk
   - family-names: Parkinson
     given-names: Edward
     orcid: https://orcid.org/0000-0003-3902-052X
@@ -39,22 +56,20 @@ authors:
   - family-names: Hewitt
     given-names: Mandy
     affiliation: "Queens University Belfast"
+    orcid: https://orcid.org/0000-0001-5263-3246
     email: hhewitt01@qub.ac.uk
-website: https://github.com/agnwinds/python
-title: Python
-version: 83b
-# doi: ??.?/zenodo.????
-date-released: 2019-02-24
-references:
-  - type: article
-    authors:
-      - family-names: Long
-        given-names: Knox
-      - family-names: Knigge
-        given-names: Christian
-    title: "Modeling the Spectral Signatures of Accretion Disk Winds: A New Monte Carlo Approach"
-    year: 2002
-    journal: The Astrophysical Journal
-    volume: 579
-    issue: 2
-    doi: 10.1086/342879
+  - family-names: Scepi
+    given-names: Nicholas
+    orcid: https://orcid.org/0000-0003-3909-2486
+    affiliation: "University of Southampton"
+  - family-names: Wallis
+    given-names: Austen
+    orcid: https://orcid.org/0000-0003-0770-9015
+    affiliation: "University of Southampton"
+  - family-names: Mosallanezhad
+    given-names: Amin
+    orcid: https://orcid.org/0000-0002-4601-7073
+    affiliation: "University of Southampton"
+  - family-names: Gupta
+    given-names: Rahul
+    affiliation: "Imperial College London"

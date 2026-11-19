@@ -1,18 +1,17 @@
 Utility, I/O and Imports
 --------------------------
 
-py_read_output
-=================================
-.. automodule:: py_read_output
-    :members:
+.. autosummary::
+    :toctree: utilities
 
-py_plot_util
-=================================
-.. automodule:: py_plot_util
-    :members:
+    import_1d
+    import_cyl
+    import_rtheta
+    py_classes
+    py_error
+    py_plot_util
+    py_read_output
+    kpar
+    watchdog
+    xhtml
 
-
-import_cyl
-=================================
-.. automodule:: import_cyl
-    :members:

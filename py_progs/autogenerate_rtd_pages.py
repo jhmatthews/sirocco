@@ -1,50 +1,31 @@
+#!/usr/bin/env python
 """
+Converts `.yml` format parameter descriptions to `.rst` files.
+
 This script goes through the created yaml documentation and converts them to
-.rst files, then adds the new RST files to the git repository. It then calls
+.rst files, then writes them to an output directory
+
+RST files to the git repository. It then calls
 Sphinx to build the docs, in the documentation/html folder, and opens them in
 the browser to test.
 
+Usage: autogenerate_rtd_pages.py [-h] [-outdir whatever]
+
 Arguments:
-    Any
-        Prints this documentation
+    None  Then the rst files are written to direcotry $Python/docs/rst/parameters
+    -h    Print this documenation and quite
+    -outdir whatever then write the rst files to that directoryk
+
+Notes:
+    The user is prevented (at least from the command line) from writing into
+    the main sphinx directory, inorder to avoid overwriting the existing files
+
 """
-#!/usr/bin/env python
 from typing import TextIO
 import os
 import sys
-import webbrowser
 from subprocess import call
 import yaml
-
-
-def image_from_latex(equation: str) -> str:
-    """
-    Converts a LaTeX equation into an image
-
-    Arguments:
-        equation: The string to convert into an image link
-
-    Returns:
-        A markdown image link to codecogs
-    """
-    return '![{}](https://latex.codecogs.com/gif.latex?{})'.format(equation, equation)
-
-
-def link_from_name(name: str) -> str:
-    """
-    Converts a name into a mediawiki link
-
-    Arguments:
-        name: The name to link to
-
-    Returns:
-        A mediawiki format link [[display name|link path]]
-    """
-    return '[[{}|{}#{}]]'.format(
-        name,
-        name.split('.')[0]+' Parameters',
-        name.lower().replace('.', '')
-    )
 
 
 def write_header_by_level(output_file: TextIO, string: str, level: int = 0):
@@ -183,7 +164,7 @@ def read_yaml(input_folder: str) -> dict:
         with open(os.path.join(input_folder, input_file), "r") as file_object:
             # Open each yaml file and load from it.
             try:
-                parameter = yaml.load(file_object)
+                parameter = yaml.full_load(file_object)
                 parameter_name = parameter['name']
 
                 # Get the type from the name (e.g. reverb.mode and set no children)
@@ -243,17 +224,19 @@ def write_rst(output_folder: str, dox_all: dict, dox_structured: dict):
         output_parameter(parameter, output_file)
         output_file.close()
 
-def autogenerate_rtd_pages():
+def autogenerate_rtd_pages(output_folder):
     """
     Write the RTD files to disk and add them to git, then run sphinx-build to generate the docs.
     """
-    output_folder = os.path.join(os.environ["PYTHON"], "docs", "rst", "parameters")
-    html_folder = os.path.join(os.environ["PYTHON"], "docs", "html")
-    docs_folder = os.path.join(os.environ["PYTHON"], "docs")
+    # html_folder = os.path.join(os.environ["SIROCCO"], "docs", "html")
+    docs_folder = os.path.join(os.environ["SIROCCO"], "docs")
     dox_all = {}
 
+    par_folder=  os.path.join(os.environ["SIROCCO"], "docs", "parameters")
+    print('Par folder',par_folder)
+
     dox_all = read_yaml(
-        os.path.join(os.environ["PYTHON"], "docs", "parameters")
+        os.path.join(par_folder)
     )
 
     # This is a tree-structured dictionary e.g.
@@ -308,10 +291,39 @@ def autogenerate_rtd_pages():
 
     write_rst(output_folder, dox_all, dox_structured)
 
+def steer(argv):
+    '''
+    This is just a steering routine to enable better control of the program
+    '''
+
+    outdir= os.path.join(os.environ["SIROCCO"], "docs", "rst", "parameters")
+    xdir= os.path.join(os.environ["SIROCCO"], "docs","sphinx")
+
+    i=1
+    while i< len(argv):
+        if argv[0:2]=='-h':
+            print(__doc__)
+        elif argv[i]=='-outdir':
+            i+=1
+            outdir=argv[i]
+            outdir=oa.path.abspath(outdir)
+
+        i+=1
+
+    if outdir.count(xdir)>0:
+        print('Error: It is too dangeroust to write in a subdirector of %s, choose a different location' % xdir)
+        return 
+
+    if os.path.isdir(outdir)==False:
+        print('Creating %s ' % outdir)
+        os.makedirs(outdir,exist_ok=True)
+    else:
+        print('The output directory %s already exists; files will be replaced or added' % outdir)
+
+
+    autogenerate_rtd_pages(outdir)
+
 
 # Next lines permit one to run the routine from the command line
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        print(__doc__)
-    else:
-        autogenerate_rtd_pages()
+    steer(sys.argv)

@@ -26,7 +26,7 @@ other points in the wind is
     v = v_{\rm base} \frac{r}{r_{\rm min}}
 
 The density in the wind is determined by setting a mass flux at the
-inner boundary ( :math:`boundary\_mdot`, in solar masses per year). The
+inner boundary (:ref:`Homologous.boundary_mdot`, in :math:`M_{\odot}/yr`). The
 variation of the density at larger radii is the controlled by an
 exponent (:math:`\beta`), keyword ``Homologous.density_exponent`` such that
 

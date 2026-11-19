@@ -5,8 +5,6 @@
  *
  * @brief Functions for communicating wind properties
  *
- * @TODO: as much as this as possible should use non-blocking communication
- *
  ***********************************************************/
 
 #include <stdio.h>
@@ -15,11 +13,11 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 /**********************************************************/
 /**
- * @brief
+ * @brief Broadcast the wind grid, `wmain`, to all ranks
  *
  * @param [in] int n_start       The index of the first cell updated by this rank
  * @param [in] int n_stop        The index of the last cell updated by this rank
@@ -27,11 +25,14 @@
  *
  * @details
  *
- * The communication pattern is as outlined in broadcast_updated_plasma_properties.
+ * This function should only be called once, after grid initialisation.
  *
- * We do not communicate the Wind_Paths_Ptr fields as the code which initialises
- * and works entirely in serial, so there is no benefit to communicating between
- * ranks.
+ * The communication pattern and how the size of the communication buffer is
+ * determined is documented in
+ * $SIROCCO/docs/sphinx/source/developer/mpi_comms.rst.
+ * To communicate a new variable, the communication buffer needs to be made
+ * bigger and a new `MPI_Pack` and `MPI_Unpack` call need to be added. See the
+ * developer documentation for more details.
  *
  **********************************************************/
 
@@ -44,39 +45,23 @@ broadcast_wind_grid (const int n_start, const int n_stop, const int n_cells_rank
   int current_rank;
   int num_comm;
   int position;
-  int bytes_wcone;
 
   WindPtr cell;
 
   d_xsignal (files.root, "%-20s Begin communication of wind grid\n", "NOK");
 
-  /* For the wcone field, we should create a derived type to send the struct
-   * more efficiently. Although, it may just as easy and quick to communicate
-   * each field one by one... but this is the right way to do it */
-  MPI_Datatype wcone_derived_type;
-  const int count = 2;
-  const int block_lengths[] = { 1, 1 };
-  const MPI_Datatype block_types[] = { MPI_DOUBLE, MPI_DOUBLE };
-  /* We need to find the memory displacements. We'll use the wcone struct in
-   * the first cell for this. Each struct should have the same amount of
-   * alignment for the fields, so this should be OK */
-  MPI_Aint base_address;
-  MPI_Aint block_offsets[count];
-  MPI_Get_address (&wmain[0].wcone, &base_address);
-  MPI_Get_address (&wmain[0].wcone.z, &block_offsets[0]);
-  MPI_Get_address (&wmain[0].wcone.dzdr, &block_offsets[1]);
-  for (i = 0; i < 2; ++i)
-  {
-    block_offsets[i] = MPI_Aint_diff (block_offsets[i], base_address);
-  }
-  MPI_Type_create_struct (count, block_lengths, block_offsets, block_types, &wcone_derived_type);
-  MPI_Type_commit (&wcone_derived_type);
-
-  /* We also have to also account for some derived types */
+  /* Calculate the size of the communication buffer */
   const int n_cells_max = get_max_cells_per_rank (NDIM2);
-  MPI_Pack_size (n_cells_max, wcone_derived_type, MPI_COMM_WORLD, &bytes_wcone);
-  const int comm_buffer_size = calculate_comm_buffer_size (1 + 5 * n_cells_max, n_cells_max * (13 + 3 * 3 + 1 * 9)) + bytes_wcone;
+// Not used:  const int num_ints = 5 * n_cells_max + 1;
+// Not used: const int num_doubles = n_cells_max * (13 + 3 * 3 + 1 * 9);   // *3 for x, xcen... *9 for v_grad
+  const int comm_buffer_size = calculate_comm_buffer_size (1 + 5 * n_cells_max, n_cells_max * (13 + 3 * 3 + 1 * 9));
+
   char *comm_buffer = malloc (comm_buffer_size);
+  if (comm_buffer == NULL)
+  {
+    Error ("Unable to allocate memory for communication buffer in broadcast_wind_grid\n");
+    Exit (EXIT_FAILURE);
+  }
 
   for (current_rank = 0; current_rank < np_mpi_global; current_rank++)
   {
@@ -100,7 +85,6 @@ broadcast_wind_grid (const int n_start, const int n_stop, const int n_cells_rank
         MPI_Pack (&cell->thetacen, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->dtheta, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->dr, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (&cell->wcone, 1, wcone_derived_type, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (cell->v, 3, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (cell->v_grad, 9, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->div_v, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
@@ -136,7 +120,6 @@ broadcast_wind_grid (const int n_start, const int n_stop, const int n_cells_rank
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->thetacen, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->dtheta, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->dr, 1, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->wcone, 1, wcone_derived_type, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->v, 3, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->v_grad, 9, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->div_v, 1, MPI_DOUBLE, MPI_COMM_WORLD);
@@ -151,8 +134,11 @@ broadcast_wind_grid (const int n_start, const int n_stop, const int n_cells_rank
     }
   }
 
-  MPI_Type_free (&wcone_derived_type);
   free (comm_buffer);
+
+  /* Barrier to ensure shared memory writes are visible to all node-local ranks */
+  MPI_Barrier (node_comm);
+
   d_xsignal (files.root, "%-20s Finished communication of wind grid\n", "NOK");
 #endif
 }

@@ -1,12 +1,6 @@
 #!/usr/bin/env python
-
 '''
-                    Space Telescope Science Institute
-
-Synopsis:
-
-The purpose of this routine is to add a new parameter to an existing parameter
-file.
+The purpose of this routine is to add a new parameter to an existing parameter file.
 
 The routine uses a paremeter already existing in the parameter file to
 find where to place the new parameter
@@ -14,18 +8,23 @@ find where to place the new parameter
 
 Command line usage (if any):
 
-    usage: add_param.py new_param value old_param
+    usage::
+
+        add_param.py new_param value old_param
 
     where
-        new_param is the new variable including what is normally included in
+        new_param
+            is the new variable including what is normally included in
             parentheses.  This string will be written to the new .pf file.
-        value is the default value to assign to the new parameter, which can be a string
-        old_param is the the variable after which the new parameter is to
+        value
+            is the default value to assign to the new parameter, which can be a string
+        old_param
+            is the the variable after which the new parameter is to
             be placed.  Note that this is a minimum match, which is to say
             that one does not need to include any more of the old parameter
             than what is required to make a unique identification
 
-The various paremeters may need to be enclosed in quotes.
+    The various paremeters may need to be enclosed in quotes.
 
 Description:
 
@@ -36,7 +35,7 @@ Description:
     value after the old_param.
 
     If a new paremeter file is merited it is written to a file with a prefix
-    of new_
+    of `new_`
 
     If new parameter files are written a command file MoveEm is created, which
     can be run by "source MoveEm" to replace the old .pf files with the new ones.
@@ -54,7 +53,7 @@ Notes:
 
 History:
 
-190803 ksl Coding begun
+    190803 ksl Coding begun
 
 '''
 
@@ -75,9 +74,7 @@ def read_file(filename,char=''):
     History:
 
     110729    ksl    Added optional delimiters
-    141209    ksl    Reinstalled in my standard startup
-            script so there was flexibility to
-            read any ascii file
+    141209    ksl    Reinstalled in my standard startup script so there was flexibility to read any ascii file
     '''
 
     try:

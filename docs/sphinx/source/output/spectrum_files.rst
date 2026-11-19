@@ -1,10 +1,10 @@
 Spectra Files
 #############
 
-Python is intended to produce simulated spectra.  These spectra are all ascii tables intended to be accessible with software packages such as astropy.
+SIROCCO is intended to produce simulated spectra.  These spectra are all ascii tables intended to be accessible with software packages such as astropy.
 
 All of the ascii begin with commented headers that contain all of the parameters of associated with a run,
-along with the date of the run and the specific version of Python used to make the run.
+along with the date of the run and the specific version of SIROCCO used to make the run.
 In principle, if one still has access to any of the spectra, one can reproduce the entire run again.
 
 Broad band spectra are created from the last ionization cycle. (More accurately the broad band spectra are written out at the end of each ionization cycle, so one the program is finished one has the 
@@ -18,16 +18,17 @@ The units in which the spectra are written out is also indicated in the header t
 
 For a model with root name *cv*, the following broadband spectra will be created:
 
-* **cv.spec_tot**
 * **cv.log_spec_tot**
 * **cv.spec_tot_wind**
 * **cv.log_spec_tot_wind**
+* **cv.spec**
+* **cv.log_spec**
 
 File types
 ==========
 
-.spec_tot
-  An ascii file that contains various spectra from the ionization-calculation phase of the program on a linear frequency scale.
+.log_spec_tot
+  An ascii file that contains various spectra from the ionization-calculation phase of the program on a log frequency scale.
   The first few lines of the file (omitting the header) are as follows:
 
   .. code::
@@ -40,38 +41,33 @@ File types
     2.628587e+14 11405.082  3.6711e+18          0 3.6711e+18          0 3.6711e+18          0 1.1528e+16
 
 
-The first two columns are fairly obvious. Lambda is in Angstroms. 
+The first column describes the frequency of a particular bin in :math:`Hz`. The frequency stated is placed on the left edge of the bin, i.e the smallest (minimum) frequency value within that bin range. 
+The second column is the wavelength in Angstroms converted from the frequency in the first column.
 
 The remainder indicate the luminosity, that is :math:`L_{\nu}` of the system for specific types of photons. The units are :math:`{\rm erg\: s}^{-1} {\rm Hz}^{-1}`. 
 
 The remaining columns are:
 
-* Created is the total spectrum of all of the photons paakets as created, that is before having been translated through the wind
-* WCreated is the spectrum of the photons that are created in the wind before translation
-* Emitted is the emergent spectrum after the photons have been translated through the wind
-* CenSrc is the emergent spectrum from photon bundles originating from the Star or BL, 
-* Disk is the emergent spectrum from photon bundles originating from the disk,
-* Wind is the emergent spectrum from photon bundles that have been reprocessed by the wind,
-* HitSurf represents photons that did not escape the system but ran into a boundary 
+* **Created** is the total spectrum of all of the photons paakets as created, that is before having been translated through the wind
+* **WCreated** is the spectrum of the photons that are created in the wind before translation
+* **Emitted** is the emergent spectrum after the photons have been translated through the wind
+* **CenSrc** is the emergent spectrum from photon bundles originating from the Star or BL, 
+* **Disk** is the emergent spectrum from photon bundles originating from the disk,
+* **Wind** is the emergent spectrum from photon bundles that have been reprocessed by the wind,
+* **HitSurf** represents photons that did not escape the system but ran into a boundary 
 
 
-.log_spec_tot
-  An ascii file which contains the same information as *.spec_tot*, but with a logarithmically space frequency intervals.
-  This gives better sampling of the SED in a lot of cases and is much better for plotting things such as the input spectrum.
-
-.spec_tot_wind
-  Identical to *.spec_tot* but just including photons that were generated in the wind or scattered by the wind
 
 .log_spec_tot_wind
-  A logarithmic version of *.spec_tot_wind*
-
+  Identical to *.log_spec_tot* but just including photons that were generated in the wind or scattered by the wind
 
 
 
 .spec
-  an ascii file that contains the final detailed spectra for the wavelengths of interest at a distance of **100 pc**.  The units for the detailed spectra are determined by the input parameter Spectrum.type.
+  an ascii file that contains the final detailed spectra for the wavelengths of interest at a distance of **100 pc** on a linear frequency scale.  
+  The units for the detailed spectra are determined by the input parameter Spectrum.type.
 
-  Photons bundles are generated in cycles in Python and the *.spec* file is actually written out at the end of each cycle
+  Photons bundles are generated in cycles in SIROCCO and the *.spec* file is actually written out at the end of each cycle
   as the program is running in the spectrum-generation phase of the program. So one can inspect the spectrum as it is building up.
 
   The beginning of the file (omitting the header) is as follows:
@@ -104,5 +100,13 @@ These data in the first set of columns do not reflect the angular dependence of 
 
 The remaining columns are the spectra at various inclination angles and binary phases.  The label A30P0.50 means the spectrum is viewed at an inclination angle of 30 degrees and at a phase of 0.5 -- for a binary system this is when the secondary was located behind the primary. 
 
+**An important note to the user:** Due to the nature of modelling with wavelength bounds on the SEDs, the edges (minimum and maximum wavelengths) of observers emergent spectra drop in flux artificially. This is expected behaviour and is not a bug. As a result, if one is interested with a certain spectral region or a particular line. Be sure to widen the pre-determined wavelength minimum and maximum bounds by 50 or so Angstroms extra. This will ensure that your region of interest is appropriately modelled.
+
 .log_spec
  Identical to the spectrum .spec file except with logarithmic intervals.  
+
+
+.. note::
+    Theree is no .spec_tot output spectrum.  The reason for this is that the wavelength/frequency range is so large in the tot spectrum that plots made 
+    on a linear scale do not represtent the spectrum well.  For the detailed spectra, which are over a more limited spectral range both types of 
+    spectra are produced.

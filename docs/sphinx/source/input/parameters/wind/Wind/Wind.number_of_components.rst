@@ -1,9 +1,9 @@
 Wind.number_of_components
 =========================
-While most simple description of a wind consist of a single region of space, Python can calculate
-radiative transfer through more complicated structres, where one region of space is described with one
+While most simple description of a wind consist of a single region of space, the user can calculate
+radiative transfer through more complicated structures, where one region of space is described with one
 prescription and another region of space with a second prescription. For example, one might want to place
-a disk atmoosphere between the disk and a wind.  This parameter describes the number of components (aka domains)
+a disk atmosphere between the disk and a wind.  This parameter describes the number of components (aka domains)
 of the wind.
 
 Type
@@ -13,7 +13,7 @@ Values
   Greater than 0
 
 File
-  `python.c <https://github.com/agnwinds/python/blob/master/source/python.c>`_
+  `sirocco.c <https://github.com/sirocco-rt/sirocco/blob/master/source/sirocco.c>`_
 
 
 Parent(s)

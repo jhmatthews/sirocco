@@ -1,44 +1,42 @@
 #!/usr/bin/env python 
-
 '''
-                    Space Telescope Science Institute
-
-Synopsis:  
-
-Execute a series of short python runs to test whether a version 
-of python is working.
+Execute a series of short python runs to test whether a version of python is working.
 
 
 Command line usage (if any):
 
-    usage: regression.py [-np 3 -pf_dir test -out_dir foo] version 
+    usage::
 
-    where 
+        regression.py [-np 3 -pf_dir test -out_dir foo] version
 
-        version         the executable of python
-        -np 3           the number of processors with which to run (default 3)
-        -pf_dir test    the directory containing all of the .pf files which will be run
-                        The defaults is $PYTHON/examples/regress.  One does not need
-                        to provide the full path name to the directory.  The routine doit
-                        first searches the current workind directory for the directory and then
-                        looks in $PYTHON/examples/
-        -out_dir foo    The directory (below the current working directory) where the 
-                        tests will run.  The defauld is constructed for the version
-                        and the data
+    where
 
-Description:  
+    version
+        the executable of python
+    -np 3
+        the number of processors with which to run (default 3)
+    -pf_dir test
+        the directory containing all of the .pf files which will be run
+        The defaults is $SIROCCO/examples/regress.  One does not need
+        to provide the full path name to the directory.  The routine doit
+        first searches the current workind directory for the directory and then
+        looks in $SIROCCO/examples/
+    -out_dir foo
+        The directory (below the current working directory) where the
+        tests will run.  The defauld is constructed for the version and the data
+
+
+Description:
 
     The basic process is as follows
 
     1.  Create a directory in which to work and intialize it
     2.  Copy all of the relevant .pf files to this directory
-    3.  Switch to the working directory and run all the models, performing
-        some basic checks 
+    3.  Switch to the working directory and run all the models, performing some basic checks
 
 Primary routines:
 
-    doit:       Internal routine which runs python on all of the pf files of interest.  Use
-                this if working in a python shell
+    doit:       Internal routine which runs python on all of the pf files of interest.  Use this if working in a python shell
     steer:      A routine to parse the command lineh
     check_one:  A routine which oversees checking of the runs
 
@@ -46,10 +44,10 @@ Notes:
 
     Regression here means to run a series of models. These routines do not compare the
     models to earlier runs
-                                       
+
 History:
 
-170903 ksl Coding begun
+    170903 ksl Coding begun
 
 '''
 
@@ -164,15 +162,12 @@ def doit(version='py',pf_dir='',out_dir='',np=3,outputfile='Summary.txt'):
     Notes:
 
         The routine looks for the input directory first as a subdirectory
-        of the directory from which regression is run, and then in $PYTHON/examples/
+        of the directory from which regression is run, and then in $SIROCCO/examples/
 
     History:
 
         170903  ksl Bagan work
-        170904  ksl Updated how routine looks for input directories
-                    and attempted to get a more readable stderr output
-                    Also, eliminted pf files with the extension .out.pf
-                    because these are mostlikely duplicates
+        170904  ksl Updated how routine looks for input directories and attempted to get a more readable stderr output Also, eliminted pf files with the extension .out.pf because these are mostlikely duplicates
 
     '''
 
@@ -188,18 +183,18 @@ def doit(version='py',pf_dir='',out_dir='',np=3,outputfile='Summary.txt'):
 
     print(date)
 
-    # Get the PYTHON environment variable
+    # Get the SIROCCO environment variable
 
-    PYTHON=os.environ['PYTHON']
-    print(PYTHON)
+    SIROCCO=os.environ['SIROCCO']
+    print(SIROCCO)
 
     if pf_dir=='':
-        pf_dir=PYTHON+'/examples/regress'
+        pf_dir=SIROCCO+'/examples/regress'
 		
     if os.path.isdir(pf_dir):
         pf_files=glob(pf_dir+'/*pf')
-    elif os.path('%s/%s' % (PYTHON,pf_dir)):
-        pf_files=glob('%s/%s' % (PYTHON,pf_dir))
+    elif os.path('%s/%s' % (SIROCCO,pf_dir)):
+        pf_files=glob('%s/%s' % (SIROCCO,pf_dir))
     else:
         print('Error: The pf directory %s does not appear to exist' % pf_dir)
         return

@@ -23,7 +23,7 @@
 
 #include "log.h"
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 /* the form of the structure which contains
  * the map from words to values
@@ -72,15 +72,19 @@ int xinit_choices = 0;
  * addional structures.
  *
 **********************************************************/
+
+
 int
 init_choices ()
 {
   /* Initialize the structure that contains all of the types of possible radiation types */
 
-  char *xchoices[] = { "bb", "uniform", "power", "cloudy", "brems", "none", "models",  "mod_bb", "mono" };
+  char *xchoices[] = { "bb", "uniform", "power", "cloudy", "brems", "none", "models", "mod_bb", "mono" };
   int xvals[] =
-    { SPECTYPE_BB, SPECTYPE_UNIFORM, SPECTYPE_POW, SPECTYPE_CL_TAB, SPECTYPE_BREM, SPECTYPE_NONE, SPECTYPE_MODEL, SPECTYPE_BB_FCOL, SPECTYPE_MONO};
-  int num_choices = 9;
+    { SPECTYPE_BB, SPECTYPE_UNIFORM, SPECTYPE_POW, SPECTYPE_CL_TAB, SPECTYPE_BREM, SPECTYPE_NONE, SPECTYPE_MODEL, SPECTYPE_BB_FCOL,
+    SPECTYPE_MONO
+  };
+  int num_choices = 9;          //Should match the length of xchoices and xvals above. must be <= MAX_RDPAR_CHOICES in sirocco.h 
 
   if (xinit_choices)
     return (0);
@@ -133,7 +137,7 @@ init_choices ()
  * disk.spec_type(bb,models)
  *
  * wheres there are other types of spectra, power, brems, that 
- * Python can produce.
+ * Sirocco can produce.
  *
  * This routine reads the quesion, and returns a string that
  * contains the numbers that correspond to the choices bb, and models
@@ -148,20 +152,14 @@ init_choices ()
  * structure.
  *
  * Init_choices must have been called, prior to get_choices.   
- * If not, Python exits with an error.
+ * If not, Sirocco exits with an error.
  * 
 **********************************************************/
 int
-get_choices (question, choices, qstruct)
-     char *question;
-     char *choices;
-     struct rdpar_choices *qstruct;
+get_choices (char *question, char *choices, struct rdpar_choices *qstruct)
 {
-  int num_choices = 8;
-
-
-  char cur_choices[10][LINELENGTH];
-  int cur_values[10] = { -999 };
+  char cur_choices[MAX_RDPAR_CHOICES][LINELENGTH];
+  int cur_values[MAX_RDPAR_CHOICES] = { -999 };
   int cur_num;
   char cur_string[LINELENGTH];
   char xcur_string[LINELENGTH];
@@ -207,17 +205,14 @@ get_choices (question, choices, qstruct)
   {
     if (dummy[i] == '(')
     {
-//OLD      nparen += 1;
       dummy[i] = ' ';
     }
     if (dummy[i] == ')')
     {
-      //OLD     nparen += 1;
       dummy[i] = ' ';
     }
     if (dummy[i] == ',')
     {
-//OLD      ncommas += 1;
       dummy[i] = ' ';
     }
   }
@@ -233,18 +228,12 @@ get_choices (question, choices, qstruct)
 
   for (i = 0; i < cur_num; i++)
   {
-    for (j = 0; j < num_choices; j++)
+    for (j = 0; j < qstruct->n; j++)
     {
       if (strncmp (cur_choices[i], qstruct->choices[j], strlen (qstruct->choices[j])) == 0)
       {
         cur_values[i] = qstruct->vals[j];
         break;
-      }
-      if (j == num_choices)
-      {
-        Error ("get_choices: No  match for %s\n", cur_choices[i]);
-        Error ("get_choices: This is a programming error\n");
-        exit (0);
       }
     }
   }

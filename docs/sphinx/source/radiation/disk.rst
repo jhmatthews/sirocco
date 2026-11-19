@@ -19,7 +19,7 @@ Colour Correction (mod_bb)
 =============================
 
 A simple form of the disc colour correction is available in the code, accessible via the 
-:ref:`Disk.rad_type_to_make_wind(bb,models,mod_bb)` keyword. The colour correction factor, :math:`f_{\rm col}`, is defined such that 
+:ref:`Disk.rad_type_to_make_wind` keyword. The colour correction factor, :math:`f_{\rm col}`, is defined such that
 
 .. math::
     B_\nu (\nu, T) \to f_{\rm col}^{-4} B_\nu (\nu, f_{\rm col} T). 

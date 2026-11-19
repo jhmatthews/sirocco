@@ -1,0 +1,8 @@
+name: Diag.turn_off_upweighting_of_simple_macro_atoms
+description: |
+  Multi-line description, must keep indentation.
+type: Boolean (yes/no)
+parent:
+  parameter: Condition e.g. greater than 0 or list e.g. [1, 2, 5]
+file: diag.c
+advanced: true

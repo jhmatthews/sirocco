@@ -11,7 +11,7 @@
  * many photons or photon bundles to create in various wavelength ranges,
  * and how to record the spectrum that pass through individual cells.
  *
- * Photons, or photon bundles, in Python are created with certain
+ * Photons, or photon bundles, in Sirocco are created with certain
  * frequency and carry a certain amount of energy.  Without
  * any kind of stratified sampling all of the photons would be created
  * with the same energy content and frequencies which sample the spectrum
@@ -19,7 +19,7 @@
  * photons bundles originating in, for example, a stellar photosphere
  * would equal that of the luminosity of the star.
  *
- * Normally, however, Python uses a form of stratified sampling to assure
+ * Normally, however, Sirocco uses a form of stratified sampling to assure
  * we have photons in various energy bands.  This is important, especially
  * for calculating ionization rates since one needs enough photons
  * above ionization edges to estimate the rate accurately.  In banding,
@@ -51,9 +51,9 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
-/* Actual structures are in python.h.  Here for reference only.
+/* Actual structures are in sirocco.h.  Here for reference only.
 
 #define NBANDS 10
 struct xbands
@@ -68,8 +68,6 @@ struct xbands
 	int nbands;           // Actual number of bands in use
 }
 xband;
-
-
 */
 
 
@@ -79,7 +77,7 @@ xband;
  * used to ensure that photons are created in sufficient numbers across
  * a large range of frequency during ionization cycles.
  *
- * Python uses a form of stratified sampling in an attempt to assure
+ * Sirocco uses a form of stratified sampling in an attempt to assure
  * that there are photon bundles at (high, generally) frequencies
  * in sufficient numbers for accurate ionization equilibria to be
  * calculated.
@@ -131,10 +129,7 @@ xband;
  **********************************************************/
 
 int
-bands_init (imode, band)
-     int imode;                 // A switch used for determining how the bands are to be populated
-     struct xbands *band;
-
+bands_init (int imode, struct xbands *band)
 {
   int mode;
   int nband;
@@ -581,6 +576,14 @@ bands_init (imode, band)
     Exit (0);
   }
 
+  if (geo.agn_ion_spectype == SPECTYPE_CL_TAB && mode != CLOUDY_TEST_BAND)
+  {
+    /* There's quite a lot of hardwired behaviour that means you need to use cloudy_test banding 
+       if you want a Cloudy broken power-law SED */
+    Error ("Using Cloudy broken-law: this only works with Photon_sampling.approach set to cloudy_test.\n");
+    Exit (0);
+  }
+
 
   Log ("bands_init: There are %d bands\n", band->nbands);
   for (nband = 0; nband < band->nbands; nband++)
@@ -592,24 +595,25 @@ bands_init (imode, band)
          band->f1[nband] * PLANCK / (BOLTZMANN * tmax), band->f2[nband] * PLANCK / (BOLTZMANN * tmax), band->min_fraction[nband]);
   }
 
-  /* Finally call the routine freqs_init which initializes the spectral bands 
-   * that are used to establish the coarse
-   * spectra in each cell for ionization calculations
-   */
+  check_appropriate_banding (band, mode);
 
-
-  for (nband = 0; nband < band->nbands; nband++)
-  {
-    geo.xfreq[nband] = band->f1[nband];
-  }
-  geo.nxfreq = band->nbands;
-  geo.xfreq[band->nbands] = band->f2[band->nbands - 1];
+  /* we used to call freqs init here, but now the photon generation bands are 
+     also tied to the ionization bands, see e.g. gh issue #1084 */
+  ion_bands_init (mode, band->f1[0], band->f2[band->nbands - 1], band);
 
   /* Now define the freqquency boundaries for the cell spectra */
-
   geo.cell_log_freq_min = log10 (band->f1[0]);
   geo.cell_log_freq_max = log10 (band->f2[band->nbands - 1]);
-  geo.cell_delta_lfreq = (geo.cell_log_freq_max - geo.cell_log_freq_min) / NBINS_IN_CELL_SPEC;
+  geo.cell_delta_lfreq = (geo.cell_log_freq_max - geo.cell_log_freq_min) / geo.nbins_in_cell_spec;
+
+  if (geo.cell_freq != NULL)
+    free (geo.cell_freq);
+  geo.cell_freq = calloc (geo.nbins_in_cell_spec + 1, sizeof (double));
+
+  for (ii = 0; ii <= geo.nbins_in_cell_spec; ii++)
+  {
+    geo.cell_freq[ii] = pow (10., (geo.cell_log_freq_min + ii * geo.cell_delta_lfreq));
+  }
 
   return (0);
 }
@@ -621,9 +625,11 @@ bands_init (imode, band)
 /** 
  * @brief      This is the routine where the frequency
  * 	binning for coarse spectra in each plasma cell is established
- *
+ * 
+ * @param [in] int  mode   The banding mode
  * @param [in] double  freqmin   The minimum frequency
  * @param [in] double  freqmax   The maximum frequency
+ * @param [in] struct xbands *band bands structure to check
  * @return     Always returns 0.  
  *
  * The frequency intervals are stored
@@ -656,14 +662,14 @@ bands_init (imode, band)
  * used to create photons.  
  *
  **********************************************************/
+#define MIN_N_IONBANDS 7
 
 int
-freqs_init (freqmin, freqmax)
-     double freqmin, freqmax;
+ion_bands_init (int mode, double freqmin, double freqmax, struct xbands *band)
 {
   int i, n, ngood, good[NXBANDS];
   double xfreq[NXBANDS];
-  int nxfreq;
+  int nxfreq, nband;
 
 
 /* At present set up a single energy band for 2 - 10 keV */
@@ -678,9 +684,8 @@ freqs_init (freqmin, freqmax)
  xfreq[6] = 10000 / HEV;
  xfreq[7] = 50000 / HEV;*/
 
-/* bands to match the cloudy table spectrum - needed to cover all frequencies to let induced compton work OK */
-
-  if (geo.agn_ion_spectype == SPECTYPE_CL_TAB)
+  /* bands to match the cloudy table spectrum - needed to cover all frequencies to let induced compton work OK */
+  if (mode == CLOUDY_TEST_BAND)
   {
     nxfreq = 3;
     xfreq[0] = 0.0001 / HEV;
@@ -688,8 +693,18 @@ freqs_init (freqmin, freqmax)
     xfreq[2] = geo.agn_cltab_hi / HEV;
     xfreq[3] = 100000000 / HEV;
   }
+  /* if we have a sufficient number of user-selected bands, then just use those band boundaries */
+  else if (band->nbands >= MIN_N_IONBANDS)
+  {
+    for (nband = 0; nband < band->nbands; nband++)
+    {
+      xfreq[nband] = band->f1[nband];
+    }
+    nxfreq = band->nbands;
+    xfreq[band->nbands] = band->f2[band->nbands - 1];
+  }
 
-/* bands try to deal with a blackbody spectrum */
+  /* if we don't have enough bands, then use the old hardwired bands */
   else
   {
     nxfreq = 10;
@@ -704,13 +719,13 @@ freqs_init (freqmin, freqmax)
     xfreq[8] = 3.162e18;
     xfreq[9] = 1.2e19;          //This is the highest frequency defined in our ionization data
     xfreq[10] = freqmax;
+
+    Log ("ion_bands_init: only %d generation bands, so adopting default 10 ionization bands from %8.4e Hz to %8.4e Hz\n", band->nbands,
+         freqmin, freqmax);
   }
 
-
-
-
-
-  Log ("freqs_init: Photons will be generated between %8.2f (%8.2e) and %8.2f (%8.2e)\n", freqmin * HEV, freqmin, freqmax * HEV, freqmax);
+  Log ("ion_bands_init: %d ionization bands from %8.2feV (%8.2eHz) to %8.2feV (%8.2eHz)\n", nxfreq, freqmin * HEV, freqmin, freqmax * HEV,
+       freqmax);
 
   ngood = 0;
   for (i = 0; i < nxfreq; i++)
@@ -731,7 +746,7 @@ freqs_init (freqmin, freqmax)
     }
   }
 
-  Log_silent ("freqs_init: Of %d starting intervals, %d will have photons\n", nxfreq, ngood);
+  Log_silent ("ion_bands_init: Of %d starting intervals, %d will have photons\n", nxfreq, ngood);
 
   n = 0;
   for (i = 0; i < nxfreq; i++)
@@ -744,10 +759,6 @@ freqs_init (freqmin, freqmax)
     }
   }
   geo.nxfreq = n;
-
-
-
-
 
   /* OK at this point we know at least some photons will be generated in each interval, but we still don't know
    * that the we are going to have a possibilty of photons throughout the first and last intervals.
@@ -764,10 +775,10 @@ freqs_init (freqmin, freqmax)
   }
 
 
-  Log_silent ("freqs_init: There were %d final intervals\n", geo.nxfreq);
+  Log_silent ("ion_bands_init: There were %d final intervals\n", geo.nxfreq);
   for (n = 0; n < geo.nxfreq; n++)
   {
-    Log_silent ("freqs_init: %8.2f (%8.2e)    %8.2f (%8.2e)  \n", geo.xfreq[n] * HEV, geo.xfreq[n], geo.xfreq[n + 1] * HEV,
+    Log_silent ("ion_bands_init: %8.2f (%8.2e)    %8.2f (%8.2e)  \n", geo.xfreq[n] * HEV, geo.xfreq[n], geo.xfreq[n + 1] * HEV,
                 geo.xfreq[n + 1]);
   }
 
@@ -775,4 +786,50 @@ freqs_init (freqmin, freqmax)
 
   return (0);
 
+}
+
+/**********************************************************/
+/** 
+ * @brief Helper routine for checking the photon generation
+ * banding is reasonable. At this stage fairly rudimentary
+ *
+ * @param [in] struct xbands *band bands structure to check
+ * @param [in] int  mode   The banding mode
+ *
+ * @details
+ * 
+ **********************************************************/
+
+void
+check_appropriate_banding (struct xbands *band, int mode)
+{
+  if (geo.system_type == SYSTEM_TYPE_AGN)
+  {
+    if (mode == CV_BAND)
+      Error ("Using CV banding for AGN system. Not recommended!\n");
+    else if (mode == YSO_BAND)
+      Error ("Using YSO banding for AGN system. Not recommended!\n");
+    else if (mode == T_STAR_BAND)
+      Error ("Using Tstar banding for AGN system. Not recommended!\n");
+    else if (band->nbands < 4)
+      Error ("You only have %d photon generation bands for AGN system. Not recommended!\n");
+  }
+  else if (geo.system_type == SYSTEM_TYPE_CV)
+  {
+    if (mode == YSO_BAND)
+      Error ("Using YSO banding for CV system. Not recommended!\n");
+    else if (band->nbands < 4)
+      Error ("You only have %d photon generation bands for CV system. Not recommended!\n");
+  }
+  else if (geo.system_type == SYSTEM_TYPE_BH)
+  {
+    if (mode == CV_BAND)
+      Error ("Using CV banding for BH system. Not recommended!\n");
+    else if (mode == YSO_BAND)
+      Error ("Using YSO banding for BH system. Not recommended!\n");
+    else if (mode == T_STAR_BAND)
+      Error ("Using Tstar banding for BH system. Not recommended!\n");
+    else if (band->nbands < 4)
+      Error ("You only have %d photon generation bands for BH system. Not recommended!\n");
+  }
 }

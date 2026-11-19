@@ -1,28 +1,26 @@
 #!/usr/bin/env python 
 
 '''
-                    Space Telescope Science Institute
-
-Synopsis:  
-
 Determine which files lack doxygen commments
 
 
 Command line usage (if any):
 
-    usage: dox_check.py filename
+    usage::
+
+        dox_check.py filename
 
 Description:  
 
 Primary routines:
 
-    doit
+    `doit`
 
 Notes:
                                        
 History:
 
-180404 ksl Coding begun
+    180404 ksl Coding begun
 
 '''
 

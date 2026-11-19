@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+Use this script to (mass) update either the name of a parameter or to update the value of a parameter.
 
-"""Use this script to (mass) update either the name of a parameter or to update
-the value of a parameter. The main purpose is to change multiple parameter files
-at once. As such, the script recursively searches for all parameter files from
+The main purpose is to change multiple parameter files at once.
+As such, the script recursively searches for all parameter files from
 the calling directory and updates them. Can also be used on a single parameter
-file or for parameter files with a given root."""
+file or for parameter files with a given root.
+"""
 
 
 import argparse as ap

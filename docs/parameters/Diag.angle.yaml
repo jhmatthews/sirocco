@@ -1,0 +1,10 @@
+name: Diag.angle
+description: |
+  0=pole
+type: Double
+unit: None
+values: Condition e.g. greater than 0 or list e.g. [1, 2, 5]
+parent:
+  parameter: Condition e.g. greater than 0 or list e.g. [1, 2, 5]
+file: diag.c
+advanced: true

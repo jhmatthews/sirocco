@@ -2,11 +2,8 @@
 
 
 '''
-                    UNLV
-
-Synopsis:  
-
 This routine carries out a series of thin shell python simulations.
+
 The wind mdot is set to produce a hydrogen density of 1e7 - to change
 this one had to change the wind_mdot parameter. The loop is carried out
 over the 2-10kev luminosity of the central source. A luminosity of

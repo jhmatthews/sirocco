@@ -1,13 +1,7 @@
 #!/usr/bin/env python 
 
 '''
-                    Space Telescope Science Institute
-
-Synopsis:  
-
-Create a .c file which initializes all of the externs
-in a .h file
-
+Create a .c file which initializes all of the externs in a .h file.
 
 Command line usage (if any):
 

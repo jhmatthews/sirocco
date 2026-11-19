@@ -1,0 +1,9 @@
+name: monochromatic.wavelength
+description: |
+  Multi-line description, must keep indentation.
+type: Double
+unit: None
+values: Condition e.g. greater than 0 or list e.g. [1, 2, 5]
+parent:
+  parameter: Condition e.g. greater than 0 or list e.g. [1, 2, 5]
+file: setup.c

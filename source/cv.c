@@ -6,9 +6,9 @@
  * @brief  Calculate parameter to use a default inputs of
  * models of catalclysmic variables
  *
- * These routines are largely independent of Python as a whole
+ * These routines are largely independent of Sirocco as a whole
  * and are only intended to intialize variables to be used in 
- * Python
+ * Sirocco
 ***********************************************************/
 
 #include	<math.h>
@@ -43,12 +43,11 @@
  *
 **********************************************************/
 double
-wdrad (m)
-     double m;
+wdrad (double m)
 {
   double r;
 
-  m /= MSOL;                   
+  m /= MSOL;
 
   r = pow ((m / 1.458), 4. / 3.);
   r = pow (1 - r, 0.47);
@@ -82,13 +81,12 @@ wdrad (m)
  * 
 **********************************************************/
 double
-diskrad (m1, m2, period)
-     double m1, m2, period;
+diskrad (double m1, double m2, double period)
 {
 
   double t2p, x, a;
   double rlobe1, q;
-  double roche2 ();
+  double roche2 (double q, double a);
 
   q = m2 / m1;
 
@@ -118,9 +116,7 @@ diskrad (m1, m2, period)
  *
 **********************************************************/
 double
-roche2 (q, a)
-     double q, a;
-
+roche2 (double q, double a)
 {
   double rouche;
   double x, y;
@@ -148,12 +144,11 @@ roche2 (q, a)
  *
  * ### Notes ###
  *
- * It is likely this code is duplicated elsewhere in Python
+ * It is likely this code is duplicated elsewhere in Sirocco
  * 
 **********************************************************/
 double
-logg (mass, rwd)
-     double mass, rwd;
+logg (double mass, double rwd)
 {
   double gravity;
   gravity = GRAV * mass / (rwd * rwd);

@@ -10,11 +10,11 @@
  *
  * There a various possibilities for how the
  * velocities could be entered.  One possibility
- * which is the way the zeus_python models work
+ * which is the way the zeus_sirocco models work
  * is for the velocity to be given in spherical
  * polar coordinates.
 
- * However, internally, python uses xyz coordinates
+ * However, internally, sirocco uses xyz coordinates
  * for velocities (as measured in the xz plane),
  * and that is the model followed, here.  This also
  * makes these routines similar to those used
@@ -31,7 +31,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -64,15 +64,13 @@
  * Guard cells are required at the outer boundaries. 
  *
  * This routine assumes the same conventions as used elsewhere
- * in Python, that is that the positions and velocities are given
+ * in Sirocco, that is that the positions and velocities are given
  * at the edges of a cell, but that rho is given at the center.
  *
  **********************************************************/
 
 int
-import_rtheta (ndom, filename)
-     int ndom;
-     char *filename;
+import_rtheta (int ndom, char *filename)
 {
   FILE *fptr;
   char line[LINELENGTH];
@@ -286,7 +284,7 @@ import_rtheta_setup_boundaries (int ndom)
        * Now we need to check if this cell is within the currently set boundaries.
        * If it is not, then we must update the boundaries to accommodate these
        * cells as they have been marked inwind, and hence should be inwind when
-       * read into Python.
+       * read into Sirocco.
        */
 
       if (x_outer_next > rho_max)
@@ -357,9 +355,7 @@ import_rtheta_setup_boundaries (int ndom)
  **********************************************************/
 
 int
-rtheta_make_grid_import (w, ndom)
-     WindPtr w;
-     int ndom;
+rtheta_make_grid_import (WindPtr w, int ndom)
 {
   int n, nn;
   double theta;
@@ -458,14 +454,12 @@ rtheta_make_grid_import (w, ndom)
  *  way to do this.  
  *  
  *  This is consistent with the way velocities
- *  are treated throughout Python.
+ *  are treated throughout Sirocco.
  *
  **********************************************************/
 
 double
-velocity_rtheta (ndom, x, v)
-     int ndom;
-     double *x, *v;
+velocity_rtheta (int ndom, double *x, double *v)
 {
   int j;
   int nn;
@@ -478,7 +472,7 @@ velocity_rtheta (ndom, x, v)
   {
     vv[j] = 0;
     for (nn = 0; nn < nelem; nn++)
-      vv[j] += wmain[zdom[ndom].nstart + nnn[nn]].v[j] * frac[nn];
+      vv[j] += wmain[nnn[nn]].v[j] * frac[nn];
   }
 
   speed = length (vv);
@@ -519,9 +513,7 @@ velocity_rtheta (ndom, x, v)
  **********************************************************/
 
 double
-rho_rtheta (ndom, x)
-     int ndom;
-     double *x;
+rho_rtheta (int ndom, double *x)
 {
   double rho = 0;
   double r, z;

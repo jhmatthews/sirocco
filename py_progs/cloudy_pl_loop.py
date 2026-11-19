@@ -1,9 +1,7 @@
 #!/usr/bin/env python -i
 
 '''
-                    UNLV
-
-Synopsis:  
+Carries out a series of Cloudy simulations for comparison with Python.
 
 This routine carries out a series of cloudy simulations for comparison with
 thin shell python simulations made in python_pl_loop, the partner code.

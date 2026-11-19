@@ -20,7 +20,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 const double MAXDIFF = VCHECK / VLIGHT;
 
@@ -76,13 +76,7 @@ const double MAXDIFF = VCHECK / VLIGHT;
 
 
 double
-calculate_ds (w, p, tau_scat, tau, nres, smax, istat)
-     WindPtr w;
-     PhotPtr p;
-     double tau_scat, *tau;
-     int *nres;
-     double smax;
-     int *istat;
+calculate_ds (WindPtr w, PhotPtr p, double tau_scat, double *tau, int *nres, double smax, int *istat)
 {
   int nion_for_resonance;
   int n, current_res_number, nstart, ndelt;
@@ -186,7 +180,7 @@ calculate_ds (w, p, tau_scat, tau, nres, smax, istat)
 
   if (fabs (dfreq) < EPSILON)
   {
-    Error ("calculate_ds: frequency along photon %d path's in cell %d (nplasma %d) is the same (dfreq=%8.2e)\n", p_now.np, one->nwind,
+    Debug ("calculate_ds: frequency along photon %d path's in cell %d (nplasma %d) is the same (dfreq=%8.2e)\n", p_now.np, one->nwind,
            one->nplasma, dfreq);
     limit_lines (freq_inner, freq_outer);
     nstart = nline_min;
@@ -209,7 +203,7 @@ calculate_ds (w, p, tau_scat, tau, nres, smax, istat)
    * electron scattering is always treated as a scattering event.
    */
 
-  kap_es = klein_nishina (mean_freq) * xplasma->ne * zdom[ndom].fill;
+  kap_es = klein_nishina (mean_freq) * xplasma->state.ne * zdom[ndom].fill;
 
   /* If in macro-atom mode, calculate the bf and ff opacities, because in
    * macro-atom mode everything including bf is calculated as a scattering
@@ -425,14 +419,14 @@ calculate_ds (w, p, tau_scat, tau, nres, smax, istat)
  *
  *  * -1 implies electron scattering
  *  * -2 implies free-free
- *  * 0 or greater implies a specific photionization process was responsible (and 
- *  also that the program was operating in macro-atom mode.
+ *  * Greater that NLINES implies a specific photionization process was responsible  
  *
  * @details
  * This routine is called to determine which of several continuum proceseses
  * cause a photon to be scattered or absorbed.  In addition to electron scattering
  * and free-free absorption, the routine can identify which photoionization process
- * is implicated.
+ * is implicated assuming we are in macro-atom mode, when photoionization is considred
+ * as a scattering process..
  *
  * ### Notes ###
  *
@@ -443,17 +437,19 @@ calculate_ds (w, p, tau_scat, tau, nres, smax, istat)
  * which of the processes was responsible.  Data for the opacity due to
  * photonionization is passed remotely via the PlasmaPtr.
  *
- * In a program running in the two level approximation, only electron scattering
- * and ff and bf are treated as absorption processes.  In macro atom, ff and
- * photoionization are treated as a scattering 
- * processes.
+ * In a program running in the two level approximation, electron scattering
+ * and ff are treated as scattering processes; bf is treated as absorption processes
+ * and so in that case, the routine chooses between es and ff scatering.  
+ * In macro atom, ff and photoionization are treated as a scattering 
+ * processes, so any one of these can be returned
+ *
+ * In order to avoid confusion with bb processes, the bf option returns
+ * a value that is larger than NLINES.
  *
  **********************************************************/
 
 int
-select_continuum_scattering_process (kap_cont, kap_es, kap_ff, xplasma)
-     double kap_cont, kap_es, kap_ff;
-     PlasmaPtr xplasma;
+select_continuum_scattering_process (double kap_cont, double kap_es, double kap_ff, PlasmaPtr xplasma)
 {
   int nres;
   double threshold;
@@ -494,7 +490,7 @@ select_continuum_scattering_process (kap_cont, kap_es, kap_ff, xplasma)
       ncont++;
     }
     /* When it gets here know that excitation is in photoionisation labelled by ncont */
-    nres = NLINES + 1 + xplasma->kbf_use[ncont - 1];    //modified SS Nov 04
+    nres = NLINES + 1 + xplasma->state.kbf_use[ncont - 1];      //modified SS Nov 04
   }
   return (nres);
 }
@@ -514,7 +510,7 @@ select_continuum_scattering_process (kap_cont, kap_es, kap_ff, xplasma)
  * @details
  *
  * The routine calculates the bf opacity in the CMF.  It populates the external
- * array kappa_bf (in python.h), which stores kappa for each bf process.
+ * array kappa_bf (in sirocco.h), which stores kappa for each bf process.
  *
  * ### Notes ###
  * The routine allows for clumping, reducing kappa_bf by the filling
@@ -524,12 +520,7 @@ select_continuum_scattering_process (kap_cont, kap_es, kap_ff, xplasma)
  **********************************************************/
 
 double
-kappa_bf (xplasma, freq, macro_all)
-     PlasmaPtr xplasma;
-     double freq;
-     int macro_all;
-
-
+kappa_bf (PlasmaPtr xplasma, double freq, int macro_all)
 {
   double kap_bf_tot;
   double ft;
@@ -546,9 +537,9 @@ kappa_bf (xplasma, freq, macro_all)
 
   ndom = wmain[xplasma->nwind].ndom;
 
-  for (nn = 0; nn < xplasma->kbf_nuse; nn++)    // Loop over photoionisation processes.
+  for (nn = 0; nn < xplasma->state.kbf_nuse; nn++)      // Loop over photoionisation processes.
   {
-    n = xplasma->kbf_use[nn];
+    n = xplasma->state.kbf_use[nn];
     ft = phot_top[n].freq[0];   //This is the edge frequency (SS)
 
     kap_bf[nn] = 0.0;
@@ -586,10 +577,10 @@ kappa_bf (xplasma, freq, macro_all)
  * ion is so low it will not contribute.
  *
  * For each cell, the routine determines what bf transitons are important
- * and stores them in one->kbf_use[n].
+ * and stores them in one->state.kbf_use[n].
  *
  * The total number of such transitions
- * is given in one->kbf_nuse.
+ * is given in one->state.kbf_nuse.
  *
  * @details
  *
@@ -613,10 +604,7 @@ kappa_bf (xplasma, freq, macro_all)
  **********************************************************/
 
 int
-kbf_need (freq_min, freq_max)
-     double freq_min, freq_max;
-
-
+kbf_need (double freq_min, double freq_max)
 {
   int nconf;
   double density;
@@ -646,7 +634,7 @@ kbf_need (freq_min, freq_max)
 
         if (ion[nion].phot_info == 0)   // vfky
         {
-          density = xplasma->density[nion];
+          density = xplasma->state.density[nion];
         }
         else
         {
@@ -662,18 +650,16 @@ kbf_need (freq_min, freq_max)
         }
 
         tau_test = phot_top[n].x[0] * density * SMAX_FRAC * length (one->xcen);
-
-
-        if (tau_test > 1.e-6 || phot_top[n].macro_info == TRUE)
+        if (tau_test > 1.e-6 || phot_top[n].macro_info == TRUE || n == ion[nion].ntop_ground || ion[nion].phot_info == 0)
         {
           /* Store the bf transition and increment nuse */
-          xplasma->kbf_use[nuse] = n;
+          xplasma->state.kbf_use[nuse] = n;
           nuse += 1;
         }
       }
 
     }
-    xplasma->kbf_nuse = nuse;
+    xplasma->state.kbf_nuse = nuse;
   }
 
 
@@ -686,14 +672,16 @@ int sobolev_error_counter = 0;
  * @brief      calculates tau in the sobolev approximation for a resonance, given the
  * conditions in the wind and the direction of the photon.
  *
- * It does not modify any of the variables that are passed to it, including for example
- * the photon.
+ * This routine does not modify any shared plasma state.  When a density
+ * override is needed (den_ion >= 0 or forced recalculation), the desired
+ * density is passed to two_level_atom via its density_override parameter
+ * rather than temporarily modifying the shared state.density array.
  *
  * @param [in] WindPtr  one   A single wind cell
  * @param [in] double  x[]   A position
  * @param [in] double  den_ion   The density of the ion.  If less than 0, the routine calculates
- * the density at x
- * @param [in] struct lines *  lptr   A pointer to a particular ion
+ * the density at x using get_ion_density
+ * @param [in] struct lines *  lptr   A pointer to a particular line transition
  * @param [in] double  dvds   the velocity gradient in the direction of travel of the photon
  * @return     The optical depth associated with a transition
  *
@@ -709,17 +697,11 @@ int sobolev_error_counter = 0;
  *
  **********************************************************/
 double
-sobolev (one, x, den_ion, lptr, dvds)
-     WindPtr one;
-     double x[];
-     double den_ion;
-     struct lines *lptr;
-     double dvds;
+sobolev (WindPtr one, double x[], double den_ion, struct lines *lptr, double dvds)
 {
   double tau, xden_ion, tau_x_dvds, levden_upper;
   double d1, d2;
   int nion;
-  double d_hold;
   int nplasma;
   int ndom;
   PlasmaPtr xplasma;
@@ -730,7 +712,7 @@ sobolev (one, x, den_ion, lptr, dvds)
     Error ("sobelev: Asking for tau for a cell that is not in wind. windcell %d inwind %d\n", one->nwind, one->inwind);
   }
   xplasma = &plasmamain[nplasma];
-  ndom = wmain[plasmamain->nwind].ndom;
+  ndom = wmain[xplasma->nwind].ndom;
   nion = lptr->nion;
 
   levden_upper = 0;
@@ -747,7 +729,7 @@ sobolev (one, x, den_ion, lptr, dvds)
     // macro atom case SS
     d1 = den_config (xplasma, lptr->nconfigl);
     d2 = den_config (xplasma, lptr->nconfigu);
-    levden_upper = xplasma->levden[xconfig[lptr->nconfigu].nden];
+    levden_upper = xplasma->state.levden[xconfig[lptr->nconfigu].nden];
   }
 
   else
@@ -757,19 +739,21 @@ ion which was done above in calculate ds.  It was made necessary by a change in 
 calls to two_level atom
 */
 
-    d_hold = xplasma->density[nion];    // Store the density of this ion in the cell
-
+    /* Use a density override to avoid modifying the shared state.density
+     * array, which would create a race condition with MPI shared memory.
+     * The density override is passed to two_level_atom so it uses this
+     * value instead of reading from xplasma->state.density[nion]. */
+    double den_override;
     if (den_ion < 0)
     {
-      xplasma->density[nion] = get_ion_density (ndom, x, lptr->nion);   // Forced calculation of density
+      den_override = get_ion_density (ndom, x, lptr->nion);     // Forced calculation of density
     }
     else
     {
-      xplasma->density[nion] = den_ion; // Put den_ion into the density array
+      den_override = den_ion;   // Use the interpolated density
     }
-    two_level_atom (lptr, xplasma, &d1, &d2);   // Calculate d1 & d2
-    xplasma->density[nion] = d_hold;    // Restore w
-    levden_upper = d2 / xplasma->density[nion];
+    two_level_atom (lptr, xplasma, &d1, &d2, den_override);     // Calculate d1 & d2
+    levden_upper = d2 / xplasma->state.density[nion];
   }
 
 /* At this point d1 and d2 are known for all of the various ways sobolev can be called, and whether
@@ -882,10 +866,7 @@ calls to two_level atom
  **********************************************************/
 
 int
-scatter (p, nres, nnscat)
-     PhotPtr p;
-     int *nres;
-     int *nnscat;
+scatter (PhotPtr p, int *nres, int *nnscat)
 {
   double z_prime[3];
   int which_out;
@@ -895,7 +876,7 @@ scatter (p, nres, nnscat)
   WindPtr one;
   double prob_kpkt, kpkt_choice, freq_comoving;
   double gamma_twiddle, gamma_twiddle_e, stim_fact;
-  int m, llvl, ulvl;
+  int m, llvl;
   PlasmaPtr xplasma;
   MacroPtr mplasma;
   int ndom;
@@ -996,7 +977,6 @@ scatter (p, nres, nnscat)
          */
 
         llvl = phot_top[*nres - NLINES - 1].nlev;       //lower level
-        ulvl = phot_top[*nres - NLINES - 1].uplev;      //upper level
 
         for (m = 0; m < xconfig[llvl].n_bfu_jump; m++)
         {
@@ -1017,32 +997,32 @@ scatter (p, nres, nnscat)
 
         /* Need to compute the factor needed for the stimulated term. */
 
-        stim_fact = den_config (xplasma, ulvl) / den_config (xplasma, llvl) / xplasma->ne;
+        /* stimulated recombination per lower-level ion is alpha_st * stim_fact, as in matom.c */
+        stim_fact = stim_recomb_factor (xplasma, &phot_top[*nres - NLINES - 1]);
 
         gamma_twiddle =
-          mplasma->gamma_old[xconfig[llvl].bfu_indx_first + m] - (mplasma->alpha_st_old[xconfig[llvl].bfu_indx_first + m] * stim_fact);
+          mplasma->state.gamma_old[xconfig[llvl].bfu_indx_first + m] -
+          (mplasma->state.alpha_st_old[xconfig[llvl].bfu_indx_first + m] * stim_fact);
         gamma_twiddle_e =
-          mplasma->gamma_e_old[xconfig[llvl].bfu_indx_first + m] - (mplasma->alpha_st_e_old[xconfig[llvl].bfu_indx_first + m] * stim_fact);
+          mplasma->state.gamma_e_old[xconfig[llvl].bfu_indx_first + m] -
+          (mplasma->state.alpha_st_e_old[xconfig[llvl].bfu_indx_first + m] * stim_fact);
 
-        /* Both gamma_twiddles must be greater that zero if this is going to work. If they
-           are zero then it's probably because this is the first iteration and so the've not
-           been computed yet. For that first iteration k-packets will be ignored. If the
-           gamma_twiddles are negative then something has gone wrong.
-         */
+        /* Both gamma_twiddles are zero in the first iteration, before they have been computed; then
+           k-packets are ignored. Stimulated recombination can exceed photoionization in unconverged or
+           noisy cells (see check_stimulated_recomb); as in matom.c and macro_accelerate.c, a negative net
+           rate counts as zero. */
 
         prob_kpkt = 0.0;        // initialise value
-        if (gamma_twiddle > 0 && gamma_twiddle_e > 0)
+        if (gamma_twiddle < 0 || gamma_twiddle_e < 0)
         {
-          prob_kpkt = 1. - gamma_twiddle / gamma_twiddle_e;
+          /* counted rather than logged per photon, which can exceed max_errors in dense cells; reported in wind_update */
+          nscat_neg_net_photoion++;
+          gamma_twiddle = fmax (gamma_twiddle, 0.);
+          gamma_twiddle_e = fmax (gamma_twiddle_e, 0.);
         }
-        else if (gamma_twiddle == 0 && gamma_twiddle_e == 0)
+        if (gamma_twiddle_e > 0)
         {
-          prob_kpkt = 0.;
-        }
-        else
-        {
-          Error ("scatter (resonate.c): a gamma_twiddle is negative. Abort.\n");
-          Exit (0);
+          prob_kpkt = fmin (fmax (1. - gamma_twiddle / gamma_twiddle_e, 0.), 1.);
         }
 
         /* Having got here we have calculated the probability of a k-packet
@@ -1089,7 +1069,7 @@ scatter (p, nres, nnscat)
 
         if (*nres - NLINES - 1 >= 0)
         {
-          xplasma->n_bf_in[*nres - NLINES - 1] += 1;
+          xplasma->derived.n_bf_in[*nres - NLINES - 1] += 1;
 
 
           //  XXXXXXXXXXXXXXXXXX  117 had and inordinate
@@ -1125,7 +1105,7 @@ scatter (p, nres, nnscat)
              to allow for the portion of the energy that went into the ionization pool before
              generating a kpkt.  In this approach we always generate a kpkt */
 
-          xplasma->bf_simple_ionpool_in += p->w * (1 - prob_kpkt);
+          xplasma->derived.bf_simple_ionpool_in += p->w * (1 - prob_kpkt);
           p->w *= prob_kpkt;
 
           macro_gov (p, nres, 2, &which_out);   //routine to deal with kpkt
@@ -1150,7 +1130,7 @@ scatter (p, nres, nnscat)
 
         if (*nres - NLINES - 1 >= 0)
         {
-          xplasma->n_bf_out[*nres - NLINES - 1] += 1;
+          xplasma->derived.n_bf_out[*nres - NLINES - 1] += 1;
         }
       }
       else
@@ -1244,7 +1224,7 @@ if fixed.
       dp_cyl[2] *= (-1);
     for (i = 0; i < 3; i++)
     {
-      xplasma->dmo_dt[i] += dp_cyl[i];
+      xplasma->derived.dmo_dt[i] += dp_cyl[i];
     }
 
   }

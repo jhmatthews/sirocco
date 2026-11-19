@@ -1,0 +1,15 @@
+name: Diag.partial_cells
+description: |
+  Multi-line description, must keep indentation.
+type: Enumerator
+values:
+  extend_full_cells: |
+    Multi-line description, must keep indentation.
+  include: |
+    Multi-line description, must keep indentation.
+  zero_densities: |
+    Multi-line description, must keep indentation.
+parent:
+  parameter: Condition e.g. greater than 0 or list e.g. [1, 2, 5]
+file: diag.c
+advanced: true

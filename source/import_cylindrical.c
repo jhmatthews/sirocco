@@ -15,7 +15,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -44,7 +44,7 @@
  * * inwind indicates whether this cell is in the wind
  *
  * We assume that all of the variables are defined as they
- * are in the python structues, that is that positions and
+ * are in the sirocco structues, that is that positions and
  * velocities are defined at the corners of cells but that
  * rho refers to the cell center.
  *
@@ -57,9 +57,7 @@
  **********************************************************/
 
 int
-import_cylindrical (ndom, filename)
-     int ndom;
-     char *filename;
+import_cylindrical (int ndom, char *filename)
 {
   FILE *fptr;
   char line[LINELENGTH];
@@ -352,9 +350,7 @@ import_cylindrical_setup_boundaries (int ndom)
  **********************************************************/
 
 int
-cylindrical_make_grid_import (w, ndom)
-     WindPtr w;
-     int ndom;
+cylindrical_make_grid_import (WindPtr w, int ndom)
 {
   int n;
   int nn;
@@ -420,14 +416,12 @@ cylindrical_make_grid_import (w, ndom)
  * ### Notes ###
  * In practice this routine is only used to initalize v in
  * wind structure.  This is consistent with the way velocities
- * are treated throughout Python.
+ * are treated throughout Sirocco.
  *
  **********************************************************/
 
 double
-velocity_cylindrical (ndom, x, v)
-     int ndom;
-     double *x, *v;
+velocity_cylindrical (int ndom, double *x, double *v)
 {
   int j;
   int nn;
@@ -440,7 +434,7 @@ velocity_cylindrical (ndom, x, v)
   {
     vv[j] = 0;
     for (nn = 0; nn < nelem; nn++)
-      vv[j] += wmain[zdom[ndom].nstart + nnn[nn]].v[j] * frac[nn];
+      vv[j] += wmain[nnn[nn]].v[j] * frac[nn];
   }
 
   speed = length (vv);
@@ -482,9 +476,7 @@ velocity_cylindrical (ndom, x, v)
  **********************************************************/
 
 double
-rho_cylindrical (ndom, x)
-     int ndom;
-     double *x;
+rho_cylindrical (int ndom, double *x)
 {
   double rho = 0;
   double r, z;

@@ -1,13 +1,6 @@
 #!/usr/bin/env python 
 '''
-	University of Southampton -- JM -- 30 September 2013
-
-				classes.py
-
-Synopsis:
-	classes
-    
-    This is a set of classes for use with the radiative transfer code python
+This is a set of classes for use with the radiative transfer code python
 
 Usage:
 	

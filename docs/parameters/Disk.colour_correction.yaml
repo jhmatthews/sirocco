@@ -1,0 +1,8 @@
+name: Disk.colour_correction
+description: |
+  Done12
+type: Enumerator
+values: Condition e.g. greater than 0 or list e.g. [1, 2, 5]
+parent:
+  parameter: Condition e.g. greater than 0 or list e.g. [1, 2, 5]
+file: setup_disk.c

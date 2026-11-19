@@ -1,6 +1,6 @@
 Wind_heating.kpacket_frac
 =========================
-Multi-line description, must keep indentation.
+The user can set the fraction of additional k-packets (energy into the thermal pool) added during the macro-atom calculations. This subsequently reduces the number of photons emitted at each cycle. The default fraction is set to 0.1.
 
 Type
   Double
@@ -9,10 +9,10 @@ Unit
   None
 
 Values
-  Condition e.g. greater than 0 or list e.g. [1, 2, 5]
+  Greater than 0
 
 File
-  `setup.c <https://github.com/agnwinds/python/blob/master/source/setup.c>`_
+  `setup.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup.c>`_
 
 
 Parent(s)

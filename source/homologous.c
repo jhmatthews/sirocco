@@ -4,7 +4,7 @@
  * @author ksl
  * @date   January, 2018
  *
- * @brief  Routines describing a homologous flow in Python.
+ * @brief  Routines describing a homologous flow in Sirocco.
  *
  * A homlogous flow is a flow in which the velocity is proportional
  * to the distance from the central source.  In this case, the
@@ -30,7 +30,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 
@@ -50,8 +50,7 @@
  **********************************************************/
 
 int
-get_homologous_params (ndom)
-     int ndom;
+get_homologous_params (int ndom)
 {
   DomainPtr one_dom;
   one_dom = &zdom[ndom];
@@ -136,9 +135,7 @@ get_homologous_params (ndom)
  **********************************************************/
 
 double
-homologous_velocity (ndom, x, v)
-     int ndom;
-     double x[], v[];
+homologous_velocity (int ndom, double x[], double v[])
 {
   double r, speed;
 
@@ -185,11 +182,9 @@ homologous_velocity (ndom, x, v)
  **********************************************************/
 
 double
-homologous_rho (ndom, x)
-     int ndom;
-     double x[];
+homologous_rho (int ndom, double x[])
 {
-  double r, rho, length ();
+  double r, rho;
   DomainPtr one_dom;
   one_dom = &zdom[ndom];
 

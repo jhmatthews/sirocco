@@ -1,6 +1,7 @@
 Central_object.blackbody_temp
 =============================
-If the AGN/BH is radiating as a black body, what temperature should it radiate at?
+
+Setting the temperature of the AGN/BH's black body radiation. This is only specified if :ref:`Central_object.rad_type_to_make_wind` is set to ``bb`` and :ref:`Central_object.radiation` is set to ``yes``. 
 
 Type
   Double
@@ -12,7 +13,7 @@ Values
   Greater than 0
 
 File
-  `setup_star_bh.c <https://github.com/agnwinds/python/blob/master/source/setup_star_bh.c>`_
+  `setup_star_bh.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup_star_bh.c>`_
 
 
 Parent(s)

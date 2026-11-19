@@ -14,7 +14,7 @@
 #include <errno.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 char delay_dump_file[LINELENGTH];
 int delay_dump_bank_size = 65535, delay_dump_bank_curr = 0;
@@ -46,7 +46,7 @@ delay_to_observer (PhotPtr pp)
   observer.lmn[0] = pp->lmn[0];
   observer.lmn[1] = pp->lmn[1];
   observer.lmn[2] = pp->lmn[2];
-  return (pp->path + ds_to_plane (&observer, pp));
+  return (pp->path + ds_to_plane (&observer, pp, FALSE));
 }
 
 /**********************************************************/
@@ -105,7 +105,7 @@ delay_dump_prep (int restart_stat)
     }
     else
     {                           // Construct and write a header string for the output file
-      fprintf (fptr, "# Python Version %s\n", VERSION);
+      fprintf (fptr, "# Sirocco Version %s\n", VERSION);
       get_time (s_time);
       fprintf (fptr, "# Date	%s\n#  \n", s_time);
       fprintf (fptr, "#\n# %-12s %-12s %-12s %-12s %-12s %-12s %-12s %-12s %-12s %-12s %-12s %-12s %-12s %-12s\n", "Np", "Freq.", "Lambda",
@@ -162,8 +162,7 @@ delay_dump_finish (void)
 int
 delay_dump_combine (int i_ranks)
 {
-  FILE *fopen ();               //, *f_base, *f_cat;
-  char c_call[LINELENGTH];      //, c_cat[LINELENGTH], c_char;
+  char c_call[LINELENGTH];
   //int i;
 /*
 	f_base = fopen(delay_dump_file, 'a');
@@ -215,7 +214,7 @@ delay_dump_combine (int i_ranks)
 int
 delay_dump (PhotPtr p, int np)
 {
-  FILE *fopen (), *fptr;
+  FILE *fptr;
   int nphot, mscat, mtopbot, i, subzero;
   double delay;
   subzero = 0;

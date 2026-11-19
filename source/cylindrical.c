@@ -14,7 +14,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -47,11 +47,7 @@
  **********************************************************/
 
 double
-cylind_ds_in_cell (ndom, p)
-     int ndom;
-     PhotPtr p;
-
-
+cylind_ds_in_cell (int ndom, PhotPtr p)
 {
 
   int n, ix, iz, iroot;
@@ -126,7 +122,7 @@ cylind_ds_in_cell (ndom, p)
  * @brief      defines the cells in a cylindrical grid
  *
  * @param [in] int  ndom   The domain number of interest
- * @param [in] WindPtr  w   The structure which defines the wind in Python
+ * @param [in] WindPtr  w   The structure which defines the wind in Sirocco
  * @return   Always returns 0
  *
  * @details
@@ -262,9 +258,7 @@ cylind_make_grid (int ndom, WindPtr w)
  **********************************************************/
 
 int
-cylind_wind_complete (ndom, w)
-     int ndom;
-     WindPtr w;
+cylind_wind_complete (int ndom, WindPtr w)
 {
   int i, j;
   int nstart, mdim, ndim;
@@ -291,8 +285,9 @@ cylind_wind_complete (ndom, w)
     one_dom->wind_midz[j] = 0.5 * (w[nstart + j].x[2] + w[nstart + j + 1].x[2]);
 
   /* Add something plausible for the edges */
-  one_dom->wind_midx[one_dom->ndim - 1] = 2. * one_dom->wind_x[nstart + ndim - 1] - one_dom->wind_midx[nstart + ndim - 2];
-  one_dom->wind_midz[one_dom->mdim - 1] = 2. * one_dom->wind_z[nstart + mdim - 1] - one_dom->wind_midz[nstart + mdim - 2];
+  one_dom->wind_midx[one_dom->ndim - 1] = 2. * one_dom->wind_x[ndim - 1] - one_dom->wind_midx[ndim - 2];
+  one_dom->wind_midz[one_dom->mdim - 1] = 2. * one_dom->wind_z[mdim - 1] - one_dom->wind_midz[mdim - 2];
+  set_domain_outer_edges (ndom);
 
   return (0);
 }
@@ -385,7 +380,7 @@ cylind_cell_volume (WindPtr w)
       {
         for (z = zmin + dz / 2; z < zmax; z += dz)
         {
-          denom += r * r;
+          denom += r;           /* the volume element is 2 pi r dr dz */
           kk++;
           x[0] = r;
           x[1] = 0;
@@ -393,7 +388,7 @@ cylind_cell_volume (WindPtr w)
 
           if (where_in_wind (x, &dom_check) == W_ALL_INWIND && dom_check == ndom)
           {
-            num += r * r;       /* 0 implies in wind */
+            num += r;
             jj++;
           }
         }
@@ -459,9 +454,7 @@ cylind_cell_volume (WindPtr w)
  **********************************************************/
 
 int
-cylind_where_in_grid (ndom, x)
-     int ndom;
-     double x[];
+cylind_where_in_grid (int ndom, double x[])
 {
   int i, j, n;
   double z;
@@ -529,9 +522,7 @@ cylind_where_in_grid (ndom, x)
  **********************************************************/
 
 int
-cylind_get_random_location (n, x)
-     int n;
-     double x[];
+cylind_get_random_location (int n, double x[])
 {
   int i, j;
   int inwind;
@@ -617,9 +608,7 @@ cylind_get_random_location (n, x)
  **********************************************************/
 
 int
-cylind_extend_density (ndom, w)
-     int ndom;
-     WindPtr w;
+cylind_extend_density (int ndom, WindPtr w)
 {
 
   int i, j, n, m;
@@ -675,7 +664,7 @@ Note that it simply calls where_in_wind multiple times.
 
 History:
   11Aug	ksl	70b - Modified to incoporate torus
-  		See python.h for more complete explanation
+  		See sirocco.h for more complete explanation
 		of how PART and ALL are related
   15sep ksl	Modified to ask the more refined question of
   		whether this cell is in the wind of the
@@ -714,8 +703,7 @@ History:
  **********************************************************/
 
 int
-cylind_is_cell_in_wind (n)
-     int n;                     // cell number
+cylind_is_cell_in_wind (int n)
 {
   int i, j;
   double r, z, dr, dz;

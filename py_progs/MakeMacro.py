@@ -1,24 +1,28 @@
 #!/usr/bin/env python
 
 """
-                    Space Telescope Science Institute
+Uses Chianti and Topbase to create the base for macro-atom models.
 
-Synopsis:  Use Chianti and Topbase to create a set of data files that 
+Use Chianti and Topbase to create a set of data files that
 can be used as the basis for creating macro-atom models of various ions
 
 
 Command line usage (if any):
 
-    usage: MakeHMacro.py ion_name nlevels [True] 
+    usage::
+
+        MakeHMacro.py ion_name nlevels [True]
 
     where the ion name is in Chianti notation, e.g c_4 for C IV, fe_25 for Fe XXV and
     nlevels is the number of energy levels to include in the model
 
     and the optional True implies this is the top ion to include.  
     
-    *Changes as per 27/08/20
+    * Changes as per 27/08/20
     
-    usage (in terminal window): MakeMacro.py ion_name nlevels True/False
+    usage (in terminal window)::
+
+        MakeMacro.py ion_name nlevels True/False
 
 Description:  
 
@@ -48,9 +52,11 @@ Notes:
                                        
 History:
 
-191227 ksl Coding begun
-221227 ksl Relooked at routine, verified it seemed to work and cleaned up some of the comments.
-           The functionality is unchanged.
+191227 ksl
+    Coding begun
+221227 ksl
+    Relooked at routine, verified it seemed to work and cleaned up some of the comments.
+    The functionality is unchanged.
 
 """
 
@@ -58,7 +64,11 @@ import sys
 from astropy.io import ascii
 import numpy
 import os
-import ChiantiPy.core as ch
+
+# Do not call this when we're on ReadTheDocs
+if not os.environ.get('READTHEDOCS'):
+    import ChiantiPy.core as ch
+
 import numpy as np
 from astropy.table import Table, join
 from astropy.io import ascii
@@ -102,10 +112,15 @@ def get_levels(ion="h_1", nlevels=10):
 
     The excitation energy has to be conistent across ions
     
-    Python can read the astropy table for levels directly,
+    Sirocco can read the astropy table for levels directly,
     so normally one would write this to a file
     """
-    x = ch.ion(ion, temperature=1e5)
+    print('get_levels: Getting levels for %s and nlevels %s' % (ion,nlevels))
+    try:
+        x = ch.ion(ion, temperature=1e5)
+    except:
+        print('Error: get_levels: failed for %s' % ion)
+        raise IOError
     First_Ion_Pot = x.Ip
 
     # Find the ionization potential of lower ionization
@@ -273,8 +288,41 @@ def get_levels(ion="h_1", nlevels=10):
                 xxtab["ilv"][i] = n
             i += 1
 
+    print('The number of macro levels is %d' % (len(xxtab)))
     return xxtab
 
+
+
+MELEC=9.10956e-28
+C=2.997925e10
+ECHARGE=4.8035e-10 
+def get_f(one_line):
+    '''
+    Calculate an absorption oscillator strength
+    from an Einstein A
+    '''
+    # print(one_line)
+    
+    factor=MELEC*C/(8.* np.pi*ECHARGE**2)
+    xwave=(one_line['Wave']*1e-8)**2
+    a=one_line['a']
+    f=factor*xwave*a
+    f*=one_line['gu']/one_line['gl']
+    # f=factor
+    return f
+
+def calculate_oscillator_strength(A_ij, wavelength_AA):
+    # Constants in CGS units
+    m_e = 9.109e-28  # Electron mass in grams
+    c = 2.997e10  # Speed of light in cm/s
+    h = 6.626e-27  # Planck's constant in erg s
+
+    wavelength_cm=wavelength_AA*1e8
+
+    # Calculate the absorption oscillator strength (f)
+    f = (4 * np.pi**2 * m_e * c**3 / (3 * h)) * (A_ij / wavelength_cm**2)
+    
+    return f
 
 # # Lines
 
@@ -314,7 +362,7 @@ def get_lines(ion="h_4", nlevels=10):
     are known
 
     There are some lines in the Chianti database that have 0 wavelength.
-    These are all strictly forbidden lines, but Python still needs a
+    These are all strictly forbidden lines, but Sirocco still needs a
     wavelength to calculate the collision x-section in the absence 
     of Burgess-style collision data, so we fill in the wavelength
     from the upper and lower level energies in this case, and issue
@@ -386,20 +434,38 @@ def get_lines(ion="h_4", nlevels=10):
     # f value is compared to the value for collisions.
 
     f_min=0.000001
+    n_fmissing=0
 
     for one in xxtab:
         if one["Wave"] == 0:
             one["Wave"] = 12396.1914 / (one["eu"] - one["el"])
-            print(
-                "Line with ll %d and ul %d is missing wavelength.  Correcting to %.3f using el and eu"
-                % (one["ll"], one["ul"], one["Wave"])
-            )
+            # print(
+            #     "Line with ll %d and ul %d is missing wavelength.  Correcting to %.3f using el and eu"
+            #     % (one["ll"], one["ul"], one["Wave"])
+            # )
         if one["f"]<f_min:
+            fff=get_f(one)
+            # print('Toast %f %g' % (one['a'],fff))
             one['f']=f_min
-            print("Line with ll %d and ul %d is missing f.  Changing to %.6f so line has way out" 
-                  % (one["ll"], one["ul"],one["f"]))
+            n_fmissing+=1
+            # print("Line with ll %d and ul %d is missing f.  Changing to %.6f so line has way out" 
+            #       % (one["ll"], one["ul"],one["f"]))
 
-    xxtab["Wave"].format = "10.6f"
+    print('There were %d lies with missing f' % n_fmissing)
+
+
+    # Convert theoretical wavelengths (which are negative) to positive values
+    i=0
+    nnn=0
+    while i<len(xxtab):
+        if xxtab['Wave'][i]<0:
+            xxtab['Wave'][i]=-xxtab['Wave'][i]
+            nnn+=1
+        i+=1
+
+    print('There were %d theoretical wavelengths, converted to positive values' % nnn)
+    xxtab.write('xline.txt',format='ascii.fixed_width_two_line',overwrite=True)
+
     xxxtab = xxtab["Dtype", "z", "ion", "Wave", "f", "gl", "gu", "el", "eu", "ll", "ul"]
     return xxxtab
 
@@ -409,7 +475,7 @@ def get_lines(ion="h_4", nlevels=10):
 # We have to first get the data from TopBase and then we have to format it propoerly
 #
 # There is a search form on the web page, but you can also retrieve the files directly with wget.  
-# The formats are slightly different, and so converting them to Python nputs is also going to be a
+# The formats are slightly different, and so converting them to Sirocco inputs is also going to be a
 # bit different, but this allows one to retrieve things without going through a web page.
 
 
@@ -426,10 +492,12 @@ def get_phot(ion="c_4"):
     number of electrons that the ion of interest has, but we convert to
     astronomical notation in this routine
     """
+
+    os.makedirs('./Phot',exist_ok=True)
     x = ch.ion(ion, temperature=1e5)
     nelec = x.Z - x.Ion + 1
     fileroot = "p%02d.%02d" % (x.Z, nelec)
-    outroot = "p%02d.%02d" % (x.Z, x.Ion)
+    outroot = "./Phot/p%02d.%02d" % (x.Z, x.Ion)
     print("Looking for ", fileroot)
     if os.path.isfile("%s.txt" % outroot):
         print("TopBase Phot file for element %d and ion %d exists" % (x.Z, x.Ion))
@@ -484,7 +552,7 @@ def get_phot(ion="c_4"):
 
 def make_phot(ion="c_4",macro=True):
     """
-    Read a retrieved TopBase file and make a Python-Photon file
+    Read a retrieved TopBase file and make a Sirocco-Photon file
     
     Note that althought the TopBase data on Vizier does not use
     astronomical notation, we changed the naming convention
@@ -497,16 +565,16 @@ def make_phot(ion="c_4",macro=True):
 
     fileroot = "p%02d.%02d" % (z, xion)
     try:
-        x = open("%s.txt" % fileroot)
+        x = open("./Phot/%s.txt" % fileroot)
         lines = x.readlines()
     except:
-        print("Error: %s.txt not found  %s" % fileroot)
+        print("Error: make_phot %s.txt not found  %s" % fileroot)
         return
     records = []
     for line in lines:
         words = line.split()
         records.append(words)
-    f = open("%s.dat" % fileroot, "w")
+    f = open("./Phot/%s.dat" % fileroot, "w")
     # z=int(records[0][0])
     # xion=int(records[0][1])
     i = 1
@@ -660,27 +728,27 @@ def make_phot(ion="c_4",macro=True):
 # The hard part here is getting the levels to be right.  If I understand Keara's notes, there are fewer sets of
 # photoinzation x-sections in top base than there are in Chianti, and so often one needs to have the same set
 # of x-section data for multiple Chianti levels, and when you do this you have to right the data out multiple times.
-# because Python expects a photionzation x-section for each level
+# because Sirocco expects a photionzation x-section for each level
 #
 # Alternatively, I suspect you can combine some of the levels into a single simpler level, if you know how to modify
 # various factors, e.g g, and you make some kind of assumption about what you need to do interms of adding f together.
 # This simplfies the model that you have
 
 
-def write_phot(ion="c_4"):
+def write_phot(ion="c_4",outdir='./Adata'):
 
     x = ch.ion(ion, temperature=1e5)
     xion = x.Ion
     z = x.Z
 
-    fileroot = "p%02d.%02d" % (x.Z, x.Ion)
+    fileroot = "./Phot/p%02d.%02d" % (x.Z, x.Ion)
 
     # First strip of the headers of the phot_file
     try:
         phot = open(fileroot + ".dat")
         lines = xx = phot.readlines()
     except:
-        print("Error: Could not open %s.dat" % fileroot)
+        print("Error: write_phot: Could not open %s.dat" % fileroot)
 
     headers = []
     i = 0
@@ -705,20 +773,21 @@ def write_phot(ion="c_4"):
         dtype=["i", "i", "i", "i", "i", "f", "i"],
     )
 
-    # Write what we have so far for diagnostica prurposes. This file is not used.
-    xxhead.write("head.txt", format="ascii.fixed_width_two_line", overwrite=True)
+    # Write what we have so far for diagnostic purposes. This file is not used.
+    # xxhead.write("head.txt", format="ascii.fixed_width_two_line", overwrite=True)
 
     # Now find, if we can the parts of the photon file that match what we need
 
-    lev_file = ion + "_levels.dat"
+    # lev_file = ion + "_levels.dat"
+    lev_file = '%s/%s_levels.dat' %(outdir,ion)
     try:
         lev = ascii.read(lev_file)
     except:
-        print("Error: Could not open %s.dat" % lev_file)
+        print("Error: Could not open level file %s" % lev_file)
 
     # lev.info()
 
-    # Joine the levels to the photoionization data                                 
+    # Join the levels to the photoionization data                                 
 
     try:
         foo = join(
@@ -728,7 +797,7 @@ def write_phot(ion="c_4"):
         print("Error: join failed")
         xxhead.info()
         lev.info()
-        xxhead.write("head.txt", format="ascii.fixed_width_two_line", overwrite=True)
+        # xxhead.write("head.txt", format="ascii.fixed_width_two_line", overwrite=True)
         lev.write("levels.txt", format="ascii.fixed_width_two_line", overwrite=True)
 
 
@@ -753,7 +822,8 @@ def write_phot(ion="c_4"):
     # Now write out the PhotFile. We use the row in the original file
     # to understand which lines to write out.  
 
-    output_file = ion + "_phot.dat"
+    # output_file = ion + "_phot.dat"
+    output_file = '%s/%s_phot.dat' % (outdir,ion)
     f = open(output_file, "w")
     for one in foo:
         # print(one)
@@ -789,7 +859,7 @@ def write_phot(ion="c_4"):
 
 # # Get the collision data from Chianti
 
-# Generating the collision data files is not entirely straightforward, because we have to match the collision data to the levels, and the source of the level information may not have been Chianti.  The collision data contained in Chianti (and in fact the only type of collision data that Python understnds) uses the so called Burgess approximation, basically a spline fit to the x-sections which is valid up to a certain maximum temperature.
+# Generating the collision data files is not entirely straightforward, because we have to match the collision data to the levels, and the source of the level information may not have been Chianti.  The collision data contained in Chianti (and in fact the only type of collision data that Sirocco understnds) uses the so called Burgess approximation, basically a spline fit to the x-sections which is valid up to a certain maximum temperature.
 #
 # A valid file begins like
 #
@@ -811,13 +881,13 @@ def write_phot(ion="c_4"):
 # In exploring the collisions in Chianti, I discovered that for H at least here are collisions strengths for between levels that do not have lines assoicated with them.  I am not sure why that is, but it must affect macro atoms, and it did it might be needed.  A simple join between the lines file and the collisions files reveals those that have both, but a left join easily shows you the ones that are just collision data
 
 
-def get_collisions(ion="h_1", nlev=20):
+def get_collisions(ion="h_1", nlev=20,outdir='./Adata'):
     """
     Given a set of levels, get the collision information associatred with these levels.  Note
     that as far as I can determine the scups file does not contain collisionl information 
     for collisional ionization
     
-    Currently in Python collisions are tightly tied to the lines that are going to be used
+    Currently in Sirocco collisions are tightly tied to the lines that are going to be used
     in a dataset.  The information about line information is used as a mechanism to identify
     the collision x-section.  (This probably dates back to simple atoms, where lines are used
     for radiative transfer and levels are used in calculating densities of upper level states,
@@ -867,8 +937,9 @@ def get_collisions(ion="h_1", nlev=20):
     )
 
     # xtab=Table([lower,upper,gf,ntemp,btemp,bscups],names=['ll','de','ul','gf','ntemp','btemp','bscups'])
+    upsfile='%s/%s__upsilon.dat' % (outdir,ion)
     # xxtab.info()
-    xout = open(ion + "_upsilon.dat", "w")
+    xout = open(upsfile, "w")
     for one in xxtab:
         # print(one)
         xstring = "CSTREN Line %3d %3d %10.6f %9.6f %2d %2d  %10.6f %10.6f " % (
@@ -946,7 +1017,7 @@ def print_elvlc(ion="c_4"):
         i += 1
 
 
-def doit(atom="h_1", nlev=10, next_ion = False): 
+def doit(atom="h_1", nlev=10, next_ion = False,outdir='./Adata'): 
     """
     Create all of the necessary files for 
     a given atom
@@ -961,6 +1032,10 @@ def doit(atom="h_1", nlev=10, next_ion = False):
 
 
     """
+
+
+    os.makedirs(outdir,exist_ok=True)
+
     nlev = int(nlev)
 
     xion = ch.ion(atom, temperature=1e5)
@@ -1000,18 +1075,16 @@ def doit(atom="h_1", nlev=10, next_ion = False):
                 0,
             ]
         )
-    xlevels.write(
-        atom + "_levels.dat", format="ascii.fixed_width_two_line", overwrite=True
+    xlevels.write('%s/%s_levels.dat' % (outdir,atom), format="ascii.fixed_width_two_line", overwrite=True
     )
     xlines = get_lines(atom, nlev)
-    xlines.write(
-        atom + "_lines.dat", format="ascii.fixed_width_two_line", overwrite=True
+    xlines.write('%s/%s_lines.dat' % (outdir,atom) , format="ascii.fixed_width_two_line", overwrite=True
     )
 
     get_phot(atom)
     make_phot(atom)
-    write_phot(atom)
-    RedoPhot.redo_one('%s_phot.dat' % atom, atom)
+    write_phot(atom,outdir)
+    RedoPhot.redo_one('Adata/%s_phot.dat' % atom, 'Adata/%s' % atom)
 
     xcol = get_collisions(atom, nlev)
     return

@@ -1,7 +1,8 @@
 Central_object.geometry_for_source
 ==================================
-If the central source in an AGN/BH system is radiating, what geometry should it radiate from?
- This is applicable even for black-body sources, where the *luminosity* depends on :ref:`Central_object.radius`.
+
+
+Setting the geometry model of the AGN/BH's radiation. This is only specified if :ref:`Central_object.radiation` is set to ``yes``. This is applicable even for black-body sources, where the *luminosity* depends on :ref:`Central_object.radius`.
 
 Type
   Enumerator
@@ -18,9 +19,17 @@ Values
     Photons that would be spawned in an extended disk (if :ref:`Disk.type` is `vertically.extended`)
     are re-generated.
 
+  bubble
+    The central source radiates from between two spheres, one with radius :ref:`Central_object.radius` 
+    and one with radius :ref:`Central_object.bubble_size`. The photon directions are individually isotropic but do not necessarily
+    create a truly isotropic source.
+
+  iso 
+    The central source radiates from the surface of a sphere with radius :ref:`Central_object.radius`.
+    Emission is truly isotropic, so photons are emitted in the same direction as the random point on the sphere surface where they are emitted.
 
 File
-  `setup_star_bh.c <https://github.com/agnwinds/python/blob/master/source/setup_star_bh.c>`_
+  `setup_star_bh.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup_star_bh.c>`_
 
 
 Parent(s)
@@ -31,4 +40,5 @@ Parent(s)
 
 Child(ren)
   * :ref:`Central_object.lamp_post_height`
+  * :ref:`Central_object.bubble_size`
 

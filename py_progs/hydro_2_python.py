@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
 '''
-                    Southampton University
+Parses a hydro input file into an astropy table.
 
-
-Synopsis:  
+Synopsis:
     This is a simple program which will
     parse a hydro input file into an astropy
     table that python can read in as a wind 

@@ -15,7 +15,7 @@
 
 #include <float.h>
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -52,10 +52,7 @@
  **********************************************************/
 
 int
-matrix_ion_populations (xplasma, mode)
-     PlasmaPtr xplasma;
-     int mode;
-
+matrix_ion_populations (PlasmaPtr xplasma, int mode)
 {
   double elem_dens[NELEMENTS];  //The density of each element
   int nn, mm, nrows;
@@ -78,8 +75,8 @@ matrix_ion_populations (xplasma, mode)
 
   /* Copy some quantities from the cell into local variables */
 
-  nh = xplasma->rho * rho2nh;   // The number density of hydrogen ions - computed from density
-  t_e = xplasma->t_e;           // The electron temperature in the cell - used for collisional processes
+  nh = xplasma->state.rho * rho2nh;     // The number density of hydrogen ions - computed from density
+  t_e = xplasma->state.t_e;     // The electron temperature in the cell - used for collisional processes
 
 
   /* We now calculate the total abundances for each element to allow us to use fractional abundances */
@@ -93,7 +90,7 @@ matrix_ion_populations (xplasma, mode)
   /* Now we populate the elemental abundance array */
   for (mm = 0; mm < nions; mm++)
   {
-    elem_dens[ion[mm].z] = elem_dens[ion[mm].z] + xplasma->density[mm];
+    elem_dens[ion[mm].z] = elem_dens[ion[mm].z] + xplasma->state.density[mm];
   }
 
   /* Dielectronic recombination, collisional ionization coefficients, three body recombination and
@@ -113,11 +110,11 @@ matrix_ion_populations (xplasma, mode)
 
   for (mm = 0; mm < nions; mm++)
   {
-    newden[mm] = xplasma->density[mm] / elem_dens[ion[mm].z];   // newden is our local fractional density array
+    newden[mm] = xplasma->state.density[mm] / elem_dens[ion[mm].z];     // newden is our local fractional density array
     xion[mm] = mm;              // xion is an array we use to track which ion is in which row of the matrix
     if (mm != ele[ion[mm].nelem].firstion)      // We can recombine since we are not in the first ionization stage
     {
-      rr_rates[mm] = total_rrate (mm, xplasma->t_e);    // radiative recombination rates
+      rr_rates[mm] = total_rrate (mm, xplasma->state.t_e);      // radiative recombination rates
     }
     if (ion[mm].istate != ele[ion[mm].nelem].istate_max)        // we can photoionize, since we are not in the highest ionization state
     {
@@ -131,7 +128,7 @@ matrix_ion_populations (xplasma, mode)
       }
       else if (mode == NEBULARMODE_MATRIX_ESTIMATORS)
       {
-        pi_rates[mm] = xplasma->ioniz[mm] / xplasma->density[mm];       // PI rate logged during the photon passage
+        pi_rates[mm] = xplasma->est.ioniz[mm] / xplasma->state.density[mm];     // PI rate logged during the photon passage
       }
       else
       {
@@ -175,14 +172,14 @@ matrix_ion_populations (xplasma, mode)
         {
           if (inner_cross[mm].nion == inner_cross_ptr[nn]->nion && inner_cross[mm].freq[0] == inner_cross_ptr[nn]->freq[0])     //Check for a match
           {
-            inner_rates[mm] = xplasma->inner_ioniz[nn] / xplasma->density[inner_cross_ptr[nn]->nion];
+            inner_rates[mm] = xplasma->est.inner_ioniz[nn] / xplasma->state.density[inner_cross_ptr[nn]->nion];
           }
         }
       }
     }
   }
 
-  /* This next line sets the partition function for each ion. This has always been the place here python calculates the
+  /* This next line sets the partition function for each ion. This has always been the place here sirocco calculates the
      partition functions and sets the level densities for each ion. It needs to be done, or other parts of the code which rely
      on sensible level populations don't work properly. In the case of the dilute blackbody, the code works well, however we do
      not currently (v78) have a procedure to calucate the levels for a spectral model case. We therefore call partition
@@ -206,13 +203,13 @@ matrix_ion_populations (xplasma, mode)
      the same result as the original procedure, or for successive calculations, it should be a better guess. I've leftin the
      original code, commented out...  */
 
-  xne = xxne = xxxne = get_ne (xplasma->density);       //Even though the abundances are fractional, we need the real electron density
+  xne = xxne = xxxne = get_ne (xplasma->state.density); //Even though the abundances are fractional, we need the real electron density
 
 
   /* xne is the current working number xxne */
 
 
-  /* We are now going to iterate on the electron density - MAXITERATIONS is set in python.h and is currently (78) set to 200.
+  /* We are now going to iterate on the electron density - MAXITERATIONS is set in sirocco.h and is currently (78) set to 200.
      We would normally expect to converge much fater than this */
 
   niterate = 0;
@@ -311,9 +308,10 @@ matrix_ion_populations (xplasma, mode)
       newden[nn] = 0.0;
 
       /* if the ion is being treated by macro_pops then use the populations just computed */
-      if ((ion[nn].macro_info == TRUE) && (geo.macro_simple == FALSE) && (geo.macro_ioniz_mode == MACRO_IONIZ_MODE_ESTIMATORS))
+      if ((ion[nn].macro_info == TRUE) && (geo.macro_simple == FALSE) && (geo.macro_ioniz_mode == MACRO_IONIZ_MODE_ESTIMATORS)
+          && (modes.no_macro_pops_for_ions == FALSE))
       {
-        newden[nn] = xplasma->density[nn] / elem_dens[ion[nn].z];
+        newden[nn] = xplasma->state.density[nn] / elem_dens[ion[nn].z];
       }
 
       /* if the ion is "simple" then find it's calculated ionization state in populations array */
@@ -365,13 +363,13 @@ matrix_ion_populations (xplasma, mode)
       Error ("matrix_ion_populations: failed to converge for cell %i t %e nh %e xnew %e\n", xplasma->nplasma, t_e, nh, xnew);
 
 
-      for (nn = 0; nn < geo.nxfreq; nn++)
+      for (nn = 0; nn < xplasma->state.nbands; nn++)
       {
         Log
           ("numin= %e (%e) numax= %e (%e) Model= %2d PL_log_w= %e PL_alpha= %e Exp_w= %e EXP_temp= %e\n",
-           xplasma->fmin_mod[nn], geo.xfreq[nn], xplasma->fmax_mod[nn],
-           geo.xfreq[nn + 1], xplasma->spec_mod_type[nn],
-           xplasma->pl_log_w[nn], xplasma->pl_alpha[nn], xplasma->exp_w[nn], xplasma->exp_temp[nn]);
+           xplasma->state.fmin_mod[nn], xplasma->state.f1[nn], xplasma->state.fmax_mod[nn],
+           xplasma->state.f2[nn], xplasma->state.spec_mod_type[nn],
+           xplasma->state.pl_log_w[nn], xplasma->state.pl_alpha[nn], xplasma->state.exp_w[nn], xplasma->state.exp_temp[nn]);
       }
 
       Error ("matrix_ion_populations: xxne %e theta %e\n", xxne);
@@ -381,24 +379,24 @@ matrix_ion_populations (xplasma, mode)
   }                             /* This is the end of the iteration loop */
 
 
-  xplasma->ne = xnew;
+  xplasma->state.ne = xnew;
   for (nn = 0; nn < nions; nn++)
   {
     /* If statement added here to suppress interference with macro populations */
     if (ion[nn].macro_info == FALSE || geo.macro_ioniz_mode == MACRO_IONIZ_MODE_NO_ESTIMATORS || geo.macro_simple == TRUE)
     {
-      xplasma->density[nn] = newden[nn] * elem_dens[ion[nn].z]; //We return to absolute densities here
+      xplasma->state.density[nn] = newden[nn] * elem_dens[ion[nn].z];   //We return to absolute densities here
     }
-    if ((sane_check (xplasma->density[nn])) || (xplasma->density[nn] < 0.0))
-      Error ("matrix_ion_populations: ion %i has population %8.4e in cell %i\n", nn, xplasma->density[nn], xplasma->nplasma);
+    if ((sane_check (xplasma->state.density[nn])) || (xplasma->state.density[nn] < 0.0))
+      Error ("matrix_ion_populations: ion %i has population %8.4e in cell %i\n", nn, xplasma->state.density[nn], xplasma->nplasma);
   }
 
-  xplasma->ne = get_ne (xplasma->density);
+  xplasma->state.ne = get_ne (xplasma->state.density);
 
   if (n_charge_exchange > 0)
   {
-    xplasma->heat_ch_ex = ch_ex_heat (&wmain[xplasma->nwind], xplasma->t_e);    //Compute the charge exchange heating
-    xplasma->heat_tot += xplasma->heat_ch_ex;
+    xplasma->est.heat_ch_ex = ch_ex_heat (&wmain[xplasma->nwind], xplasma->state.t_e);  //Compute the charge exchange heating
+    xplasma->est.heat_tot += xplasma->est.heat_ch_ex;
   }
 
   /*We now need to populate level densities in order to later calculate line emission (for example).
@@ -441,15 +439,8 @@ matrix_ion_populations (xplasma, mode)
  **********************************************************/
 
 int
-populate_ion_rate_matrix (rate_matrix, pi_rates, inner_rates, rr_rates, b_temp, xne, nh1, nh2)
-     double rate_matrix[nions][nions];
-     double pi_rates[nions];
-     double inner_rates[n_inner_tot];
-     double rr_rates[nions];
-     double xne;
-     double b_temp[nions];
-     double nh1, nh2;
-
+populate_ion_rate_matrix (double rate_matrix[nions][nions], double pi_rates[nions], double inner_rates[n_inner_tot], double rr_rates[nions],
+                          double b_temp[nions], double xne, double nh1, double nh2)
 {
 //  int nn, mm, zcount;
   int nn, mm;

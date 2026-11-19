@@ -1,9 +1,7 @@
 Boundary_layer
 ==============
 
-
-.. todo::
-   Fill in
+All parameters that define the boundary layer where the accretion disc ajoins the central object. 
 
 
 .. toctree::

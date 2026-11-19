@@ -17,7 +17,7 @@
  *
  *    - hit_secondary   determines whether a photon defined by p_roche will hit the secondary
  *    or not.  If it misses, hit_secondary returns 0, if it hits, the return is
- *    P_SEC (or hit secondary as contained in python.h).
+ *    P_SEC (or hit secondary as contained in sirocco.h).
  *
  * ###Notes###
  *
@@ -45,7 +45,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 /* Given the mass of the primary and secondary and the period calculate some other basic parameters
  for the binary system, including the L1 point. */
@@ -187,8 +187,7 @@ binary_basics ()
  **********************************************************/
 
 int
-hit_secondary (p)
-     PhotPtr p;
+hit_secondary (PhotPtr p)
 {
   double smin, smax, smid, s;
   double potential;
@@ -277,16 +276,13 @@ hit_secondary (p)
  **********************************************************/
 
 double
-pillbox (p, smin, smax)
-     PhotPtr p;
-     double *smin, *smax;
+pillbox (PhotPtr p, double *smin, double *smax)
 {
   double x1, x2;
   double a, b, c;
   double root[2], ss[2];
   int i, n;
   struct photon pp;
-  double ds_to_plane ();
 
   n = 0;
 
@@ -343,7 +339,7 @@ root is really only possible if the photon is already in the pillbox  */
 planes of the two end caps and then checking the cylindrical radius. Negative
 distances are valid only if the photon is in the pillbox already */
 
-  x1 = ds_to_plane (&plane_m2_near, p); /* Calculate the distance to the L1 plane */
+  x1 = ds_to_plane (&plane_m2_near, p, FALSE);  /* Calculate the distance to the L1 plane */
   stuff_phot (p, &pp);
   move_phot (&pp, x1);          /* So pp is now located at the l1 plane */
   if ((pp.x[1] * pp.x[1] + pp.x[2] * pp.x[2]) <= geo.r2_width * geo.r2_width)
@@ -352,7 +348,7 @@ distances are valid only if the photon is in the pillbox already */
     n++;
   }
 
-  x2 = ds_to_plane (&plane_m2_far, p);  /* Calculate the distance to the plane behind the the star.  */
+  x2 = ds_to_plane (&plane_m2_far, p, FALSE);   /* Calculate the distance to the plane behind the the star.  */
   stuff_phot (p, &pp);
   move_phot (&pp, x2);          /* So pp is now located at the r2_far plane */
   if ((pp.x[1] * pp.x[1] + pp.x[2] * pp.x[2]) <= geo.r2_width * geo.r2_width)
@@ -429,7 +425,6 @@ phi (double s, void *params)
 {
   struct photon pp;
   double x1, x2, z, z1, z2, z3;
-  double length ();
 
   if (phi_init == 0)
   {
@@ -491,7 +486,7 @@ phi (double s, void *params)
 double
 dphi_ds (double s, void *params)
 {
-  double phi (), x1, x2;
+  double x1, x2;
   void *dummy_par = NULL;
   double dx, z;
   if ((dx = 0.001 * geo.a) < EPS)
@@ -581,7 +576,6 @@ roche2_half_width ()
 {
   double xmin, xmax, xmid, xbest;
   double rmin;
-  double roche_width ();
 
   xmin = geo.l1 + 1.e5;
   xmax = geo.r2_far + geo.a - 1.e5;

@@ -8,6 +8,7 @@ response functions.
 # pylint: disable=C0301
 import numpy as np
 from typing import List, Optional
+
 from py4py.reverb import TransferFunction
 
 
@@ -31,8 +32,8 @@ def do_tf_plots(
         threshold (float): The peak flux threshold to use for calculating the centroid (see TransferFunction.delay).
 
     Outputs:
-        {file}_tf_delay.txt [Optional]
-        {tf.filename}_name.eps [for each tf in tf_list_inp]
+       ` {file}_tf_delay.txt` [Optional]
+        `{tf.filename}_name.eps` [for each tf in tf_list_inp]
     """
     delays: List[float] = []
     for tf_inp in tf_list_inp:
@@ -69,10 +70,10 @@ def do_rf_plots(
         file (Optional[str]): The output filename for the list of centroid delays.
 
     Outputs:
-        {tf_mid.name}_resp_mid.eps
-        {tf_mid.name}_resp_low.eps
-        {tf_mid.name}_resp_high.eps
-        {file}_rf_delay.txt [Optional]
+        `{tf_mid.name}_resp_mid.eps`
+        `{tf_mid.name}_resp_low.eps`
+        `{tf_mid.name}_resp_high.eps`
+        `{file}_rf_delay.txt` [Optional]
     """
     if name is not None:
         name += '_'

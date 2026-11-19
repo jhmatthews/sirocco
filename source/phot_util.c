@@ -20,7 +20,7 @@
 #include <string.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 int init_stuff_phot = 0;
 size_t sizeofphot;
@@ -43,8 +43,7 @@ size_t sizeofphot;
 
 
 int
-init_dummy_phot (p)
-     PhotPtr p;
+init_dummy_phot (PhotPtr p)
 {
   p->x[0] = p->x[1] = p->x[2] = 0.0;
   p->lmn[0] = p->lmn[1] = 0;
@@ -78,8 +77,7 @@ init_dummy_phot (p)
  **********************************************************/
 
 int
-stuff_phot (pin, pout)
-     PhotPtr pin, pout;
+stuff_phot (PhotPtr pin, PhotPtr pout)
 {
   pout->x[0] = pin->x[0];
   pout->x[1] = pin->x[1];
@@ -138,9 +136,7 @@ stuff_phot (pin, pout)
  **********************************************************/
 
 int
-move_phot (pp, ds)
-     PhotPtr pp;
-     double ds;
+move_phot (PhotPtr pp, double ds)
 {
   int ierr;
 
@@ -175,8 +171,7 @@ move_phot (pp, ds)
  **********************************************************/
 
 int
-comp_phot (p1, p2)
-     PhotPtr p1, p2;
+comp_phot (PhotPtr p1, PhotPtr p2)
 {
   if (p1->x[0] != p2->x[0] || p1->lmn[0] != p2->lmn[0])
     return (1);
@@ -217,14 +212,10 @@ comp_phot (p1, p2)
  * the disk plane, but for a photon travelling out of the wind we are
  * very interested in this possibility.
  *
- * This version is intended to allow cylvar coordinates, in old versions (56d)
- * prior to cylvar coordiantes, this routine was called ds_to_windcone
  **********************************************************/
 
 double
-ds_to_cone (cc, p)
-     ConePtr cc;
-     struct photon *p;
+ds_to_cone (ConePtr cc, struct photon *p)
 {
   double dz, dzdr2;
   double a, b, c, root[2];
@@ -294,9 +285,7 @@ ds_to_cone (cc, p)
  **********************************************************/
 
 double
-ds_to_sphere (r, p)
-     double r;
-     struct photon *p;
+ds_to_sphere (double r, struct photon *p)
 {
   int i;
   double a, b, c, root[2];
@@ -347,13 +336,10 @@ both roots were imaginary */
  **********************************************************/
 
 double
-ds_to_sphere2 (x, r, p)
-     double x[], r;
-     struct photon *p;
+ds_to_sphere2 (double x[], double r, struct photon *p)
 {
   double a, b, c, root[2], delta[3];
   int i;
-  double dot ();
 
   vsub (p->x, x, delta);
 
@@ -400,10 +386,9 @@ ds_to_sphere2 (x, r, p)
  **********************************************************/
 
 int
-quadratic (a, b, c, r)
-     double a, b, c, r[];
+quadratic (double a, double b, double c, double r[])
 {
-  double q, z;
+  double q;
 
   if (a == 0.0)
   {                             /* Then it's not really a quadratic but we can solve it
@@ -427,11 +412,20 @@ quadratic (a, b, c, r)
     r[0] = r[1] = -99.;
     return (-1);                /* both roots are imaginary */
   }
+  /* Numerically stable form: the textbook (-b +- sqrt(b^2 - 4ac)) / 2a loses all precision
+     in one root when |a| is tiny compared with b (e.g. a ray almost parallel to a cone). */
   q = sqrt (q);
-  z = 0.5 / a;
+  if (b >= 0.0)
+    q = -0.5 * (b + q);
+  else
+    q = -0.5 * (b - q);
 
-  r[0] = (-b - q) * z;
-  r[1] = (-b + q) * z;
+  r[0] = q / a;
+
+  if (q != 0.0)
+    r[1] = c / q;
+  else
+    r[1] = r[0];
 
 
   if (r[0] > 0.0 && (r[0] < r[1] || r[1] <= 0.0))
@@ -453,6 +447,8 @@ quadratic (a, b, c, r)
  *
  * @param [in] struct plane *  pl   A structure which descibes a plane in terms of a position and vector normal to the surface
  * @param [in] struct photon *  p   A photon
+ * @param [in] int force_postive_z  Whether to force the photon to be moving towards the positve z quadrant (appropriate for planes that 
+               are symmetric about z=0, but only defined once, such as the windplanes.)
  * @return     The distance to the plane, or VERY_BIG if the photon does not hit the plane (in the positive direction)
  *
  * @details
@@ -469,25 +465,26 @@ quadratic (a, b, c, r)
  **********************************************************/
 
 double
-ds_to_plane (pl, p)
-     struct plane *pl;
-     struct photon *p;
+ds_to_plane (struct plane *pl, struct photon *p, int force_positive_z)
 {
   double denom, diff[3], numer;
-  double dot ();
+  struct photon ptest;
 
+  stuff_phot (p, &ptest);
+  if (ptest.lmn[2] < 0 && (force_positive_z == TRUE))
+  {
+    ptest.x[2] = -ptest.x[2];   /* force the photon to be in the positive x,z quadrant */
+    ptest.lmn[2] = -ptest.lmn[2];       /* force the photon to moving in the positive z direction */
+  }
 
-  if ((denom = dot (p->lmn, pl->lmn)) == 0)
+  if ((denom = dot (ptest.lmn, pl->lmn)) == 0)
     return (VERY_BIG);
 
-  vsub (pl->x, p->x, diff);
+  vsub (pl->x, ptest.x, diff);
 
   numer = dot (diff, pl->lmn);
 
   return (numer / denom);
-
-
-
 }
 
 
@@ -512,13 +509,9 @@ ds_to_plane (pl, p)
  **********************************************************/
 
 double
-ds_to_closest_approach (x, p, impact_parameter)
-     double x[];                /* point for which impact parameter is calculated */
-     struct photon *p;          /* Photon ptr of interest */
-     double *impact_parameter;  /* distance of ray to point a closest approach */
+ds_to_closest_approach (double x[], struct photon *p, double *impact_parameter)
 {
   double diff[3], s, result[3];
-  double length (), dot ();
 
   vsub (p->x, x, diff);
   s = -dot (diff, p->lmn);
@@ -553,9 +546,7 @@ ds_to_closest_approach (x, p, impact_parameter)
  **********************************************************/
 
 double
-ds_to_cylinder (rho, p)
-     double rho;
-     struct photon *p;
+ds_to_cylinder (double rho, struct photon *p)
 {
   double a, b, c, root[2];
   int i;

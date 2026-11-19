@@ -14,7 +14,7 @@
 
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -73,34 +73,34 @@ get_line_transfer_mode ()
 
   if (user_line_mode == LINE_MODE_ABSORB)
   {
-    Log ("Line_transfer mode:  Simple, pure absorption, no scattering\n");
+    Log ("Line_transfer mode:  Classic, pure absorption, no scattering\n");
     geo.line_mode = user_line_mode;
   }
   else if (user_line_mode == LINE_MODE_SCAT)
   {
-    Log ("Line_transfer mode:  Simple, pure scattering, no absoprtion\n");
+    Log ("Line_transfer mode:  Classic, pure scattering, no absoprtion\n");
     geo.line_mode = user_line_mode;
   }
   else if (user_line_mode == LINE_MODE_SINGLE_SCAT)
   {
-    Log ("Line_transfer mode:  Simple, single scattering, with absorption, but without escape probality treatment\n");
+    Log ("Line_transfer mode:  Classic, single scattering, with absorption, but without escape probality treatment\n");
     geo.line_mode = user_line_mode;
   }
   else if (user_line_mode == LINE_MODE_ESC_PROB)
   {
-    Log ("Line_transfer mode:  Simple, isotropic scattering, escape probabilities\n");
+    Log ("Line_transfer mode:  Classic, isotropic scattering, escape probabilities\n");
     geo.line_mode = user_line_mode;
   }
   else if (user_line_mode == 5)
   {
-    Log ("Line_transfer mode:  Simple, thermal trapping, Single scattering \n");
+    Log ("Line_transfer mode: Classic, thermal trapping, Single scattering \n");
     geo.scatter_mode = SCATTER_MODE_THERMAL;    // Thermal trapping model
     geo.line_mode = LINE_MODE_ESC_PROB;
     geo.rt_mode = RT_MODE_2LEVEL;       // Not macro atom (SS) 
   }
   else if (user_line_mode == 6)
   {
-    Log ("Line_transfer mode:  macro atoms, isotropic scattering  \n");
+    Log ("Line_transfer mode: Macro, isotropic scattering  \n");
     geo.scatter_mode = SCATTER_MODE_ISOTROPIC;
     geo.line_mode = LINE_MODE_ESC_PROB;
     geo.rt_mode = RT_MODE_MACRO;        // Identify macro atom treatment (SS)
@@ -108,7 +108,7 @@ get_line_transfer_mode ()
   }
   else if (user_line_mode == 7)
   {
-    Log ("Line_transfer mode:  macro atoms, anisotropic  scattering  \n");
+    Log ("Line_transfer mode: Macro, anisotropic  scattering  \n");
     geo.scatter_mode = SCATTER_MODE_THERMAL;    // thermal trapping
     geo.line_mode = LINE_MODE_ESC_PROB;
     geo.rt_mode = RT_MODE_MACRO;        // Identify macro atom treatment (SS)
@@ -116,7 +116,7 @@ get_line_transfer_mode ()
   }
   else if (user_line_mode == 8)
   {
-    Log ("Line_transfer mode: simple macro atoms, isotropic  scattering  \n");
+    Log ("Line_transfer mode: Macro, isotropic  scattering  \n");
     geo.scatter_mode = SCATTER_MODE_ISOTROPIC;
     geo.line_mode = LINE_MODE_ESC_PROB;
     geo.rt_mode = RT_MODE_MACRO;        // Identify macro atom treatment i.e. indivisible packets
@@ -124,7 +124,7 @@ get_line_transfer_mode ()
   }
   else if (user_line_mode == 9)
   {
-    Log ("Line_transfer mode: simple macro atoms, anisotropic  scattering  \n");
+    Log ("Line_transfer mode: Macro, anisotropic  scattering  \n");
     geo.scatter_mode = SCATTER_MODE_THERMAL;    // thermal trapping
     geo.line_mode = LINE_MODE_ESC_PROB;
     geo.rt_mode = RT_MODE_MACRO;        // Identify macro atom treatment i.e. indivisible packets
@@ -141,7 +141,7 @@ get_line_transfer_mode ()
   /* an adaptive mode might be added in future */
   if (geo.rt_mode == RT_MODE_MACRO)
   {
-    /* XMACRO -- these options MUST be consistent with the define statements in python.h */
+    /* XMACRO -- these options MUST be consistent with the define statements in sirocco.h */
     strcpy (answer, "mc_jumps");
     geo.matom_transition_mode = rdchoice ("Matom_transition_mode(mc_jumps,matrix)", "0,1", answer);
 
@@ -151,32 +151,15 @@ get_line_transfer_mode ()
     }
 
 
-    if (geo.run_type == RUN_TYPE_PREVIOUS)
+    if (geo.run_type == RUN_TYPE_PREVIOUS && geo.nmacro > 0)
     {
-      if (geo.matom_transition_mode == MATOM_MATRIX)
+      /* The macro-atom matrices were allocated in wind_read according to the
+       * transition mode of the earlier run; reallocate them for this one */
+      for (n = 0; n < NPLASMA; n++)
       {
-        Log ("Warning: Storing macro-atom matrices -- be careful of high memory usage.\n");
-
-
-        {
-          for (n = 0; n < NPLASMA; n++)
-          {
-            macromain[n].store_matom_matrix = modes.store_matom_matrix;
-            macromain[n].matom_transition_mode = geo.matom_transition_mode;
-          }
-
-        }
+        macromain[n].state.matom_transition_mode = geo.matom_transition_mode;
       }
-      else
-      {
-        for (n = 0; n < NPLASMA; n++)
-        {
-          macromain[n].store_matom_matrix = modes.store_matom_matrix = FALSE;
-          macromain[n].matom_transition_mode = geo.matom_transition_mode;
-        }
-
-      }
-
+      calloc_matom_matrix (NPLASMA);
     }
 
   }
@@ -225,10 +208,10 @@ Available line transfer modes and descriptions are: \n\
   8(deprecated) Indivisible energy packets, force all simple-atoms, anisotropic scattering\n\
   9(deprecated) Indivisible energy packets, force all simple-atoms, anisotropic scattering\n\
 \n\
-  Standard mode is thermal_trapping for runs involving weight reduction and no macro-atoms\n\
-  Standard macro-atom mode is macro_atoms_thermal_trapping\n\
+  Classic mode is thermal_trapping for runs involving weight reduction and no macro-atoms\n\
+  Hybrid macro-atom mode is macro_atoms_thermal_trapping\n\
 \n\
-See this web address for more information: https://github.com/agnwinds/python/wiki/Line-Transfer-and-Scattering\n\
+See this web address for more information: https://github.com/agnwinds/sirocco/wiki/Line-Transfer-and-Scattering\n\
 \n\
 \n\
 ";                              // End of string to provide one with help

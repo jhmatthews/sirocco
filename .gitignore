@@ -1,13 +1,19 @@
 # This is the git ignore for python
 # ignore binaries in bin/ such as e.g. py78a
+bin/sirocco*
+bin/swind*
 bin/py*
 bin/windsave2table*
 bin/rad_hydro*
 bin/inspect_wind*
 bin/modify_wind*
 
+
 # Run files
 *.spec*
+*.pf.old
+*.out.pf
+mod.pf
 
 # Object files
 *.o
@@ -57,6 +63,7 @@ Makefile
 docs/sphinx/html/
 docs/sphinx/doctrees/
 docs/sphinx/venv/
+docs/sphinx/source/py_progs/py4py_auto/
 
 # doxygen stuff
 docs/doxygen/html/
@@ -79,9 +86,12 @@ wiki/
 *.Plo
 *.Po
 
-# atomic data files should not be tracked by this repository
+# Some atomic data files should not be tracked by this repository
 data/
 xmod/
+
+# avoid tracking symbolic links errenously put in xdata
+xdata/xdata
 
 # we shouldn't be tracking version.h either
 source/version.h
@@ -89,7 +99,7 @@ source/version.h
 # we also should not track templates.h.old either
 source/templates.h.old
 
-# python output files
+# sirocco output files
 *.diag
 *.spec
 *.log_spec
@@ -99,9 +109,16 @@ source/templates.h.old
 *.sig
 *.out.pf
 logfile
+*.wind_save
 
 # IDE files
 .idea/
 **/*.vscode/
 py_progs/.idea/
 scratch/
+
+
+# files from sed or other -e modifier
+*-e 
+
+

@@ -11,7 +11,7 @@
  * file to ascii files which can be read with astropy.io ascii
  * as tables.
  *
- * Unlike py_wind, windsave2table is hardwired and to change what
+ * Unlike swind, windsave2table is hardwired and to change what
  * is written one must actually modify the routines themselves.
  ***********************************************************/
 
@@ -21,7 +21,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 int xedge = FALSE;
 
@@ -49,10 +49,7 @@ int xedge = FALSE;
  **********************************************************/
 
 int
-do_windsave2table (root, ion_switch, edge_switch)
-     char *root;
-     int ion_switch;
-     int edge_switch;
+do_windsave2table (char *root, int ion_switch, int edge_switch)
 {
   int ndom, i;
   char rootname[LINELENGTH];
@@ -148,14 +145,12 @@ do_windsave2table (root, ion_switch, edge_switch)
  **********************************************************/
 
 int
-create_master_table (ndom, rootname)
-     int ndom;
-     char rootname[];
+create_master_table (int ndom, char rootname[])
 {
   char filename[132];
-  double *c[50], *converge;
-  char column_name[50][20];
-  char one_line[1024], start[1024], one_value[20];
+  double *c[51], *converge;
+  char column_name[51][24];
+  char one_line[1024], start[1024], one_value[24];
   char name[132];               /* file name extension */
 
 
@@ -181,55 +176,70 @@ create_master_table (ndom, rootname)
   c[2] = get_one (ndom, "ne");
   strcpy (column_name[2], "ne");
 
-  c[3] = get_one (ndom, "t_e");
-  strcpy (column_name[3], "t_e");
+  c[3] = get_one (ndom, "nh");
+  strcpy (column_name[3], "nh");
 
-  c[4] = get_one (ndom, "t_r");
-  strcpy (column_name[4], "t_r");
+  c[4] = get_one (ndom, "t_e");
+  strcpy (column_name[4], "t_e");
 
-  c[5] = get_ion (ndom, 1, 1, 0, name);
-  strcpy (column_name[5], "h1");
+  c[5] = get_one (ndom, "t_r");
+  strcpy (column_name[5], "t_r");
 
-  c[6] = get_ion (ndom, 2, 2, 0, name);
-  strcpy (column_name[6], "he2");
+  c[6] = get_ion (ndom, 1, 1, 0, name);
+  strcpy (column_name[6], "h1");
 
-  c[7] = get_ion (ndom, 6, 4, 0, name);
-  strcpy (column_name[7], "c4");
+  c[7] = get_ion (ndom, 2, 2, 0, name);
+  strcpy (column_name[7], "he2");
 
-  c[8] = get_ion (ndom, 7, 5, 0, name);
-  strcpy (column_name[8], "n5");
+  c[8] = get_ion (ndom, 6, 4, 0, name);
+  strcpy (column_name[8], "c4");
 
-  c[9] = get_ion (ndom, 8, 6, 0, name);
-  strcpy (column_name[9], "o6");
+  c[9] = get_ion (ndom, 7, 5, 0, name);
+  strcpy (column_name[9], "n5");
 
-  c[10] = get_one (ndom, "dmo_dt_x");
-  strcpy (column_name[10], "dmo_dt_x");
+  c[10] = get_ion (ndom, 8, 6, 0, name);
+  strcpy (column_name[10], "o6");
+
+  c[11] = get_one (ndom, "dmo_dt_x");
+  strcpy (column_name[11], "dmo_dt_x");
 
 
-  c[11] = get_one (ndom, "dmo_dt_y");
-  strcpy (column_name[11], "dmo_dt_y");
+  c[12] = get_one (ndom, "dmo_dt_y");
+  strcpy (column_name[12], "dmo_dt_y");
 
-  c[12] = get_one (ndom, "dmo_dt_z");
-  strcpy (column_name[12], "dmo_dt_z");
+  c[13] = get_one (ndom, "dmo_dt_z");
+  strcpy (column_name[13], "dmo_dt_z");
 
-  c[13] = get_one (ndom, "ip");
-  strcpy (column_name[13], "ip");
+  c[14] = get_one (ndom, "ip");
+  strcpy (column_name[14], "ip");
 
-  c[14] = get_one (ndom, "xi");
-  strcpy (column_name[14], "xi");
+  c[15] = get_one (ndom, "xi");
+  strcpy (column_name[15], "xi");
 
-  c[15] = get_one (ndom, "ntot");
-  strcpy (column_name[15], "ntot");
+  c[16] = get_one (ndom, "ntot");
+  strcpy (column_name[16], "ntot");
 
-  c[16] = get_one (ndom, "nrad");
-  strcpy (column_name[16], "nrad");
+  c[17] = get_one (ndom, "nrad");
+  strcpy (column_name[17], "nrad");
 
-  c[17] = get_one (ndom, "nioniz");
-  strcpy (column_name[17], "nioniz");
+  c[18] = get_one (ndom, "nioniz");
+  strcpy (column_name[18], "nioniz");
+
+  c[19] = get_one (ndom, "nscat_es");
+  strcpy (column_name[19], "nscat_es");
+
+  c[20] = get_one (ndom, "nscat_res");
+  strcpy (column_name[20], "nscat_res");
+
+  c[21] = get_one (ndom, "nscat_ff");
+  strcpy (column_name[21], "nscat_ff");
+
+  c[22] = get_one (ndom, "nscat_bf");
+  strcpy (column_name[22], "nscat_bf");
 
 
   /* This should be the maxium number above +1 */
-  ncols = 18;
+  ncols = 23;
 
 
   converge = get_one (ndom, "converge");
@@ -249,44 +259,7 @@ create_master_table (ndom, rootname)
      * First assemble the header line
      */
 
-    sprintf (start, "%9s %9s %4s %6s %6s %9s %9s %9s ", "r", "rcen", "i", "inwind", "converge", "v_x", "v_y", "v_z");
-    strcpy (one_line, start);
-    n = 0;
-    while (n < ncols)
-    {
-      sprintf (one_value, "%9.9s ", column_name[n]);
-      strcat (one_line, one_value);
-
-      n++;
-    }
-    fprintf (fptr, "%s\n", one_line);
-
-
-    /* Now assemble the lines of the table */
-
-    for (i = 0; i < ndim2; i++)
-    {
-      //This line is different from the two d case
-      sprintf (start, "%9.3e %9.3e %4d %6d %8.0f %9.2e %9.2e %9.2e ",
-               wmain[nstart + i].r, wmain[nstart + i].rcen, i, wmain[nstart + i].inwind,
-               converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
-      strcpy (one_line, start);
-      n = 0;
-      while (n < ncols)
-      {
-        sprintf (one_value, "%9.2e ", c[n][i]);
-        strcat (one_line, one_value);
-        n++;
-      }
-      fprintf (fptr, "%s\n", one_line);
-    }
-  }
-  else if (zdom[ndom].coord_type == CYLIND)
-  {
-
-    /* First assemble the header line */
-
-    sprintf (start, "%8s %8s %8s %8s %4s %4s %6s %8s %9s %9s %9s ", "x", "z", "xcen", "zcen", "i", "j", "inwind", "converge", "v_x", "v_y",
+    sprintf (start, "%9s %9s %4s %5s %7s %6s %6s %9s %9s %9s ", "r", "rcen", "i", "nwind", "nplasma", "inwind", "converge", "v_x", "v_y",
              "v_z");
     strcpy (one_line, start);
     n = 0;
@@ -304,29 +277,28 @@ create_master_table (ndom, rootname)
 
     for (i = 0; i < ndim2; i++)
     {
-      wind_n_to_ij (ndom, nstart + i, &ii, &jj);
-      sprintf (start,
-               "%8.2e %8.2e %8.2e %8.2e %4d %4d %6d %8.0f %9.2e %9.2e %9.2e ",
-               wmain[nstart + i].x[0], wmain[nstart + i].x[2], wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
-               jj, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
+      //This line is different from the two d case
+      sprintf (start, "%9.6e %9.6e %4d %5d %7d %6d %8.0f %9.6e %9.6e %9.6e ",
+               wmain[nstart + i].r, wmain[nstart + i].rcen, i, wmain[nstart + i].nwind, wmain[nstart + i].nplasma, wmain[nstart + i].inwind,
+               converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
       fprintf (fptr, "%s\n", one_line);
     }
   }
-  else if (zdom[ndom].coord_type == RTHETA)
+  else if (zdom[ndom].coord_type == CYLIND)
   {
 
     /* First assemble the header line */
 
-    sprintf (start, "%8s %8s %8s %9s %8s %8s %8s %8s %4s %4s %6s %8s %9s %9s %9s ", "r", "theta", "r_cen", "theta_cen", "x", "z", "xcen",
-             "zcen", "i", "j", "inwind", "converge", "v_x", "v_y", "v_z");
+    sprintf (start, "%8s %8s %8s %8s %4s %4s %7s %7s %6s %8s %9s %9s %9s ", "x", "z", "xcen", "zcen", "i", "j", "nwind", "nplasma",
+             "inwind", "converge", "v_x", "v_y", "v_z");
     strcpy (one_line, start);
     n = 0;
     while (n < ncols)
@@ -345,15 +317,56 @@ create_master_table (ndom, rootname)
     {
       wind_n_to_ij (ndom, nstart + i, &ii, &jj);
       sprintf (start,
-               "%8.2e %8.2e %8.2e %9.2e %8.2e %8.2e %8.2e %8.2e %4d %4d %6d %8.0f %9.2e %9.2e %9.2e ",
-               wmain[nstart + i].r, wmain[nstart + i].theta, wmain[nstart + i].rcen, wmain[nstart + i].thetacen,
+               "%8.6e %8.6e %8.6e %8.6e %4d %4d %8d %6d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].x[0], wmain[nstart + i].x[2], wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
-               jj, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
+               jj, wmain[nstart + i].nwind, wmain[nstart + i].nplasma, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0],
+               wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
+        strcat (one_line, one_value);
+        n++;
+      }
+      fprintf (fptr, "%s\n", one_line);
+    }
+  }
+  else if (zdom[ndom].coord_type == RTHETA)
+  {
+
+    /* First assemble the header line */
+
+    sprintf (start, "%9s %9s %9s %9s %9s %9s %9s %9s %4s %4s %7s %6s  %6s %8s %9s %9s %9s ", "r", "theta", "r_cen", "theta_cen", "x", "z",
+             "xcen", "zcen", "i", "j", "nwind", "iplasma", "inwind", "converge", "v_x", "v_y", "v_z");
+    strcpy (one_line, start);
+    n = 0;
+    while (n < ncols)
+    {
+      sprintf (one_value, "%9.9s ", column_name[n]);
+      strcat (one_line, one_value);
+
+      n++;
+    }
+    fprintf (fptr, "%s\n", one_line);
+
+
+    /* Now assemble the lines of the table */
+
+    for (i = 0; i < ndim2; i++)
+    {
+      wind_n_to_ij (ndom, nstart + i, &ii, &jj);
+      sprintf (start,
+               "%9.6e %9.6e %9.6e %9.6e %9.6e %9.6e %9.6e %9.6e %4d %4d %7d %7d %7d %8.0f %9.6e %9.6e %9.6e ",
+               wmain[nstart + i].r, wmain[nstart + i].theta, wmain[nstart + i].rcen, wmain[nstart + i].thetacen,
+               wmain[nstart + i].x[0], wmain[nstart + i].x[2], wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
+               jj, wmain[nstart + i].nwind, wmain[nstart + i].nplasma, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0],
+               wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
+      strcpy (one_line, start);
+      n = 0;
+      while (n < ncols)
+      {
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -395,9 +408,7 @@ create_master_table (ndom, rootname)
  **********************************************************/
 
 int
-create_heat_table (ndom, rootname)
-     int ndom;
-     char rootname[];
+create_heat_table (int ndom, char rootname[])
 {
   char filename[132];
   double *c[50], *converge;
@@ -498,13 +509,39 @@ create_heat_table (ndom, rootname)
   strcpy (column_name[25], "heat_shock");
 
   c[26] = get_one (ndom, "heat_lines_macro");
-  strcpy (column_name[26], "heat_lines_macro");
+  strcpy (column_name[26], "ht_ln_macro");
 
   c[27] = get_one (ndom, "heat_photo_macro");
-  strcpy (column_name[27], "heat_photo_macro");
+  strcpy (column_name[27], "ht_ph_macro");
+
+  c[28] = get_one (ndom, "heat_qrecomb_macro");
+  strcpy (column_name[28], "ht_qr_macro");
+
+  c[29] = get_one (ndom, "cool_lines_macro");
+  strcpy (column_name[29], "cl_ln_macro");
+
+  c[30] = get_one (ndom, "cool_bf_macro");
+  strcpy (column_name[30], "cl_ph_macro");
+
+  c[31] = get_one (ndom, "cool_di_macro");
+  strcpy (column_name[31], "cl_di_macro");
+
+  c[32] = get_one (ndom, "energy_in_macro");
+  strcpy (column_name[32], "e_in_macro");
+
+  c[33] = get_one (ndom, "energy_out_macro");
+  strcpy (column_name[33], "e_out_macro");
+
+  /* Emission in the band of the spectral cycles by k-packets and macro atoms
+     (summed over levels); zero for models without macro atoms */
+  c[34] = get_one (ndom, "kpkt_emiss");
+  strcpy (column_name[34], "kpkt_lum");
+
+  c[35] = get_one (ndom, "matom_emiss");
+  strcpy (column_name[35], "matom_lum");
 
   /* This should be the maximum number above +1 */
-  ncols = 28;
+  ncols = 36;
 
 
   converge = get_one (ndom, "converge");
@@ -542,14 +579,14 @@ create_heat_table (ndom, rootname)
     for (i = 0; i < ndim2; i++)
     {
       //This line is different from the two d case
-      sprintf (start, "%9.3e %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+      sprintf (start, "%9.6e %4d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].r, i, wmain[nstart + i].inwind,
                converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -580,14 +617,14 @@ create_heat_table (ndom, rootname)
     {
       wind_n_to_ij (ndom, nstart + i, &ii, &jj);
       sprintf (start,
-               "%8.2e %8.2e %4d %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+               "%8.6e %8.6e %4d %4d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
                jj, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -624,9 +661,7 @@ create_heat_table (ndom, rootname)
  **********************************************************/
 
 int
-create_convergence_table (ndom, rootname)
-     int ndom;
-     char rootname[];
+create_convergence_table (int ndom, char rootname[])
 {
   char filename[132];
   double *c[50], *converge;
@@ -743,14 +778,14 @@ create_convergence_table (ndom, rootname)
     for (i = 0; i < ndim2; i++)
     {
       //This line is different from the two d case
-      sprintf (start, "%9.3e %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+      sprintf (start, "%9.6e %4d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].r, i, wmain[nstart + i].inwind,
                converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -781,14 +816,14 @@ create_convergence_table (ndom, rootname)
     {
       wind_n_to_ij (ndom, nstart + i, &ii, &jj);
       sprintf (start,
-               "%8.2e %8.2e %4d %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+               "%8.6e %8.6e %4d %4d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
                jj, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -824,9 +859,7 @@ create_convergence_table (ndom, rootname)
  **********************************************************/
 
 int
-create_velocity_gradient_table (ndom, rootname)
-     int ndom;
-     char rootname[];
+create_velocity_gradient_table (int ndom, char rootname[])
 {
   char filename[132];
   double *c[50], *converge;
@@ -926,14 +959,14 @@ create_velocity_gradient_table (ndom, rootname)
     for (i = 0; i < ndim2; i++)
     {
       //This line is different from the two d case
-      sprintf (start, "%9.3e %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+      sprintf (start, "%9.6e %4d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].r, i, wmain[nstart + i].inwind,
                converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -964,14 +997,14 @@ create_velocity_gradient_table (ndom, rootname)
     {
       wind_n_to_ij (ndom, nstart + i, &ii, &jj);
       sprintf (start,
-               "%8.2e %8.2e %4d %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+               "%8.6e %8.6e %4d %4d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
                jj, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -1006,11 +1039,7 @@ create_velocity_gradient_table (ndom, rootname)
  **********************************************************/
 
 int
-create_ion_table (ndom, rootname, iz, ion_switch)
-     int ndom;
-     char rootname[];
-     int iz;
-     int ion_switch;
+create_ion_table (int ndom, char rootname[], int iz, int ion_switch)
 {
   char filename[132];
   double *c[100];
@@ -1095,13 +1124,13 @@ create_ion_table (ndom, rootname, iz, ion_switch)
     for (i = 0; i < ndim2; i++)
     {
       //This line is different from the two d case
-      sprintf (start, "%8.2e %4d %6d ", wmain[nstart + i].r, i, wmain[nstart + i].inwind);
+      sprintf (start, "%8.6e %4d %6d ", wmain[nstart + i].r, i, wmain[nstart + i].inwind);
       strcpy (one_line, start);
 
       n = 0;
       while (n < number_ions)
       {
-        sprintf (one_value, "%8.2e ", c[n][i]);
+        sprintf (one_value, "%8.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -1134,12 +1163,12 @@ create_ion_table (ndom, rootname, iz, ion_switch)
     for (i = 0; i < ndim2; i++)
     {
       wind_n_to_ij (ndom, nstart + i, &ii, &jj);
-      sprintf (start, "%8.2e %8.2e %4d %4d %6d ", wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii, jj, wmain[nstart + i].inwind);
+      sprintf (start, "%8.6e %8.6e %4d %4d %6d ", wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii, jj, wmain[nstart + i].inwind);
       strcpy (one_line, start);
       n = 0;
       while (n < number_ions)
       {
-        sprintf (one_value, "%8.2e ", c[n][i]);
+        sprintf (one_value, "%8.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -1172,9 +1201,7 @@ create_ion_table (ndom, rootname, iz, ion_switch)
  **********************************************************/
 
 double *
-get_ion (ndom, element, istate, iswitch, name)
-     int ndom, element, istate, iswitch;
-     char *name;
+get_ion (int ndom, int element, int istate, int iswitch, char *name)
 {
   int nion, nelem;
   int n;
@@ -1210,58 +1237,58 @@ get_ion (ndom, element, istate, iswitch, name)
   {
     x[n] = 0;
     nplasma = wmain[nstart + n].nplasma;
-    if (wmain[nstart + n].inwind >= 0 && plasmamain[nplasma].rho > 0.0)
+    if (wmain[nstart + n].inwind >= 0 && plasmamain[nplasma].state.rho > 0.0)
     {
       if (iswitch == 0)
       {
-        x[n] = plasmamain[nplasma].density[nion];
-        nh = rho2nh * plasmamain[nplasma].rho;
+        x[n] = plasmamain[nplasma].state.density[nion];
+        nh = rho2nh * plasmamain[nplasma].state.rho;
         x[n] /= (nh * ele[nelem].abun);
         strcpy (name, "frac");
       }
       else if (iswitch == 1)
       {
-        x[n] = plasmamain[nplasma].density[nion];
+        x[n] = plasmamain[nplasma].state.density[nion];
         strcpy (name, "den");
       }
       else if (iswitch == 2)
       {
-        x[n] = (double) plasmamain[nplasma].scatters[nion] / plasmamain[nplasma].vol;
+        x[n] = (double) plasmamain[nplasma].derived.scatters[nion] / plasmamain[nplasma].state.vol;
         strcpy (name, "scat");
       }
       else if (iswitch == 3)
       {
-        x[n] = plasmamain[nplasma].xscatters[nion];
+        x[n] = plasmamain[nplasma].derived.xscatters[nion];
         strcpy (name, "ion_frac");
       }
       else if (iswitch == 4)
       {
-        x[n] = plasmamain[nplasma].ioniz[nion];
+        x[n] = plasmamain[nplasma].est.ioniz[nion];
         strcpy (name, "ioniz");
       }
       else if (iswitch == 5)
       {
-        x[n] = plasmamain[nplasma].recomb[nion];
+        x[n] = plasmamain[nplasma].derived.recomb[nion];
         strcpy (name, "recomb");
       }
       else if (iswitch == 6)
       {
-        x[n] = plasmamain[nplasma].heat_ion[nion];
+        x[n] = plasmamain[nplasma].est.heat_ion[nion];
         strcpy (name, "heat");
       }
       else if (iswitch == 7)
       {
-        x[n] = plasmamain[nplasma].cool_rr_ion[nion];
+        x[n] = plasmamain[nplasma].derived.cool_rr_ion[nion];
         strcpy (name, "cool_rr");
       }
       else if (iswitch == 8)
       {
-        x[n] = plasmamain[nplasma].lum_rr_ion[nion];
+        x[n] = plasmamain[nplasma].derived.lum_rr_ion[nion];
         strcpy (name, "lum_rr");
       }
       else if (iswitch == 9)
       {
-        x[n] = plasmamain[nplasma].cool_dr_ion[nion];
+        x[n] = plasmamain[nplasma].derived.cool_dr_ion[nion];
         strcpy (name, "cool_dr");
       }
       else
@@ -1304,9 +1331,7 @@ get_ion (ndom, element, istate, iswitch, name)
  **********************************************************/
 
 double *
-get_one (ndom, variable_name)
-     int ndom;
-     char variable_name[];
+get_one (int ndom, char variable_name[])
 {
   int n;
   int nplasma;
@@ -1329,183 +1354,239 @@ get_one (ndom, variable_name)
 
       if (strcmp (variable_name, "ne") == 0)
       {
-        x[n] = plasmamain[nplasma].ne;
+        x[n] = plasmamain[nplasma].state.ne;
       }
       else if (strcmp (variable_name, "rho") == 0)
       {
-        x[n] = plasmamain[nplasma].rho;
+        x[n] = plasmamain[nplasma].state.rho;
       }
       else if (strcmp (variable_name, "vol") == 0)
       {
-        x[n] = plasmamain[nplasma].vol;
+        x[n] = plasmamain[nplasma].state.vol;
       }
       else if (strcmp (variable_name, "t_e") == 0)
       {
-        x[n] = plasmamain[nplasma].t_e;
+        x[n] = plasmamain[nplasma].state.t_e;
       }
       else if (strcmp (variable_name, "t_r") == 0)
       {
-        x[n] = plasmamain[nplasma].t_r;
+        x[n] = plasmamain[nplasma].state.t_r;
       }
       else if (strcmp (variable_name, "t_e_old") == 0)
       {
-        x[n] = plasmamain[nplasma].t_e_old;
+        x[n] = plasmamain[nplasma].state.t_e_old;
       }
       else if (strcmp (variable_name, "t_r_old") == 0)
       {
-        x[n] = plasmamain[nplasma].t_r_old;
+        x[n] = plasmamain[nplasma].state.t_r_old;
       }
       else if (strcmp (variable_name, "dt_e") == 0)
       {
-        x[n] = plasmamain[nplasma].dt_e;
+        x[n] = plasmamain[nplasma].derived.dt_e;
       }
       else if (strcmp (variable_name, "dt_e_old") == 0)
       {
-        x[n] = plasmamain[nplasma].dt_e_old;
+        x[n] = plasmamain[nplasma].derived.dt_e_old;
       }
       else if (strcmp (variable_name, "J") == 0)
       {
-        x[n] = plasmamain[nplasma].j;
+        x[n] = plasmamain[nplasma].est.j;
       }
       else if (strcmp (variable_name, "J_direct") == 0)
       {
-        x[n] = plasmamain[nplasma].j_direct;
+        x[n] = plasmamain[nplasma].est.j_direct;
       }
       else if (strcmp (variable_name, "J_scatt") == 0)
       {
-        x[n] = plasmamain[nplasma].j_scatt;
+        x[n] = plasmamain[nplasma].est.j_scatt;
       }
       else if (strcmp (variable_name, "ave_freq") == 0)
       {
-        x[n] = plasmamain[nplasma].ave_freq;
+        x[n] = plasmamain[nplasma].est.ave_freq;
       }
       else if (strcmp (variable_name, "converge") == 0)
       {
-        x[n] = plasmamain[nplasma].converge_whole;
+        x[n] = plasmamain[nplasma].derived.converge_whole;
       }
       else if (strcmp (variable_name, "dmo_dt_x") == 0)
       {
-        x[n] = plasmamain[nplasma].dmo_dt[0];
+        x[n] = plasmamain[nplasma].derived.dmo_dt[0];
       }
       else if (strcmp (variable_name, "dmo_dt_y") == 0)
       {
-        x[n] = plasmamain[nplasma].dmo_dt[1];
+        x[n] = plasmamain[nplasma].derived.dmo_dt[1];
       }
       else if (strcmp (variable_name, "dmo_dt_z") == 0)
       {
-        x[n] = plasmamain[nplasma].dmo_dt[2];
+        x[n] = plasmamain[nplasma].derived.dmo_dt[2];
       }
       else if (strcmp (variable_name, "ntot") == 0)
       {
-        x[n] = plasmamain[nplasma].ntot;
+        x[n] = plasmamain[nplasma].est.ntot;
       }
       else if (strcmp (variable_name, "ip") == 0)
       {
-        x[n] = plasmamain[nplasma].ip;
+        x[n] = plasmamain[nplasma].est.ip;
       }
       else if (strcmp (variable_name, "xi") == 0)
       {
-        x[n] = plasmamain[nplasma].xi;
+        x[n] = plasmamain[nplasma].derived.xi;
       }
       else if (strcmp (variable_name, "heat_tot") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_tot;
+        x[n] = plasmamain[nplasma].est.heat_tot;
       }
       else if (strcmp (variable_name, "heat_tot_old") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_tot_old;
+        x[n] = plasmamain[nplasma].derived.heat_tot_old;
       }
       else if (strcmp (variable_name, "heat_comp") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_comp;
+        x[n] = plasmamain[nplasma].est.heat_comp;
       }
       else if (strcmp (variable_name, "heat_lines") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_lines;
+        x[n] = plasmamain[nplasma].est.heat_lines;
       }
       else if (strcmp (variable_name, "heat_ff") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_ff;
+        x[n] = plasmamain[nplasma].est.heat_ff;
       }
       else if (strcmp (variable_name, "heat_photo") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_photo;
+        x[n] = plasmamain[nplasma].est.heat_photo;
       }
       else if (strcmp (variable_name, "heat_auger") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_auger;
+        x[n] = plasmamain[nplasma].est.heat_auger;
       }
       else if (strcmp (variable_name, "cool_comp") == 0)
       {
-        x[n] = plasmamain[nplasma].cool_comp;
+        x[n] = plasmamain[nplasma].derived.cool_comp;
       }
       else if (strcmp (variable_name, "lum_tot") == 0)
       {
-        x[n] = plasmamain[nplasma].lum_tot;
+        x[n] = plasmamain[nplasma].derived.lum_tot;
       }
       else if (strcmp (variable_name, "lum_lines") == 0)
       {
-        x[n] = plasmamain[nplasma].lum_lines;
+        x[n] = plasmamain[nplasma].derived.lum_lines;
       }
       else if (strcmp (variable_name, "lum_ff") == 0)
       {
-        x[n] = plasmamain[nplasma].lum_ff;
+        x[n] = plasmamain[nplasma].derived.lum_ff;
       }
       else if (strcmp (variable_name, "lum_rr") == 0)
       {
-        x[n] = plasmamain[nplasma].lum_rr;
+        x[n] = plasmamain[nplasma].derived.lum_rr;
       }
       else if (strcmp (variable_name, "cool_rr") == 0)
       {
-        x[n] = plasmamain[nplasma].cool_rr;
+        x[n] = plasmamain[nplasma].derived.cool_rr;
       }
       else if (strcmp (variable_name, "cool_dr") == 0)
       {
-        x[n] = plasmamain[nplasma].cool_dr;
+        x[n] = plasmamain[nplasma].derived.cool_dr;
       }
       else if (strcmp (variable_name, "cool_tot") == 0)
       {
-        x[n] = plasmamain[nplasma].cool_tot;
+        x[n] = plasmamain[nplasma].est.cool_tot;
       }
       else if (strcmp (variable_name, "w") == 0)
       {
-        x[n] = plasmamain[nplasma].w;
+        x[n] = plasmamain[nplasma].state.w;
       }
       else if (strcmp (variable_name, "nrad") == 0)
       {
-        x[n] = plasmamain[nplasma].nrad;
+        x[n] = plasmamain[nplasma].derived.nrad;
       }
       else if (strcmp (variable_name, "nioniz") == 0)
       {
-        x[n] = plasmamain[nplasma].nioniz;
+        x[n] = plasmamain[nplasma].est.nioniz;
+      }
+      else if (strcmp (variable_name, "nscat_es") == 0)
+      {
+        x[n] = plasmamain[nplasma].derived.nscat_es;
+      }
+      else if (strcmp (variable_name, "nscat_res") == 0)
+      {
+        x[n] = plasmamain[nplasma].derived.nscat_res;
+      }
+      else if (strcmp (variable_name, "nscat_bf") == 0)
+      {
+        x[n] = plasmamain[nplasma].derived.nscat_bf;
+      }
+      else if (strcmp (variable_name, "nscat_ff") == 0)
+      {
+        x[n] = plasmamain[nplasma].derived.nscat_ff;
       }
       else if (strcmp (variable_name, "heat_shock") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_shock;
+        x[n] = plasmamain[nplasma].derived.heat_shock;
       }
       else if (strcmp (variable_name, "cool_adiab") == 0)
       {
-        x[n] = plasmamain[nplasma].cool_adiabatic;
+        x[n] = plasmamain[nplasma].derived.cool_adiabatic;
       }
       else if (strcmp (variable_name, "heat_lines_macro") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_lines_macro;
+        x[n] = plasmamain[nplasma].est.heat_lines_macro;
       }
       else if (strcmp (variable_name, "heat_photo_macro") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_photo_macro;
+        x[n] = plasmamain[nplasma].est.heat_photo_macro;
+      }
+      else if (strcmp (variable_name, "heat_qrecomb_macro") == 0)
+      {
+        x[n] = plasmamain[nplasma].est.heat_qrecomb_macro;
+      }
+      else if (strcmp (variable_name, "cool_lines_macro") == 0)
+      {
+        x[n] = plasmamain[nplasma].derived.cool_lines_macro;
+      }
+      else if (strcmp (variable_name, "cool_bf_macro") == 0)
+      {
+        x[n] = plasmamain[nplasma].derived.cool_bf_macro;
+      }
+      else if (strcmp (variable_name, "cool_di_macro") == 0)
+      {
+        x[n] = plasmamain[nplasma].derived.cool_di_macro;
+      }
+      else if (strcmp (variable_name, "energy_in_macro") == 0)
+      {
+        /* macromain is only allocated for models with macro atoms */
+        if (macromain != NULL)
+          x[n] = macromain[nplasma].est.energy_flow_in;
+      }
+      else if (strcmp (variable_name, "energy_out_macro") == 0)
+      {
+        if (macromain != NULL)
+          x[n] = macromain[nplasma].est.energy_flow_out;
+      }
+      else if (strcmp (variable_name, "kpkt_emiss") == 0)
+      {
+        x[n] = plasmamain[nplasma].derived.kpkt_emiss;
+      }
+      else if (strcmp (variable_name, "matom_emiss") == 0)
+      {
+        if (macromain != NULL)
+        {
+          int m;
+          for (m = 0; m < nlevels_macro; m++)
+            x[n] += macromain[nplasma].derived.matom_emiss[m];
+        }
       }
       else if (strcmp (variable_name, "gain") == 0)
       {
-        x[n] = plasmamain[nplasma].gain;
+        x[n] = plasmamain[nplasma].derived.gain;
       }
       else if (strcmp (variable_name, "macro_bf_in") == 0)
       {
-        x[n] = plasmamain[nplasma].bf_simple_ionpool_in;
+        x[n] = plasmamain[nplasma].derived.bf_simple_ionpool_in;
       }
       else if (strcmp (variable_name, "macro_bf_out") == 0)
       {
-        x[n] = plasmamain[nplasma].bf_simple_ionpool_out;
+        x[n] = plasmamain[nplasma].derived.bf_simple_ionpool_out;
       }
       else if (strcmp (variable_name, "dv_x_dx") == 0)
       {
@@ -1559,6 +1640,8 @@ get_one (ndom, variable_name)
       {
         x[n] = wmain[n].dfudge;
       }
+      else if (strcmp (variable_name, "nh") == 0)
+        x[n] = rho2nh * plasmamain[nplasma].state.rho;
       else
       {
         Error ("get_one: Unknown variable %s\n", variable_name);
@@ -1612,11 +1695,7 @@ get_one (ndom, variable_name)
  **********************************************************/
 
 int
-get_one_array_element (ndom, variable_name, array_dim, xval)
-     int ndom;
-     char variable_name[];
-     int array_dim;
-     double xval[];
+get_one_array_element (int ndom, char variable_name[], int array_dim, double xval[])
 {
   int j, n;
   int nplasma;
@@ -1645,55 +1724,55 @@ get_one_array_element (ndom, variable_name, array_dim, xval)
 
         if (strcmp (variable_name, "xj") == 0)
         {
-          xval[m] = plasmamain[nplasma].xj[j];
+          xval[m] = plasmamain[nplasma].est.xj[j];
         }
         else if (strcmp (variable_name, "xave_freq") == 0)
         {
-          xval[m] = plasmamain[nplasma].xave_freq[j];
+          xval[m] = plasmamain[nplasma].est.xave_freq[j];
         }
         else if (strcmp (variable_name, "fmin") == 0)
         {
-          xval[m] = plasmamain[nplasma].fmin[j];
+          xval[m] = plasmamain[nplasma].est.fmin[j];
         }
         else if (strcmp (variable_name, "fmax") == 0)
         {
-          xval[m] = plasmamain[nplasma].fmax[j];
+          xval[m] = plasmamain[nplasma].est.fmax[j];
         }
         else if (strcmp (variable_name, "fmin_mod") == 0)
         {
-          xval[m] = plasmamain[nplasma].fmin_mod[j];
+          xval[m] = plasmamain[nplasma].state.fmin_mod[j];
         }
         else if (strcmp (variable_name, "fmax_mod") == 0)
         {
-          xval[m] = plasmamain[nplasma].fmax_mod[j];
+          xval[m] = plasmamain[nplasma].state.fmax_mod[j];
         }
         else if (strcmp (variable_name, "xsd_freq") == 0)
         {
-          xval[m] = plasmamain[nplasma].xsd_freq[j];
+          xval[m] = plasmamain[nplasma].est.xsd_freq[j];
         }
         else if (strcmp (variable_name, "nxtot") == 0)
         {
-          xval[m] = plasmamain[nplasma].nxtot[j];
+          xval[m] = plasmamain[nplasma].est.nxtot[j];
         }
         else if (strcmp (variable_name, "spec_mod_type") == 0)
         {
-          xval[m] = plasmamain[nplasma].spec_mod_type[j];
+          xval[m] = plasmamain[nplasma].state.spec_mod_type[j];
         }
         else if (strcmp (variable_name, "pl_alpha") == 0)
         {
-          xval[m] = plasmamain[nplasma].pl_alpha[j];
+          xval[m] = plasmamain[nplasma].state.pl_alpha[j];
         }
         else if (strcmp (variable_name, "pl_log_w") == 0)
         {
-          xval[m] = plasmamain[nplasma].pl_log_w[j];
+          xval[m] = plasmamain[nplasma].state.pl_log_w[j];
         }
         else if (strcmp (variable_name, "exp_temp") == 0)
         {
-          xval[m] = plasmamain[nplasma].exp_temp[j];
+          xval[m] = plasmamain[nplasma].state.exp_temp[j];
         }
         else if (strcmp (variable_name, "exp_w") == 0)
         {
-          xval[m] = plasmamain[nplasma].exp_w[j];
+          xval[m] = plasmamain[nplasma].state.exp_w[j];
         }
         else
         {
@@ -1747,9 +1826,7 @@ get_one_array_element (ndom, variable_name, array_dim, xval)
  **********************************************************/
 
 int
-create_spec_table (ndom, rootname)
-     int ndom;
-     char rootname[];
+create_spec_table (int ndom, char rootname[])
 {
   char filename[132];
   double *c[50], *converge;
@@ -1863,13 +1940,13 @@ create_spec_table (ndom, rootname)
       for (i = 0; i < ndim2; i++)
       {
         //This line is different from the two d case
-        sprintf (start, "%9.3e %9.3e %4d %6d %8.0f %6d ",
+        sprintf (start, "%9.6e %9.6e %4d %6d %8.0f %6d ",
                  wmain[nstart + i].r, wmain[nstart + i].rcen, i, wmain[nstart + i].inwind, converge[i], nx);
         strcpy (one_line, start);
         n = 0;
         while (n < ncols)
         {
-          sprintf (one_value, "%9.2e ", c[n][j]);
+          sprintf (one_value, "%9.4e ", c[n][j]);
           strcat (one_line, one_value);
           n++;
         }
@@ -1905,14 +1982,14 @@ create_spec_table (ndom, rootname)
       {
         wind_n_to_ij (ndom, nstart + i, &ii, &jj);
         sprintf (start,
-                 "%8.2e %8.2e %8.2e %8.2e %4d %4d %6d %8.0f %6d  ",
+                 "%8.6e %8.6e %8.6e %8.6e %4d %4d %6d %8.0f %6d  ",
                  wmain[nstart + i].x[0], wmain[nstart + i].x[2], wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
                  jj, wmain[nstart + i].inwind, converge[i], nx);
         strcpy (one_line, start);
         n = 0;
         while (n < ncols)
         {
-          sprintf (one_value, "%9.2e ", c[n][j]);
+          sprintf (one_value, "%9.4e ", c[n][j]);
           strcat (one_line, one_value);
           n++;
         }
@@ -1926,7 +2003,7 @@ create_spec_table (ndom, rootname)
 
     /* First assemble the header line */
 
-    sprintf (start, "%8s %8s %8s %9s %8s %8s %8s %8s %4s %4s %6s %8s %6s ", "r", "theta", "r_cen", "theta_cen", "x", "z", "xcen",
+    sprintf (start, "%9s %9s %9s %9s %9s %9s %9s %9s %4s %4s %6s %8s %6s ", "r", "theta", "r_cen", "theta_cen", "x", "z", "xcen",
              "zcen", "i", "j", "inwind", "converge", "nband");
     strcpy (one_line, start);
     n = 0;
@@ -1949,7 +2026,7 @@ create_spec_table (ndom, rootname)
       {
         wind_n_to_ij (ndom, nstart + i, &ii, &jj);
         sprintf (start,
-                 "%8.2e %8.2e %8.2e %9.2e %8.2e %8.2e %8.2e %8.2e %4d %4d %6d %8.0f %6d ",
+                 "%9.6e %9.6e %9.6e %9.6e %9.6e %9.6e %9.6e %9.6e %4d %4d %6d %8.0f %6d ",
                  wmain[nstart + i].r, wmain[nstart + i].theta, wmain[nstart + i].rcen, wmain[nstart + i].thetacen,
                  wmain[nstart + i].x[0], wmain[nstart + i].x[2], wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
                  jj, wmain[nstart + i].inwind, converge[i], nx);
@@ -1957,7 +2034,7 @@ create_spec_table (ndom, rootname)
         n = 0;
         while (n < ncols)
         {
-          sprintf (one_value, "%9.2e ", c[n][j]);
+          sprintf (one_value, "%9.4e ", c[n][j]);
           strcat (one_line, one_value);
           n++;
         }
@@ -1992,41 +2069,27 @@ create_spec_table (ndom, rootname)
  **********************************************************/
 
 int
-create_detailed_cell_spec_table (ncell, rootname)
-     int ncell;
-     char rootname[];
+create_detailed_cell_spec_table (int ncell, char rootname[])
 {
   FILE *fptr;
   char filename[132];
 
-  double freq[NBINS_IN_CELL_SPEC];
-  double flux[NBINS_IN_CELL_SPEC];
   int i, nplasma;
 
   printf ("%e %e\n", geo.cell_log_freq_min, geo.cell_delta_lfreq);
 
   sprintf (filename, "%s.xspec.%d.txt", rootname, ncell);
 
-  for (i = 0; i < NBINS_IN_CELL_SPEC; i++)
-  {
-    freq[i] = pow (10., geo.cell_log_freq_min + i * geo.cell_delta_lfreq);
-  }
-
   nplasma = wmain[ncell].nplasma;
-
-  for (i = 0; i < NBINS_IN_CELL_SPEC; i++)
-  {
-    flux[i] = plasmamain[nplasma].cell_spec_flux[i];
-  }
-
 
   fptr = fopen (filename, "w");
 
   fprintf (fptr, "Freq.          Flux\n");
 
-  for (i = 0; i < NBINS_IN_CELL_SPEC; i++)
+  for (i = 0; i < geo.nbins_in_cell_spec; i++)
   {
-    fprintf (fptr, "%10.3e  %10.3e\n", freq[i], flux[i]);
+    double freq = pow (10., geo.cell_log_freq_min + i * geo.cell_delta_lfreq);
+    fprintf (fptr, "%10.3e  %10.3e\n", freq, plasmamain[nplasma].est.cell_spec_flux[i]);
   }
 
 
@@ -2068,9 +2131,7 @@ create_detailed_cell_spec_table (ncell, rootname)
  **********************************************************/
 
 int
-create_big_detailed_spec_table (ndom, rootname)
-     int ndom;
-     char *rootname;
+create_big_detailed_spec_table (int ndom, char *rootname)
 {
   char column_name[MAX_COLUMNS][20];
   int nplasma[MAX_COLUMNS], ii, jj, ncols;
@@ -2078,7 +2139,7 @@ create_big_detailed_spec_table (ndom, rootname)
 
   FILE *fptr;
   char filename[132];
-  double freq[NBINS_IN_CELL_SPEC];
+  double *freq;
   int nstart, nstop;
 
   /* Identify the range of wind cells for this domain */
@@ -2121,7 +2182,8 @@ create_big_detailed_spec_table (ndom, rootname)
 
 
   /* Calculate the frequencies */
-  for (i = 0; i < NBINS_IN_CELL_SPEC; i++)
+  freq = calloc (geo.nbins_in_cell_spec, sizeof (double));
+  for (i = 0; i < geo.nbins_in_cell_spec; i++)
   {
     freq[i] = pow (10., geo.cell_log_freq_min + i * geo.cell_delta_lfreq);
   }
@@ -2153,13 +2215,13 @@ create_big_detailed_spec_table (ndom, rootname)
     }
     fprintf (fptr, "\n");
 
-    for (i = 0; i < NBINS_IN_CELL_SPEC; i++)
+    for (i = 0; i < geo.nbins_in_cell_spec; i++)
     {
       fprintf (fptr, "%10.3e ", freq[i]);
 
       for (n = nstart; n < nstop; n++)
       {
-        fprintf (fptr, "%10.3e ", plasmamain[nplasma[n]].cell_spec_flux[i]);
+        fprintf (fptr, "%10.3e ", plasmamain[nplasma[n]].est.cell_spec_flux[i]);
       }
 
       fprintf (fptr, "\n");
@@ -2172,11 +2234,7 @@ create_big_detailed_spec_table (ndom, rootname)
     nstop = nstart + MAX_IN_TABLE;
   }
 
+  free (freq);
+
   return (0);
-
-
-
-
-
-
 }

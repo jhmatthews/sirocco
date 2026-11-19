@@ -1,17 +1,19 @@
 #!/usr/bin/env python
 '''
-    University of Southampton -- JM -- March 2015
-
-                photo_xs.py
+University of Southampton -- JM -- March 2015
 
 Synopsis:
+
     various utilities for processing photoionization cross-sections
 
 Usage:
-    to tabulate and save VFKY data:
+
+    to tabulate and save VFKY data::
+
         photo_xs.py tab photo_fkvy.data output_filename
 
-    to plot all vfky xsections:
+    to plot all vfky xsections::
+
         photo_xs.py plotv photo_fkvy.data
 
 '''
@@ -68,9 +70,7 @@ def sigma_phot(vfky, freq):
 
 
 class Photo(object):
-
     '''This is a general class for photoionization data'''
-
 
     def __init__(self):
         self.type = None
@@ -85,17 +85,19 @@ class Photo(object):
         self.fname = None
 
     def read_topbase_file(self, filename, mode = "Top"):
-
         '''
         read in XS info from Topbase XS data in Python format
 
-        :INPUT:
-            filename         string
-                            atomic data filename e.g. topbase_h1_phot.py
-        :OUTPUT:
-            top             topbase class instance
-                            topbase class instance containing information
-                            for this filename
+        INPUT:
+
+            filename (string):
+                atomic data filename e.g. topbase_h1_phot.py
+
+        OUTPUT:
+
+            top (topbase class instance):
+                topbase class instance containing information for this filename
+
         '''
         self.fname = filename
         self.type = "Topbase"
@@ -136,14 +138,16 @@ class Photo(object):
 
 
     def read_vfky_file(self, filename):
-
         '''
         read in XS info from Verner XS data in Python format
 
-        :INPUT:
-            filename         string
-                            atomic data filename e.g. topbase_h1_phot.py
-        :OUTPUT:
+        INPUT:
+
+            filename (string):
+                atomic data filename e.g. `topbase_h1_phot.py`
+
+        OUTPUT:
+
             populates members of class such as z, f0, etc.
         '''
 
@@ -163,7 +167,6 @@ class Photo(object):
         return 0
 
     def write_file(self, output_filename):
-
         '''
         write a class out to a tabulated file
         '''
@@ -190,16 +193,17 @@ class Photo(object):
 
 
     def tabulate_vfky(self):
-
         '''
         read in XS info from Topbase XS data in Python format
 
-        :INPUT:
+        INPUT:
+
             self
+
         :OUTPUT:
-            top             topbase class instance
-                            topbase class instance containing information
-                            for this filename
+
+            top (topbase class instance):
+                topbase class instance containing information for this filename
         '''
 
         # We need to start our tabulation just a tiny way up from from the threshold, otherwise it is equal to zero.
@@ -234,7 +238,6 @@ class Photo(object):
         return 0
 
     def plot_all(self):
-
         '''plot all Xsections - makes a lot of plots!!'''
 
         if self.tabulated == False or self.type == None:

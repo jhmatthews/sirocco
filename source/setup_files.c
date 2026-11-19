@@ -4,7 +4,7 @@
  * @date   March, 2018
  *
  * @brief  A series of routines mostly associated with opening
- * files needed by Python
+ * files needed by Sirocco
  *
  ***********************************************************/
 
@@ -14,7 +14,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -37,7 +37,7 @@
  *
  * ### Notes ###
  *
- * @bug This routine was refactored out of python.c in an attempt
+ * @bug This routine was refactored out of sirocco.c in an attempt
  * to make that routine simpler, but it is not obvious that 
  * what done here actually makes sense. For example, although
  * the routine checks if the windsave file exists, and sets
@@ -47,10 +47,9 @@
  **********************************************************/
 
 int
-init_log_and_windsave (restart_stat)
-     int restart_stat;
+init_log_and_windsave (int restart_stat)
 {
-  FILE *fopen (), *qptr;
+  FILE *qptr;
 
   if (restart_stat == FALSE)
   {                             // Then we are simply running from a new model
@@ -91,15 +90,15 @@ init_log_and_windsave (restart_stat)
 /**********************************************************/
 /** 
  * @brief      Use the root name of the .pf file to create
- * names for the various output files written by Python
+ * names for the various output files written by Sirocco
  *
  * @return     Always returns 0
  *
  * @details
  * 
- * This names of the files python uses are stored in he filenames
+ * This names of the files sirocco uses are stored in he filenames
  * structure.  This routine uses the root of the .pf file to
- * create names for all of the files that Python will write and
+ * create names for all of the files that Sirocco will write and
  * stores them in the files structure
  *
  * The routine also opens the parameter file if it exists
@@ -146,14 +145,12 @@ setup_created_files ()
 
 
   /* Now create the names of all the files which will be written.  Note that some files
-     have the same root as the input file, while others have a generic name of python.
+     have the same root as the input file, while others have a generic name of sirocco.
      This is intended so that files which you really want to keep have unique names, while
      those which are for short-term diagnostics are overwritten.   */
 
-  strcpy (files.wspec, files.root);     //generated photons
   strcpy (files.lwspec, files.root);    //generated photon in log space
 
-  strcpy (files.wspec_wind, files.root);
   strcpy (files.lwspec_wind, files.root);
 
   strcpy (files.spec, files.root);
@@ -166,20 +163,18 @@ setup_created_files ()
   strcat (files.new_pf, ".out.pf");
 
 
-  strcpy (files.windrad, "python");
+  strcpy (files.windrad, "sirocco");
   strcpy (files.windsave, files.root);
   strcpy (files.specsave, files.root);
 
-  /* save python.phot and disk.diag files under diag_root folder */
+  /* save sirocco.phot and disk.diag files under diag_root folder */
   strcpy (files.phot, files.diagfolder);
-  strcat (files.phot, "python");
+  strcat (files.phot, "sirocco");
 
   sprintf (files.disk, "%.100s/%.100s", files.diagfolder, files.root);
 
-  strcat (files.wspec, ".spec_tot");
   strcat (files.lwspec, ".log_spec_tot");
 
-  strcat (files.wspec_wind, ".spec_tot_wind");
   strcat (files.lwspec_wind, ".log_spec_tot_wind");
 
 

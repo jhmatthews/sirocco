@@ -1,7 +1,7 @@
 KWD.acceleration_length
 =======================
-The size of the acceleration length scale for a disk wind described by the
-KWD model.
+
+Sets the distance of the length scale which the wind is accelerated over. 
 
 Type
   Double
@@ -13,10 +13,10 @@ Values
   Greater than 0
 
 File
-  `knigge.c <https://github.com/agnwinds/python/blob/master/source/knigge.c>`_
+  `knigge.c <https://github.com/sirocco-rt/sirocco/blob/master/source/knigge.c>`_
 
 
 Parent(s)
-  * :ref:`Wind.type`: kwd
+  * :ref:`Wind.type`: ``kwd``
 
 

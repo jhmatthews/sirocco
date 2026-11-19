@@ -1,4 +1,8 @@
+#!/usr/bin/env python
+# -*- coding: <utf-8> -*-
 """
+Generates `.yml` format descriptions of the parameters in the C files.
+
 This script goes through the (non-blacklisted) input .c files, and identifies
 the input variables, their types and any notes (e.g. units, choices).
 
@@ -14,17 +18,52 @@ Arguments:
         Print the full text of all .yaml files that would be created to the screen.
 
     -w / --write
-        Move any deprecated parameters to $PYTHON/parameters/old/,
-        then write any new parameters to file.
+        Move any deprecated parameters to `$SIROCCO/parameters/old/`,
+        then write any new parameters to in `$SIROCCO/parameters/`
 
         Note, this will not over-write any parameters that have changed types
-        but not names e.g. rdflo('thing') to rdint('thing').
+        but not names e.g. `rdflo('thing')` to `rdint('thing')`.
 
     -h / --help
         Prints this documentation.
+
+After the program has been run $SIROCCO/parameters should contain a yaml file
+for every possible input, and any input that has changed significantly should
+be in $PYHON/parameters.old  One should normally be sure to add the new yaml
+files to the repository.
+
+Note:
+
+    This routine does not autormatial add new yaml files that have been 
+    created to the git repository, though it is possible that should 
+    be the default.
+
+    Therefore if one uses the -w option, it will create new files, 
+    and these will remaing in the local repositiory, even if one changes 
+    branches.  This can be confusing!!!
+
+    The program checks which files in the directories it writes to
+    are not committed, but it is up to the user to sort out what s/he
+    wants to do.
+
+    The command to list files in a directory that are not tracked is::
+
+        git ls-files --other
+
+    if one is in the directory in question.
+
+    The command to remove files in a directory (from within that directory) is::
+
+        git clean -f
+
+    The recommendation is to:
+
+    * to clean both $SIROCCO/parameters/, and $SIROCCO/parameters/old/ from your
+      local directories before using writing files using this routine, and then
+    * to add and comit  all of the files that are produced before going on to other
+      stages of activities associated with documentation.
+
 """
-#!/usr/bin/env python
-# -*- coding: <utf-8> -*-
 import os
 import sys
 from typing import List, Union
@@ -425,9 +464,9 @@ def autogenerate_parameter_docs():
     """
     Function to autogenerate parameter documentation.
     """
-    input_folder = os.path.join(os.environ["PYTHON"], "source")
-    output_folder = os.path.join(os.environ["PYTHON"], "docs", "parameters")
-    output_old_folder = os.path.join(os.environ["PYTHON"], "docs", "parameters", "old")
+    input_folder = os.path.join(os.environ["SIROCCO"], "source")
+    output_folder = os.path.join(os.environ["SIROCCO"], "docs", "parameters")
+    output_old_folder = os.path.join(os.environ["SIROCCO"], "docs", "parameters", "old")
 
     input_files = list_input_files(input_folder)
     existing_documentation = list_existing_documentation(output_folder)
@@ -455,7 +494,7 @@ def autogenerate_parameter_docs():
         print("Cannot write documentation as it will not work in case-insensitive OSes (e.g. Mac, Windows)")
         return
 
-    if len(sys.argv) is 1:
+    if len(sys.argv) == 1:
         # If we're not running in write mode
         print("Documentation for parameters that no longer exist:")
         for param in deprecated_documentation:
@@ -476,6 +515,18 @@ def autogenerate_parameter_docs():
             print_docs=('-p' in sys.argv or '--print' in sys.argv),
             write_docs=('-w' in sys.argv or '--write' in sys.argv)
         )
+
+    print('\n*** These are uncommitted files in the parameters directory ***\n')
+
+    os.system('git ls-files --other %s' % output_folder)
+
+    print('\n*** These are uncommitted files in the deprecated parameters directory ***\n')
+
+    os.system('git ls-files --other %s' % output_old_folder)
+
+    print('\n*** If either of the above showed uncommitted files, one should either commit them')
+    print('or rm them (see the help for more info.)  ***\n')
+
 
 # Next lines permit one to run the routine from the command line
 if __name__ == "__main__":

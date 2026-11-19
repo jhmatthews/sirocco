@@ -77,7 +77,7 @@
  *  	parameter to a line in the structure from which it gets the parameter value.
  *  	The keywords can be in any order but once a line has been used, it is not
  *  	reused.  There can be multiple lines with the same keyword, as for example
- *  	is the case in Python when one wants to extract spectra from multiple angles
+ *  	is the case in Sirocco when one wants to extract spectra from multiple angles
  *  	
  *  	In noninteractive mode, if the second string in the file is "$" (or 
  *  	there is no second string, it will
@@ -221,11 +221,9 @@ int strict = 0;                 // Initialize to a value that indicates everytin
  **********************************************************/
 
 int
-opar (filename)
-     char filename[];
+opar (char filename[])
 {
-  FILE *fopen (), *tmp_ptr;
-  int rdpar_init ();
+  FILE *tmp_ptr;
 
   /* Check that an input file is not currently open */
   if (rdpar_stat == 2)
@@ -290,10 +288,8 @@ opar (filename)
  **********************************************************/
 
 int
-add_par (filename)
-     char filename[];
+add_par (char filename[])
 {
-  int rdpar_init ();
 
   /* Check that an input file is not currently open */
   if (rdpar_stat != 2)
@@ -340,8 +336,7 @@ add_par (filename)
  **********************************************************/
 
 int
-cpar (filename)
-     char filename[];
+cpar (char filename[])
 {
   char old_filename[LINELEN];
 
@@ -367,9 +362,28 @@ cpar (filename)
   return (NORMAL);
 }
 
+/**********************************************************/
+/**
+ * @brief      Close the parameter-reading session without rewriting the parameter file
+ *
+ * @return     NORMAL
+ *
+ * Like cpar, but discards tmp.rdpar. used in unit tests
+ **********************************************************/
+
+int
+cpar_discard (void)
+{
+  if (rd_rank != 0)
+    return (0);
+  fclose (rdout_ptr);
+  rdpar_stat = 0;
+  remove ("tmp.rdpar");
+  return (NORMAL);
+}
+
 /* Despite its name, this routine is internal to the other rdpar parts of rdpar. It
    does however set put rdpar into a known mode and set up the output file */
-
 
 /**********************************************************/
 /** 
@@ -389,7 +403,6 @@ cpar (filename)
 int
 rdpar_init ()
 {
-  FILE *fopen ();
   rdin_ptr = stdin;             /* Initialize rdin_ptr to standard input */
   if ((rdout_ptr = fopen ("tmp.rdpar", "w")) == NULL)
   {
@@ -402,6 +415,50 @@ rdpar_init ()
 }
 
 
+// Ensure string is properly terminated within LINELEN
+
+/**********************************************************/
+/** 
+ * @brief      check is a string is properly terminateds are processed.
+ *
+ * @param [in] char  *s           the string to check              
+
+ * @return     the string after checking whether it ends with \0 as expected
+ *
+ *
+ * ###Notes###
+ *
+ * This routine checks is a string is properly terminated within LINELEN, if not 
+ * it adds \0 to the string and issues an error.
+ *
+ * This routine was created to fix an issue with string2int.  The problem
+ * should be fixed there so this error should not occur.  ksl has left the
+ * routine mainly so that the problem re-occurs, one knows how to detect
+ * it.  The problem was revealed in 2025, uwing valgrind.
+ *
+ **********************************************************/
+
+char *
+check_and_fix_string (char *s)
+{
+  if (s == NULL)
+    return NULL;
+
+  for (size_t i = 0; i < LINELEN; i++)
+  {
+    if (s[i] == '\0')
+    {
+      return s;                 // already valid
+    }
+  }
+
+  // If we reach here, no '\0' within LINELEN
+  Error ("Error: no string terminator within %d characters, adding termination.\n", LINELEN);
+  s[LINELEN - 1] = '\0';        // force termination at the end
+  Log ("Corrected String: %s\n", s);
+
+  return s;
+}
 
 /**********************************************************/
 /** 
@@ -427,8 +484,7 @@ rdpar_init ()
  **********************************************************/
 
 int
-string_process (question, dummy)
-     char question[], dummy[];
+string_process (char question[], char dummy[])
 {
 
   if (rdpar_stat == 0)
@@ -479,8 +535,7 @@ string_process (question, dummy)
  **********************************************************/
 
 int
-string_process_from_command_line (question, dummy)
-     char question[], dummy[];
+string_process_from_command_line (char question[], char dummy[])
 {
   char tdummy[LINELEN];
   fprintf (stderr, "%s (%s) :", question, dummy);
@@ -559,13 +614,12 @@ string_process_from_command_line (question, dummy)
  **********************************************************/
 
 int
-string_process_from_file (question, dummy)
-     char question[], dummy[];
+string_process_from_file (char question[], char dummy[])
 {
 
   char firstword[LINELEN], secondword[LINELEN];
   char *line, *fgets_rc;
-  char *ccc, *index (), *fgets ();
+  char *ccc;
   int nwords = 0;               // Initialise to avoid warning
   int wordlength;
   char xfirstword[LINELEN], xquestion[LINELEN];
@@ -718,7 +772,7 @@ string_process_from_file (question, dummy)
  * @brief      store the parsed version of an input line into 
  * 	a structure so that it can be written out to a file
  * 	, generally
- * 	the header for one of the ascii files produced by python
+ * 	the header for one of the ascii files produced by sirocco
  *
  * @param [in] char *  name   name of the parameter
  * @param [in] char *  value   string containing the value for the parameter
@@ -735,8 +789,7 @@ string_process_from_file (question, dummy)
  **********************************************************/
 
 int
-rdpar_store_record (name, value)
-     char *name, *value;
+rdpar_store_record (char *name, char *value)
 {
   strcpy (rdpar_record[rdpar_nrec].name, name);
   strcpy (rdpar_record[rdpar_nrec].value, value);
@@ -770,8 +823,7 @@ rdpar_store_record (name, value)
  **********************************************************/
 
 int
-rdpar_save (file_ptr)
-     FILE *file_ptr;
+rdpar_save (FILE *file_ptr)
 {
   int i;
 
@@ -841,8 +893,7 @@ rdpar_comment (char *format, ...)
  **********************************************************/
 
 int
-message (string)
-     char string[];
+message (char string[])
 {
   fprintf (stderr, "%s\n", string);
   fflush (stderr);
@@ -868,8 +919,7 @@ message (string)
  **********************************************************/
 
 int
-rdstr (question, answer)
-     char question[], answer[];
+rdstr (char question[], char answer[])
 {
   int query;
   char dummy[LINELEN];
@@ -911,9 +961,7 @@ rdstr (question, answer)
  **********************************************************/
 
 int
-rdchar (question, answer)
-     char question[];
-     char *answer;
+rdchar (char question[], char *answer)
 {
   int query;
   char dummy[LINELEN];
@@ -955,9 +1003,7 @@ rdchar (question, answer)
  **********************************************************/
 
 int
-rdint (question, answer)
-     char question[];
-     int *answer;
+rdint (char question[], int *answer)
 {
   int query;
   char dummy[LINELEN];
@@ -999,9 +1045,7 @@ rdint (question, answer)
  **********************************************************/
 
 int
-rdflo (question, answer)
-     char question[];
-     float *answer;
+rdflo (char question[], float *answer)
 {
   int query;
   char dummy[LINELEN];
@@ -1042,9 +1086,7 @@ rdflo (question, answer)
  **********************************************************/
 
 int
-rddoub (question, answer)
-     char question[];
-     double *answer;
+rddoub (char question[], double *answer)
 {
   int query;
   char dummy[LINELEN];
@@ -1086,9 +1128,7 @@ rddoub (question, answer)
  **********************************************************/
 
 int
-rdline (question, answer)
-     char question[];
-     char answer[];
+rdline (char question[], char answer[])
 {
   int query;
   char dummy[LINELEN];
@@ -1148,11 +1188,7 @@ rdline (question, answer)
 
 #define MAX_CHOICES 10
 int
-string2int (word, string_choices, string_values, string_answer)
-     char *word;
-     char *string_choices;
-     char *string_values;
-     char *string_answer;
+string2int (char *word, char *string_choices, char *string_values, char *string_answer)
 {
   int i;
   int nchoices;
@@ -1161,7 +1197,11 @@ string2int (word, string_choices, string_values, string_answer)
   char choices[LINELEN];
   char values[LINELEN];
   int ivalue, matched, ibest;
+  int len_choices, len_values;  /* Store the lengths */
 
+  /* Store lengths before modifying */
+  len_choices = strlen (string_choices);
+  len_values = strlen (string_values);
 
 
   /*Blank out the arrays we will be using here */
@@ -1210,7 +1250,14 @@ string2int (word, string_choices, string_values, string_answer)
   }
 
 
+  /* Add proper termination to both strings */
+  choices[len_choices] = '\0';  /* Null-terminate choices */
+  values[len_values] = '\0';    /* Null-terminate values */
 
+
+  /* Next two lines should no longer be necessary, as stings are now properly terminated */
+  check_and_fix_string (choices);
+  check_and_fix_string (values);
 
   nchoices = sscanf (choices, "%s %s %s %s %s %s %s %s %s %s", xs[0], xs[1], xs[2], xs[3], xs[4], xs[5], xs[6], xs[7], xs[8], xs[9]);
   nchoices =
@@ -1314,10 +1361,7 @@ string2int (word, string_choices, string_values, string_answer)
  **********************************************************/
 
 int
-rdchoice (question, answers, answer)
-     char question[];
-     char answers[];
-     char *answer;
+rdchoice (char question[], char answers[], char *answer)
 {
   char dummy[LINELEN];
   char string_answer[LINELEN];
@@ -1402,7 +1446,7 @@ rdchoice (question, answers, answer)
  * @return  0  
  *
  * Bascially the point of this is just to get a base or root name
- * for various files produced by Python.
+ * for various files produced by Sirocco.
  *
  * ###Notes###
  *
@@ -1417,8 +1461,7 @@ rdchoice (question, answers, answer)
  **********************************************************/
 
 int
-get_root (root, total)
-     char root[], total[];
+get_root (char root[], char total[])
 {
   int j;
   char *pf;
@@ -1470,8 +1513,7 @@ get_root (root, total)
  **********************************************************/
 
 int
-rdpar_set_mpi_rank (rank)
-     int rank;
+rdpar_set_mpi_rank (int rank)
 {
   rd_rank = rank;
   return (0);
@@ -1491,7 +1533,7 @@ rdpar_set_mpi_rank (rank)
  *
  * ###Notes###
  *
- * In writing to log files, Python allows one to control the
+ * In writing to log files, Sirocco allows one to control the
  * amount of information which is wrtten out by defining a verbosity
  * level.  The rdpar routines (because they are intended to be
  * useful in other applications), have their own verbosity 
@@ -1501,8 +1543,7 @@ rdpar_set_mpi_rank (rank)
  **********************************************************/
 
 int
-rdpar_set_verbose (vlevel)
-     int vlevel;
+rdpar_set_verbose (int vlevel)
 {
   if (vlevel < 2)
     verbose = 0;

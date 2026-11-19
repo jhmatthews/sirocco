@@ -1,41 +1,39 @@
 Wind.type
 =========
-Multi-line description, must keep indentation.
+
+Sets the type of wind model the user wants to use. More information of model specifics can be found in :ref:`Wind Model Parameters` and :ref:`Wind Models`.
 
 Type
   Enumerator
 
 Values
   SV
-    Multi-line description, must keep indentation.
+    The Shlosman and Vitello parameterization of a bi-conical flow. (:ref:`SV`)
 
   corona
-    Multi-line description, must keep indentation.
+    A simple model for a corona above the disk. (:ref:`Corona`)
 
   homologous
-    Multi-line description, must keep indentation.
+    A homologous expansion law useful for simulating SNe. (:ref:`Homologous`)
 
   hydro
-    Multi-line description, must keep indentation.
+    A special purpose mode used by the sirocco.collaboration for importing models from Zeus and Pluto. (Depreciated) (:ref:`Hydro`)
 
   imported
-    Multi-line description, must keep indentation.
+    A general purpose mode for importing a wind from an ascii file (see also :doc:`Importing Models </wind_models/importing_models>`).
 
   kwd
-    Multi-line description, must keep indentation.
+    The Knigge-Woods-Drew parameterization of a bi-conical flow. (:ref:`KWD`)
 
   shell
-    Multi-line description, must keep indentation.
+    A model of a thin shell useful for diagnostic studies. (:ref:`Shell`)
 
   star
-    Multi-line description, must keep indentation.
-
-  yso
-    Multi-line description, must keep indentation.
+    A stellar-wind model. A fairly standard parameterization of a spherical outflow for a hot star. (:ref:`Stellar_wind`)
 
 
 File
-  `setup_domains.c <https://github.com/agnwinds/python/blob/master/source/setup_domains.c>`_
+  `setup_domains.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup_domains.c>`_
 
 
 Parent(s)

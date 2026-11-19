@@ -1,27 +1,25 @@
 #!/usr/bin/env python 
 
 '''
-                    Space Telescope Science Institute
-
-Synopsis:  
-
 Indent in a controlled manner the .c files used by Python
-
 
 Command line usage (if any):
 
-    usage: run_indent.py filename to indent a single file
-           run_indent.py *.c to indent all of the .c files in a directory
-           run_indent.py *.h to indent all of the .h files
-           run_indent -all to indent all of the c and .h files
+    * `run_indent.py filename` to indent a single file
+    * `run_indent.py *.c` to indent all of the .c files in a directory
+    * `run_indent.py *.h` to indent all of the .h files
+    * `run_indent -all` to indent all of the c and .h files
 
 Description:  
 
 Primary routines:
 
-    doit  processes a single file
-    steer processes the command calling either doi or do_all
-    do_all processes all the .c and .h files in a directory
+    doit
+        processes a single file
+    steer
+        processes the command calling either doi or do_all
+    do_all
+        processes all the .c and .h files in a directory
 
 Notes:
 
@@ -31,7 +29,7 @@ Notes:
                                        
 History:
 
-180913 ksl Coding begun
+    180913 ksl Coding begun
 
 '''
 
@@ -94,19 +92,19 @@ def doit(filename='lines.c'):
 
     Notes:
 
-    If gnuindent is not found, then this function
-    is a NOP.
+        If gnuindent is not found, then this function
+        is a NOP.
 
-    The indented version is first written to another
-    file.  Then we check to see if the indented file
-    is different from the original.  
+        The indented version is first written to another
+        file.  Then we check to see if the indented file
+        is different from the original.
 
-    If the newly indented version is differnt from the
-    original, then it is copied back to the original.
+        If the newly indented version is differnt from the
+        original, then it is copied back to the original.
 
-    This is done so that a file that is unchanged is not
-    "touched', which would cause a recompilation when
-    mske is uesed.
+        This is done so that a file that is unchanged is not
+        "touched', which would cause a recompilation when
+        mske is uesed.
 
     History:
 
@@ -152,9 +150,10 @@ def do_all(ignore_list=None):
     '''
     Indent all of the .c and .h files in a directory in a standard way
 
-    ignore_list     list of file strings to ignore 
-                    if NoneType or blank array then nothing is ignored
-                    gets converted to numpy array inside function 
+    ignore_list
+        list of file strings to ignore
+        if NoneType or blank array then nothing is ignored
+        gets converted to numpy array inside function
     '''
     if get_gnu()=='':
         return

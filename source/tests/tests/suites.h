@@ -23,4 +23,13 @@ void create_matrix_test_suite (void);
 /* test_run_mode.c */
 void create_run_mode_test_suite (void);
 
+/* test_matrix.c */
+void create_translate_test_suite (void);
+
+/* test_macro_estimators.c */
+void create_macro_estimators_test_suite (void);
+
+/* test_atomic_data.c */
+void create_atomic_data_test_suite (void);
+
 #endif

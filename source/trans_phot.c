@@ -10,8 +10,8 @@
  *
  * ### Notes ###
  *
- * The routines contained here are central to Python, and anyone
- * who wants to understand Python in general should spend time
+ * The routines contained here are central to Sirocco, and anyone
+ * who wants to understand Sirocco in general should spend time
  * understanding how they work
  *
  * There are two basic options associated with the routines.
@@ -49,7 +49,7 @@
 #include <sys/time.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 long n_lost_to_dfudge = 0;
 
@@ -129,12 +129,11 @@ trans_phot (WindPtr w, PhotPtr p, int iextract)
     }
 
     trans_phot_single (w, &p[nphot], iextract);
-
   }
 
   Log ("\n");
 
-  print_timer_duration ("!!python: photon transport completed in", timer_t0);
+  print_timer_duration ("!!sirocco: photon transport completed in", timer_t0);
   //XXXX Delete when understand what is going on with state machines
   xsignal (files.root, "%-20s Photon transport completed\n", "NOK");
 
@@ -274,9 +273,17 @@ trans_phot_single (WindPtr w, PhotPtr p, int iextract)
        * detailed spectrum.
        */
 
-      if (geo.absorb_reflect == BACK_RAD_SCATTER)
+      if (geo.absorb_reflect == BACK_RAD_SCATTER || geo.absorb_reflect == BACK_RAD_SPECULAR)
       {
-        randvcos (pp.lmn, normal);
+        /* if we are using specular reflection, simply reverse the 
+           z-component of the photon direction */
+        if (geo.absorb_reflect == BACK_RAD_SPECULAR)
+        {
+          pp.lmn[2] = -pp.lmn[2];
+        }
+        else
+          randvcos (pp.lmn, normal);
+
         if (move_phot (&pp, DFUDGE))
         {
           Error ("trans_phot_single: photon not in correct frame when reflecting off of star\n");
@@ -450,7 +457,7 @@ trans_phot_single (WindPtr w, PhotPtr p, int iextract)
         if (modes.track_resonant_scatters)
           track_scatters (&pp, wmain[n_grid].nplasma, "Resonant");
 
-        plasmamain[wmain[n_grid].nplasma].scatters[line[current_nres].nion] += 1;
+        plasmamain[wmain[n_grid].nplasma].derived.scatters[line[current_nres].nion] += 1;
 
         if (geo.rt_mode == RT_MODE_2LEVEL)
         {
@@ -464,6 +471,22 @@ trans_phot_single (WindPtr w, PhotPtr p, int iextract)
           stuff_phot (&pp, p);
           break;
         }
+      }
+
+      if (pp.w < weight_min)
+      {
+        pp.istat = P_ABSORB;
+        pp.tau = VERY_BIG;
+        stuff_phot (&pp, p);
+        break;
+      }
+
+      if (pp.istat == P_ERROR_MATOM || pp.istat == P_LOFREQ_FF || pp.istat == P_ADIABATIC)
+      {
+        p->istat = pp.istat;
+        pp.tau = VERY_BIG;
+        stuff_phot (&pp, p);
+        break;
       }
 
       /* Now extract photons if we are in detailed the detailed spectrum portion of the program
@@ -520,7 +543,6 @@ trans_phot_single (WindPtr w, PhotPtr p, int iextract)
 
     /* This is an insurance policy but it is not obvious that, for example nscat
      * and nrscat, need to be updated */
-
     p->istat = istat;
     p->nscat = pp.nscat;
     p->nrscat = pp.nrscat;

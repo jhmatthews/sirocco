@@ -1,7 +1,7 @@
 Central_object.luminosity
 =========================
 The luminosity of a non-blackbody AGN central source.
-This is defined as the luminosity from 2-10keV.
+This is defined as the luminosity of the source from the 2 to 10keV spectral band.
 
 Type
   Double
@@ -13,7 +13,7 @@ Values
   Greater than 0.
 
 File
-  `setup_star_bh.c <https://github.com/agnwinds/python/blob/master/source/setup_star_bh.c>`_
+  `setup_star_bh.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup_star_bh.c>`_
 
 
 Parent(s)

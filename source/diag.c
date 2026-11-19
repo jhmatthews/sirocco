@@ -6,7 +6,7 @@
  *
  * @brief
  * This routine consolidates an approach to providing extra diagnostics
- * for debugging python. It also
+ * for debugging sirocco. It also
  * contains initialization routines
  * that control which diagnosics are tracked.
  *
@@ -69,7 +69,7 @@
 #include <stdarg.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -196,11 +196,14 @@ get_extra_diagnostics ()
   n += modes.jumps_for_detailed_spectra = rdchoice ("@Diag.use_jumps_for_emissivities_in_detailed_spectra(yes,no)", "1,0", answer);
 
   strcpy (answer, "no");
-  n += modes.use_upweighting_of_simple_macro_atoms =
-    rdchoice ("@Diag.use_upweighting_of_simple_macro_atoms(yes,no)", "1,0", answer);
+  n += modes.use_upweighting_of_simple_macro_atoms = rdchoice ("@Diag.use_upweighting_of_simple_macro_atoms(yes,no)", "1,0", answer);
 
   strcpy (answer, "zero_densities");
   n += modes.partial_cells = rdchoice ("@Diag.partial_cells(include,zero_densities,extend_full_cells)", "0,1,2", answer);
+  if (modes.partial_cells == PC_INCLUDE)
+  {
+    Log ("Warning: Including partial cells is deprecated, and may be removed in future versions of Sirocco.\n");
+  }
 
   strcpy (answer, "no");
   n += modes.searchlight = rdchoice ("@Diag.invoke_searchlight_option(yes,no)", "1,0", answer);
@@ -366,9 +369,8 @@ init_extra_diagnostics ()
   FILE *cellfile;               /*File that may or may not exist, pointing to cells we want to write out photon stats for */
   int cell;                     /*Temporary storage of cell to use */
 
-  if (eplinit == 0 && modes.extra_diagnostics)
+  if (eplinit == 0 && (modes.save_extract_photons || modes.track_resonant_scatters))
   {
-    sprintf (files.extra, "%.50s.ext.txt", files.root);
     epltptr = fopen (files.extra, "w");
     eplinit = 1;
   }
@@ -430,10 +432,7 @@ init_extra_diagnostics ()
  **********************************************************/
 
 int
-save_photon_stats (one, p, ds, w_ave)
-     WindPtr one;
-     PhotPtr p;
-     double ds, w_ave;
+save_photon_stats (WindPtr one, PhotPtr p, double ds, double w_ave)
 {
   int i;
 
@@ -476,9 +475,7 @@ int save_photon_number = 0;
  **********************************************************/
 
 int
-save_photons (p, comment)
-     PhotPtr p;
-     char comment[];
+save_photons (PhotPtr p, char comment[])
 {
   save_photon_number += 1;
 
@@ -514,10 +511,7 @@ save_photons (p, comment)
  **********************************************************/
 
 int
-track_scatters (p, nplasma, comment)
-     PhotPtr p;
-     int nplasma;
-     char *comment;
+track_scatters (PhotPtr p, int nplasma, char *comment)
 {
 
   fprintf (epltptr, "Scattter %i %.2e %.2e %.2e  %i %e %e %i %s\n", p->np,

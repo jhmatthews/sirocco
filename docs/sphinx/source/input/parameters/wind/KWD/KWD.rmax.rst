@@ -1,7 +1,7 @@
 KWD.rmax
 ========
-The radius at which the disk wind terminates, in units of central object
-radii. This has to be greater than rmin.
+
+This radius defines the outer boundary and greatest distance from the central object that the wind launches off the disk. 
 
 Type
   Double
@@ -13,10 +13,10 @@ Values
   Greater than :ref:`KWD.rmin`
 
 File
-  `knigge.c <https://github.com/agnwinds/python/blob/master/source/knigge.c>`_
+  `knigge.c <https://github.com/sirocco-rt/sirocco/blob/master/source/knigge.c>`_
 
 
 Parent(s)
-  * :ref:`Wind.type`: kwd
+  * :ref:`Wind.type`: ``kwd``
 
 

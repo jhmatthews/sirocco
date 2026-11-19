@@ -1,37 +1,42 @@
 #!/usr/bin/env python 
 
 '''
-                    Space Telescope Science Institute
+Checks if `.pf` files in a directory need modification.
 
 Synopsis:  
 
-Check all of the pf files in a directory to see if
-they require modification, alternatively run pieces of travis 
-to make sure the parameter files will run.  
+    Check all of the pf files in a directory to see if
+    they require modification, alternatively run pieces of travis
+    to make sure the parameter files will run.
 
 
 Command line usage (if any):
 
-    usage: pf_check.py directory_name
+    usage::
+
+        pf_check.py directory_name
 
 Description:  
 
     The program checks all the .pf files in a directory by
-    running the file with Python with the -i switch turned 
+    running the file with Sirocco with the -i switch turned 
     on so to check whether the pf file will run, querying
     the user for any missing inputs.  
 
     In order that ther original directory not be affected,
     it first copies all of the .pf files to a directory 
-    with the name
+    with the name::
+
         pf_check_directory_date
 
-    The full path names to directories in the $PYTHON/examples
-    do not need to be given, so for example
-        pf_check.py beta
-    will test the parameter files in $PYTHON/examples/beta.
+    The full path names to directories in the `$SIROCCO/examples`
+    do not need to be given, so for example::
 
-    After running Python in -i mode for each of the files, 
+        pf_check.py beta
+
+    will test the parameter files in `$SIROCCO/examples/beta`.
+
+    After running Sirocco in -i mode for each of the files, 
     the routine diffs the .out.pf file with the original.pf
     file to see if changes should be made to the .pf file
 
@@ -51,10 +56,13 @@ Description:
 
 Primary routines:
 
-    doit - the main routine which runs everything
-    travis - the special routine for parsing the .travis.yaml file to
+    doit
+        the main routine which runs everything
+    travis
+        the special routine for parsing the .travis.yaml file to
         get the commands to run
-    steer - interpret the command line
+    steer
+        interpret the command line
 
 Notes:
 
@@ -65,7 +73,8 @@ Notes:
                                        
 History:
 
-190304 ksl Coding begun
+    190304 ksl
+        Coding begun
 
 '''
 
@@ -86,9 +95,9 @@ def travis():
     Return a special set of commands when dealing with the travis directory
     '''
 
-    PYTHON=os.environ['PYTHON']
+    SIROCCO=os.environ['SIROCCO']
 
-    x=open('%s/.travis.yml' % (PYTHON))
+    x=open('%s/.travis.yml' % (SIROCCO))
     z=yaml.load(x)
     print(z['script'])
     commands=[]
@@ -123,9 +132,9 @@ def doit(directory):
     if os.path.isdir(directory):
         xdir=directory
     else:
-        # Get the PYTHON environment variable
-        PYTHON=os.environ['PYTHON']
-        ydir='%s/examples/%s' % (PYTHON,directory)
+        # Get the SIROCCO environment variable
+        SIROCCO=os.environ['SIROCCO']
+        ydir='%s/examples/%s' % (SIROCCO,directory)
         if os.path.isdir(ydir):
             xdir=ydir
         else:

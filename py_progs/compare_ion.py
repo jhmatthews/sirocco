@@ -1,13 +1,7 @@
 #!/usr/bin/env python 
 
 '''
-                    Space Telescope Science Institute
-
-Synopsis:  
-
-This routine is used for diagnosing isses with spectra
-produced during ionization cycles
-
+This routine is used for diagnosing isses with spectra produced during ionization cycles
 
 Command line usage (if any):
 
@@ -43,7 +37,7 @@ from astropy.io import ascii
 import matplotlib.pyplot as plt
 import numpy as np
 
-from scipy.signal import boxcar
+from scipy.signal.windows import boxcar
 from scipy.signal import convolve
 
 def xsmooth(flux,smooth=21):

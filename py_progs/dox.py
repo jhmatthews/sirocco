@@ -1,19 +1,15 @@
 #!/usr/bin/env python 
 
 '''
-                    Space Telescope Science Institute
-
-Synopsis:  
-
-    Check whether c routines have proper dox headers, and if not write a new
-    file with a dummy dox header for the user to update
+Check whether c routines have proper dox headers, and if not write a new file with a dummy dox header for the user to update
 
 
 Command line usage:
 
-    usage: dox.py whatever.c  to process a single file
-           dox.py *.c  or -all to process all c files in a directory
-           dox.py -h  to get this help message
+    usage:
+    * `dox.py whatever.c` to process a single file
+    * `dox.py *.c`  or `-all` to process all c files in a directory
+    * `dox.py -h` to get this help message
 
 Description:  
 
@@ -21,29 +17,29 @@ Description:
     reports on the results.  
     
     If one or more headers are missing, for a file named for exampe foo.c,  it will write out
-    a new file named new_foo.c with a basic header installed.
+    a new file named `new_foo.c` with a basic header installed.
 
-    This basic headers in this routine should be edited and the file, in this case new_foo.c
+    This basic headers in this routine should be edited and the file, in this case `new_foo.c`
     copied back to foo.c
 
 Primary routines:
 
-    doit processes a single file
-    do_many processes all of the files in a directory, by calling doit multiplee times
+    `doit` processes a single file
+    `do_many` processes all of the files in a directory, by calling doit multiple times
     steer processes the command line
 
 Notes:
 
-    Files that begin 'new_' will not be checked
+    Files that begin `new_` will not be checked
 
     dox.py can give incorrect results if the routine is not properly indented
 
-    This routine does not check for old style headers used prior to the introductin of doxygen
+    This routine does not check for old style headers used prior to the introduction of doxygen
     to Python, since that conversion should be complete.
                                        
 History:
 
-180912 ksl Coding begun
+    180912 ksl Coding begun
 
 '''
 
@@ -95,9 +91,7 @@ def read_file(filename,char=''):
     History:
     
     110729    ksl    Added optional delimiters
-    141209    ksl    Reinstalled in my standard startup
-            script so there was flexibility to
-            read any ascii file
+    141209    ksl    Reinstalled in my standard startup script so there was flexibility to read any ascii file
     '''
 
     try:

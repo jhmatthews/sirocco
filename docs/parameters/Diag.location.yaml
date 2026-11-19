@@ -1,0 +1,13 @@
+name: Diag.location
+description: |
+  Multi-line description, must keep indentation.
+type: Enumerator
+values:
+  central_object: |
+    Multi-line description, must keep indentation.
+  disk: |
+    Multi-line description, must keep indentation.
+parent:
+  parameter: Condition e.g. greater than 0 or list e.g. [1, 2, 5]
+file: diag.c
+advanced: true

@@ -8,7 +8,7 @@
  * the wind
  *
  *
- * Python supports two ways to determine a new photon
+ * Sirocco supports two ways to determine a new photon
  * direction when a photon scatters in thie wind.  These
  * include 
  *
@@ -23,7 +23,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -67,9 +67,7 @@
 
 
 int
-randwind_thermal_trapping (p, nnscat)
-     PhotPtr p;
-     int *nnscat;
+randwind_thermal_trapping (PhotPtr p, int *nnscat)
 {
   double tau_norm, p_norm;
   double tau, dvds, z, ztest;

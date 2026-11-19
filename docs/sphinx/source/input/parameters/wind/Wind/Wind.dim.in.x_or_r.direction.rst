@@ -8,7 +8,7 @@ the number given.
 
 Note that in some situations there may be more than one wind
 component, known technically as a domain.  In that case the user
-will be queried for this value mulitple times, one for each domain
+will be queried for this value multiple times, one for each domain.
 
 Type
   Integer
@@ -17,7 +17,7 @@ Values
   Greater than or equal to 4, to allow for boundaries.
 
 File
-  `setup_domains.c <https://github.com/agnwinds/python/blob/master/source/setup_domains.c>`_
+  `setup_domains.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup_domains.c>`_
 
 
 Parent(s)

@@ -2,9 +2,7 @@ Wind_heating
 ============
 
 
-.. todo::
-   Fill in
-
+Additional parameters associated with non radiative processes that can affect the thermal balance of the wind.
 
 .. toctree::
    :glob:

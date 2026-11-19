@@ -5,16 +5,16 @@
  * @date   April, 2018
  *
  * @brief  Except for where_in_wind, these are convenience routines
- * which make it easier to incorporate wind models into Python.  
+ * which make it easier to incorporate wind models into Sirocco.  
  *
  * where_in_wind determines whether a position is x is in the wind
- * and if so in what domain.  Since grid can overlap, the Python
+ * and if so in what domain.  Since grid can overlap, the Sirocco
  * convention is that the domains are overlaid on one another, and
  * the last one is the one that matters at a particular postion.  
  * where_in_wind is therefore one of the basic utilites to determine
  * where one is at any time.
  *
- * In Python, the actual radiative transfer is carried on various
+ * In Sirocco, the actual radiative transfer is carried on various
  * grids (domains).  During radiative transfer quatnities like
  * velocity and density are obtained by interpolating on values
  * in the grid, and not from the formulae that defince for, e. g.
@@ -35,7 +35,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -61,7 +61,7 @@
  * Since domains can overlap in principle, e.g one can have say a bipolar wind which starts
  * at the disk surface and goes to a very large radius, and then a coronal just above the disk,
  * one needs a convention to know which domain to use when there are two possibilities.  The
- * Python convention is to lay the grids on top of one another so that the last one matters when 
+ * Sirocco convention is to lay the grids on top of one another so that the last one matters when 
  * there is a conflict. For this reason the grids are searched in reverse order.
  *
  * Where_in_wind does not tell you whether a position is in the grid or not, just whether 
@@ -75,9 +75,7 @@
  **********************************************************/
 
 int
-where_in_wind (x, ndomain)
-     double x[];
-     int *ndomain;
+where_in_wind (double x[], int *ndomain)
 {
   double rho, rad, z;
   int ireturn;
@@ -230,9 +228,7 @@ where_in_wind (x, ndomain)
  **********************************************************/
 
 double
-model_velocity (ndom, x, v)
-     double x[], v[];
-     int ndom;
+model_velocity (int ndom, double x[], double v[])
 {
   double speed = 0;
 
@@ -317,9 +313,7 @@ model_velocity (ndom, x, v)
  **********************************************************/
 
 int
-model_vgrad (ndom, x, v_grad)
-     double x[], v_grad[][3];
-     int ndom;
+model_vgrad (int ndom, double x[], double v_grad[][3])
 {
 
   double v[3], v_forward[3], v_reverse[3];
@@ -415,9 +409,7 @@ model_vgrad (ndom, x, v_grad)
  **********************************************************/
 
 double
-get_div_v_in_cmf_frame (ndom, x)
-     int ndom;
-     double *x;
+get_div_v_in_cmf_frame (int ndom, double *x)
 {
   int i;
   double v[3][3];
@@ -456,9 +448,7 @@ get_div_v_in_cmf_frame (ndom, x)
  **********************************************************/
 
 double
-model_rho (ndom, x)
-     int ndom;
-     double x[];
+model_rho (int ndom, double x[])
 {
   double rho = 0;
   int n = 0;
@@ -544,9 +534,7 @@ model_rho (ndom, x)
  **********************************************************/
 
 int
-wind_check (www, n)
-     WindPtr www;
-     int n;
+wind_check (WindPtr www, int n)
 {
   int i, j, k, istart, istop;
   int ierr = 0;
@@ -647,7 +635,7 @@ wind_check (www, n)
         }
       }
     }
-    else if (zdom[ndom].coord_type == CYLIND || zdom[ndom].coord_type == CYLVAR)
+    else if (zdom[ndom].coord_type == CYLIND)
     {
       dxmin = 1e99;
       dzmin = 1e99;

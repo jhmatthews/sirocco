@@ -1,20 +1,20 @@
 #!/usr/bin/env python 
 
 '''
-                    Space Telescope Science Institute
-
-Synopsis:  
+Checks .sig files to see which runs in a grid have completed.
 
 When running a grid of models, it may not be clear whether
 all of the runs have been completed, especially if time limits
 are placed on the individual runs.  This routine checks the
-.sig files to see which of a list of .pf files have been 
+.sig files to see which of a list of .pf files have been
 completed.
 
 
 Command line usage (if any):
 
-    usage: grid_check.py filename 
+    usage::
+
+        grid_check.py filename
 
     where filename contains a list of the .pf files that need to be checked
 
@@ -61,8 +61,10 @@ def read_file(filename,char=''):
 
     History:
     
-    110729    ksl    Added optional delimiters
-    141209    ksl    Reinstalled in my standard startup
+        110729    ksl
+            Added optional delimiters
+        141209    ksl
+            Reinstalled in my standard startup
             script so there was flexibility to
             read any ascii file
     '''

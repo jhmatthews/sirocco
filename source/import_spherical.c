@@ -30,7 +30,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -66,13 +66,11 @@
  **********************************************************/
 
 int
-import_1d (ndom, filename)
-     int ndom;
-     char *filename;
+import_1d (int ndom, char *filename)
 {
   FILE *fptr;
   char line[LINELENGTH];
-  int n, icell, ncell;
+  int n, icell, inwind, ncell;
   double r, v_r, mass_rho, t_r, t_e;
 
   Log ("Reading a 1d model %s\n", filename);
@@ -86,7 +84,7 @@ import_1d (ndom, filename)
   ncell = 0;
   while (fgets (line, LINELENGTH, fptr) != NULL)
   {
-    n = sscanf (line, " %d %le %le %le %le %le", &icell, &r, &v_r, &mass_rho, &t_e, &t_r);
+    n = sscanf (line, " %d %d %le %le %le %le %le", &icell, &inwind, &r, &v_r, &mass_rho, &t_e, &t_r);
     if (n < READ_NO_TEMP_1D)
     {
       continue;
@@ -94,6 +92,7 @@ import_1d (ndom, filename)
     else
     {
       imported_model[ndom].i[ncell] = icell;
+      imported_model[ndom].inwind[ncell] = inwind;
       imported_model[ndom].r[ncell] = r;
       imported_model[ndom].v_r[ncell] = v_r;
       imported_model[ndom].mass_rho[ncell] = mass_rho;
@@ -220,9 +219,7 @@ import_spherical_setup_boundaries (int ndom)
  **********************************************************/
 
 int
-spherical_make_grid_import (w, ndom)
-     WindPtr w;
-     int ndom;
+spherical_make_grid_import (WindPtr w, int ndom)
 {
 
   int j, n;
@@ -306,9 +303,7 @@ spherical_make_grid_import (w, ndom)
  **********************************************************/
 
 double
-velocity_1d (ndom, x, v)
-     int ndom;
-     double *x, *v;
+velocity_1d (int ndom, double *x, double *v)
 {
   double speed;
   double r;
@@ -325,7 +320,7 @@ velocity_1d (ndom, x, v)
   speed = 0;
   for (nn = 0; nn < nelem; nn++)
   {
-    speed += wmain[zdom[ndom].nstart + nnn[nn]].v[0] * frac[nn];
+    speed += wmain[nnn[nn]].v[0] * frac[nn];
   }
 
   v[0] = x[0] / r * speed;
@@ -364,9 +359,7 @@ velocity_1d (ndom, x, v)
  **********************************************************/
 
 double
-rho_1d (ndom, x)
-     int ndom;
-     double *x;
+rho_1d (int ndom, double *x)
 {
   double rho = 0;
   double r;

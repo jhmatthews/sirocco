@@ -5,8 +5,6 @@
  *
  * @brief Functions for communicating wind properties
  *
- * @TODO: as much as this as possible should use non-blocking communication
- *
  ***********************************************************/
 
 #include <stdio.h>
@@ -15,7 +13,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 /**********************************************************/
 /**
@@ -36,7 +34,7 @@ normalize_spectra_across_ranks (void)
   int i;
   int j;
   int nspec;
-  int size_of_commbuffer;;
+  int size_of_commbuffer;
   double *spectrum_buffer;
 
   d_xsignal (files.root, "%-20s Begin spectrum reduction\n", "NOK");

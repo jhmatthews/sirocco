@@ -157,11 +157,10 @@ index_lines ()
   float *freqs, foo;
   int *index, ioo;
   int n;
-  void indexx ();
 
   /* Allocate memory for some modestly large arrays */
-  freqs = calloc (sizeof (foo), NLINES + 2);
-  index = calloc (sizeof (ioo), NLINES + 2);
+  freqs = calloc (sizeof (foo), nlines + 2);
+  index = calloc (sizeof (ioo), nlines + 2);
 
   freqs[0] = 0;
   for (n = 0; n < nlines; n++)
@@ -197,18 +196,22 @@ index_lines ()
 
 /**********************************************************/
 /**
- * @brief      Index the topbase photoionzation crossections by frequency
+ * @brief      Index the photoionization cross sections by threshold frequency
  *
  *
  * @return     Always returns 0
  *
  * @details
  *
- * The results are stored in phot_top_ptr
+ * phot_top_ptr is (re)allocated with one element for each of the
+ * ntop_phot + nxphot cross sections in phot_top, and filled with
+ * pointers to them in order of increasing threshold frequency.
+ * It must be called after all the cross sections have been read,
+ * since phot_top may move while they are being read.
  *
  * ### Notes ###
  * Adapted from index_lines as part to topbase
- *             addition to python
+ *             addition to sirocco
  *
  **********************************************************/
 
@@ -218,7 +221,6 @@ index_phot_top ()
   float *freqs, foo;
   int *index, ioo;
   int n;
-  void indexx ();
 
   /* Allocate memory for some modestly large arrays */
   freqs = calloc (sizeof (foo), ntop_phot + nxphot + 2);
@@ -231,6 +233,14 @@ index_phot_top ()
 
   indexx (ntop_phot + nxphot, freqs, index);    /* Note that this math recipes routine
                                                    expects arrays to run from 1 to nlines inclusive */
+
+  free (phot_top_ptr);
+  phot_top_ptr = (TopPhotPtr *) calloc (sizeof (TopPhotPtr), ntop_phot + nxphot);
+  if (phot_top_ptr == NULL)
+  {
+    Error ("index_phot_top: There is a problem in allocating memory for phot_top_ptr\n");
+    exit (0);
+  }
 
   /* The for loop indices are complicated by the numerical recipes routine,
      which is a simple translation of a fortran routine.
@@ -254,15 +264,16 @@ index_phot_top ()
 
 /**********************************************************/
 /**
- * @brief      Index inner shell xsections in frequency order
+ * @brief      Index the inner shell cross sections by threshold frequency
  *
- * @return     Alwasy returns 0
+ * @return     Always returns 0
  *
  * @details
- * The rusults are stored in inner_cross_ptr
- *
- * ### Notes ###
- * ??? NOTES ???
+ * inner_cross_ptr is (re)allocated with one element for each of the
+ * n_inner_tot cross sections in inner_cross, and filled with pointers
+ * to them in order of increasing threshold frequency.  As for
+ * index_phot_top, it must be called after all the cross sections
+ * have been read.
  *
  **********************************************************/
 
@@ -272,7 +283,6 @@ index_inner_cross ()
   float *freqs, foo;
   int *index, ioo;
   int n;
-  void indexx ();
 
   /* Allocate memory for some modestly large arrays */
   freqs = calloc (sizeof (foo), n_inner_tot + 2);
@@ -285,6 +295,14 @@ index_inner_cross ()
 
   indexx (n_inner_tot, freqs, index);   /* Note that this math recipes routine
                                            expects arrays to run from 1 to nlines inclusive */
+
+  free (inner_cross_ptr);
+  inner_cross_ptr = (TopPhotPtr *) calloc (sizeof (TopPhotPtr), n_inner_tot);
+  if (inner_cross_ptr == NULL)
+  {
+    Error ("index_inner_cross: There is a problem in allocating memory for inner_cross_ptr\n");
+    exit (0);
+  }
 
   /* The for loop indices are complicated by the numerical recipes routine,
      which is a simple translation of a fortran routine.
@@ -328,9 +346,7 @@ index_inner_cross ()
  **********************************************************/
 
 void
-indexx (n, arrin, indx)
-     int n, indx[];
-     float arrin[];
+indexx (int n, float arrin[], int indx[])
 {
   int l, j, ir, indxt, i;
   float q;
@@ -423,8 +439,7 @@ indexx (n, arrin, indx)
  **********************************************************/
 
 int
-limit_lines (freqmin, freqmax)
-     double freqmin, freqmax;
+limit_lines (double freqmin, double freqmax)
 {
 
   int nmin, nmax, n;
@@ -571,14 +586,11 @@ double q21_a, q21_t_old;
 ************************************************************/
 
 double
-q21 (line_ptr, t)
-     struct lines *line_ptr;
-     double t;
+q21 (struct lines *line_ptr, double t)
 {
   double gaunt;
   double omega;
   double u0;
-  double upsilon ();
 
 
   if (q21_line_ptr != line_ptr || t != q21_t_old)
@@ -642,13 +654,9 @@ q21 (line_ptr, t)
  **********************************************************/
 
 double
-q12 (line_ptr, t)
-     struct lines *line_ptr;
-     double t;
+q12 (struct lines *line_ptr, double t)
 {
   double x;
-  double q21 ();
-  double exp ();
 
   x = line_ptr->gu / line_ptr->gl * q21 (line_ptr, t) * exp (-H_OVER_K * line_ptr->freq / t);
 
@@ -685,8 +693,7 @@ double a21_a;
  **********************************************************/
 
 double
-a21 (line_ptr)
-     struct lines *line_ptr;
+a21 (struct lines *line_ptr)
 {
   double freq;
 
@@ -717,18 +724,17 @@ a21 (line_ptr)
  * u0 is the ratio of Boltzmans constant times the electron temperature in the cell
  * divided by Plancks constant times the frequency of the line under analysis.
  *
+ * Burgess and Tully have 4 separate types, but in order to allow levels in Chianti to be combined in Sirocco
+ * to Type 5 has collision strengths that are simply interpolatedas the ratio of Kt_e/hnu.
  *
  **********************************************************/
 
 double
-upsilon (n_coll, u0)
-     int n_coll;
-     double u0;
+upsilon (int n_coll, double u0)
 {
   double x;                     //The scaled temperature
   double y;                     //The scaled collision strength
   double upsilon;               //The actual collision strength
-  int linterp ();
 
   /* first we compute x. This is the "reduced temperature" from
      Burgess & Tully 1992. */
@@ -740,6 +746,10 @@ upsilon (n_coll, u0)
   else if (coll_stren[n_coll].type == 2 || coll_stren[n_coll].type == 3)
   {
     x = u0 / (u0 + coll_stren[n_coll].scaling_param);
+  }
+  else if (coll_stren[n_coll].type == 5)
+  {
+    x = u0;
   }
   else
   {
@@ -759,7 +769,7 @@ upsilon (n_coll, u0)
   {
     upsilon = y * (log (u0 + exp (1)));
   }
-  else if (coll_stren[n_coll].type == 2)
+  else if (coll_stren[n_coll].type == 2 || coll_stren[n_coll].type == 5)
   {
     upsilon = y;
   }

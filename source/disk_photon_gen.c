@@ -14,7 +14,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 #define PRINT_OFF 0
@@ -46,17 +46,11 @@
  **********************************************************/
 
 int
-photo_gen_disk (p, weight, f1, f2, spectype, istart, nphot)
-     PhotPtr p;
-     double weight;
-     double f1, f2;
-     int spectype;
-     int istart, nphot;
+photo_gen_disk (PhotPtr p, double weight, double f1, double f2, int spectype, int istart, int nphot)
 {
 
   double freqmin, freqmax;
   int i, iend;
-  double planck ();
   double r, z, theta, phi;
   int nring = 0;
   double north[3];
@@ -189,7 +183,7 @@ photo_gen_disk (p, weight, f1, f2, spectype, istart, nphot)
     }
     else if (spectype == SPECTYPE_BB_FCOL)
     {
-      fcol = disk_colour_correction(disk.t[nring]);
+      fcol = disk_colour_correction (disk.t[nring]);
       p[i].freq = planck (fcol * disk.t[nring], freqmin, freqmax);
     }
     else if (spectype == SPECTYPE_UNIFORM)
@@ -260,10 +254,9 @@ photo_gen_disk (p, weight, f1, f2, spectype, istart, nphot)
  **********************************************************/
 
 int
-disk_photon_summary (filename, mode)
-     char filename[], mode[];
+disk_photon_summary (char filename[], char mode[])
 {
-  FILE *fopen (), *ptr;
+  FILE *ptr;
   int n;
   double x;
   if (mode[0] == 'a')

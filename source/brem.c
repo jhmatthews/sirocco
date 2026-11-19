@@ -20,7 +20,7 @@
 #include <stdlib.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -161,8 +161,7 @@ double brem_set[] = {
  **********************************************************/
 
 double
-get_rand_brem (freqmin, freqmax)
-     double freqmin, freqmax;
+get_rand_brem (double freqmin, double freqmax)
 {
   double freq, alpha, y, brem_alpha_tiny;
   int echeck;

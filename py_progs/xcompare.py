@@ -1,12 +1,7 @@
 #!/usr/bin/env python 
 
 '''
-                    Space Telescope Science Institute
-
-Synopsis:  
-
 Perform a standardized comparison between two Python runs
-
 
 Command line usage (if any):
 
@@ -28,7 +23,7 @@ History:
 
 import os
 import matplotlib.pyplot as plt
-from scipy.signal import boxcar
+from scipy.signal.windows import boxcar
 from scipy.signal import convolve
 import numpy as np
 from astropy.io import ascii

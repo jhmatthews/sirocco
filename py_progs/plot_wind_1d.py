@@ -1,17 +1,14 @@
 #!/usr/bin/env python 
 
 '''
-                    Space Telescope Science Institute
-
-Synopsis:  
-
-This is a general purpose routine for plotting variables 
-written out by windsave2table for 1d models
+This is a general purpose routine for plotting variables  written out by windsave2table for 1d models
 
 
 Command line usage (if any):
 
-    usage: plot_wind_1d.py filename
+    usage::
+
+        plot_wind_1d.py filename
 
 Description:  
 
@@ -23,8 +20,9 @@ Notes:
                                        
 History:
 
-191102 ksl Coding begun.  This routine is largely parallel to the routine
-            plot_wind.py (which is intended for 2d models
+191102 ksl
+    Coding begun.  This routine is largely parallel to the routine
+    plot_wind.py (which is intended for 2d models
 
 '''
 
@@ -166,17 +164,25 @@ def doit(filename='7MsolBigGapEXT.0.master.txt',var='t_r',grid='ij',inwind='',sc
         plot_dir='',root=''):
 
     '''
-     Plot a single variable from an astropy table (normally created with windsave2table, with various
+    Plot a single variable from an astropy table (normally created with windsave2table, with various
     options
 
-    where var is the variable to plot
-    where grid can be ij, log, or anything else.  If ij then the plot will be in grid coordinates, if log
-        the plot will be in on a log scale in physical coordiantes.  If anything else, the plot will be
-        on a linear scale in physical coordiantes
-    where scale indicates how the variable should be plotted.  guess tells the routine to make a sensible choice
-        linear implies the scale should be linear and log implies a log scale should be used
-    where zmin and zmax overide the max and mimimum in the array (assuming these limits are with the range of
-        the variable)
+    Arguments:
+        var:
+            is the variable to plot
+        grid:
+            can be ij, log, or anything else.  If ij then the plot will be in grid coordinates, if log
+            the plot will be in on a log scale in physical coordiantes.  If anything else, the plot will be
+            on a linear scale in physical coordiantes
+        scale:
+            indicates how the variable should be plotted.  guess tells the routine to make a sensible choice
+            linear implies the scale should be linear and log implies a log scale should be used
+        zmin:
+            overide the max and mimimum in the array (assuming these limits are with the range of
+            the variable)
+        zmax:
+            overide the max and mimimum in the array (assuming these limits are with the range of
+            the variable)
 
     Description:
 

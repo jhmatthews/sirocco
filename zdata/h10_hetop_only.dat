@@ -1,0 +1,83 @@
+#This is a standard atomic data set for a 20 level hydrogen model and 20 level helium atom
+#and lines/continua of other elements from the usual standard 73 set.
+#It be treated with or without the full macro atom formalism for hydrogen and helium only.
+#first macro atom data is read in
+# data/atomic_macro/h10_hetop_standard80_elem_ions.dat
+data/atomic_macro/h10_hetop_only_ele_ion.dat                           
+data/atomic_macro/h10_levels.dat
+data/atomic_macro/h10_lines.dat
+data/atomic_macro/h10_phot.dat
+data/atomic_macro/he_top_levels.dat
+data/atomic_macro/he_top_lines.dat
+data/atomic_macro/he_top_phot_macro.dat
+#This is the standard set of data files created for python81c - collision stength included
+# These are the level files used in standard79 - they tend to have very few levels for each state
+# particularly for the upper levels
+#
+data/atomic/topbase_levels_cno.dat
+data/atomic/topbase_levels_fe.dat
+#
+# This is a new level file - all ions have ten levels - this is a reduction for some ions
+#
+data/atomic/topbase_all_levels_10_lev.dat
+#
+# The next file is the levels used to compute line emission
+#
+data/atomic/levels_ver_2.dat
+#
+# And the next is for the actual lines
+#
+data/atomic/lines_linked_ver_2.dat
+#
+# And this next is for the collision strength data - new
+#
+data/atomic/ver_upsilon_linked.dat
+#
+data/atomic/excited.dat
+data/atomic/recomb.dat
+#
+# The next set of topbase PI cross sections are those used in atomic79
+#
+data/atomic/topbase_cno_phot_extrap.dat
+data/atomic/topbase_fe_phot_extrap.dat
+#
+# This helium file contains all helium levels, unlike the limited number in the older files above
+#
+#data/atomic/topbase_phot_he_extrap.dat
+#
+# This iron level file contains 10 levels for each iron stage as opposed to the normal 1(!)
+#
+#data/atomic/topbase_phot_fe_10_lev_extrap.dat
+#
+#Next is VFKY PI cross sections, supplemented with VY data out to 50kev.
+#
+data/atomic/vfky_outershell_tab.dat
+#
+#Next is VY inner shell photoionization cross sections
+#
+data/atomic/vy_innershell_tab.dat
+#
+#Now we have electron yield data from Kaastra and Mewe, matching the inner shells
+#
+data/atomic/kaastra_electron_yield.dat
+#
+#Next is dielectronic recombination data from chianti.
+#
+data/atomic/chianti_dr.dat
+#
+#Next is badnell style total radiative recombinaion rate
+#
+data/atomic/chianti_rr.dat
+#
+#Next is badnell style ground state radiative recombinaion rate
+#
+data/atomic/Badnell_GS_RR.dat
+#
+#Next is gaunt factor data from sutherland (1997)
+#
+data/atomic/gffint.dat
+#
+#Next is direct ionization from dere
+#
+data/atomic/di_dere.dat
+#

@@ -1,7 +1,13 @@
 Checking Runs and Testing
 ---------------------------
 
-run_check
-=================================
-.. automodule:: run_check
-    :members:
+.. autosummary::
+    :toctree: testing
+
+    balmer_decrement
+    compare_ion
+    CompareAtomic
+    grid_check
+    run_check
+    test_masterfiles
+    xcompare

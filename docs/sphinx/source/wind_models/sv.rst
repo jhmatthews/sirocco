@@ -25,7 +25,7 @@ and :math:`r_o` refers to the footpoint of a streamline.
 The poloidal velocity along the streamlines is defined to be
 
 .. math::
-    v_l - v_o + (v_{\infty}(r_o)-v_o) \frac {(l/R_v)^{\alpha}}{(l/R_v)^{\alpha}+1}
+    v_l = v_o + (v_{\infty}(r_o)-v_o) \frac {(l/R_v)^{\alpha}}{(l/R_v)^{\alpha}+1}
 
 The scale length :math:`R_v` and the exponent :math:`\alpha` control the
 acceleration of the wind between a velocity :math:`v_o`, at the base of the wind 
@@ -65,6 +65,7 @@ The following variables are used::
     SV.v_infinity(in_units_of_vescape          3
     SV.acceleration_length(cm)                 7e10
     SV.acceleration_exponent                   1.5
+    SV.gamma(streamline_skew;1=usually)         1
     SV.v_zero_mode(fixed,sound_speed)                  fixed 
     SV.v_zero(cm/s)                                                6e5
 

@@ -11,6 +11,7 @@
  * ****************************************************************************************************************** */
 
 #include <errno.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,14 +20,16 @@
 #include <CUnit/CUnit.h>
 
 #include "../../atomic.h"
-#include "../../python.h"
+#include "../../sirocco.h"
 #include "../assert.h"
 #include "../unit_test.h"
 
-char *PYTHON_ENV;
+char *SIROCCO_ENV;
 char TEST_CWD[LINELENGTH];
 char ATOMIC_DATA_TARGET[LINELENGTH];
-char ATOMIC_DATA_DEST[LINELENGTH];
+char ATOMIC_DATA_DEST[2 * LINELENGTH];
+char ATOMIC_DATA_TARGET_DEVELOPER[LINELENGTH];
+char ATOMIC_DATA_DEST_DEVELOPER[2 * LINELENGTH];
 
 #define TEST_DATA_LENGTH 2056
 
@@ -36,9 +39,9 @@ char ATOMIC_DATA_DEST[LINELENGTH];
  *
  * @details
  *
- * This uses the data from $PYTHON/source/tests/test_data/define_wind/agn_macro.pf and
- * $PYTHON/source/tests/test_data/define_wind/agn_macro.grid.txt. The latter was created using the Python script in the
- * $PYTHON/source/tests/test_data/define_wind directory.
+ * This uses the data from $SIROCCO/source/tests/test_data/define_wind/agn_macro.pf and
+ * $SIROCCO/source/tests/test_data/define_wind/agn_macro.grid.txt. The latter was created using the Python script in the
+ * $SIROCCO/source/tests/test_data/define_wind directory.
  *
  * TODO: we don't check anything to do with macro atoms (we don't output this from windsave2table)
  *
@@ -63,7 +66,7 @@ test_sv_agn_macro_wind (void)
 
   define_wind ();
 
-  snprintf (test_data_filename, LINELENGTH, "%s/source/tests/test_data/define_wind/agn_macro.grid.txt", PYTHON_ENV);
+  snprintf (test_data_filename, LINELENGTH, "%s/source/tests/test_data/define_wind/agn_macro.grid.txt", SIROCCO_ENV);
   fp = fopen (test_data_filename, "r");
   if (fp == NULL)
   {
@@ -109,10 +112,10 @@ test_sv_agn_macro_wind (void)
     plasma_cell = &plasmamain[wind_cell->nplasma];
 
     /* cell positions */
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->x[0], x, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->x[2], z, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->xcen[0], xcen, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->xcen[2], zcen, FRACTIONAL_ERROR);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->x[0], x, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->x[2], z, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->xcen[0], xcen, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->xcen[2], zcen, TEST_TOLERANCE);
     CU_ASSERT_EQUAL_FATAL (wind_cell->inwind, inwind);
 
     /* The default behaviour of Python's output tools (e.g. windsave2table) is
@@ -124,34 +127,34 @@ test_sv_agn_macro_wind (void)
     }
 
     /* velocities */
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[0], v_x, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[1], v_y, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[2], v_z, FRACTIONAL_ERROR);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[0], v_x, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[1], v_y, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[2], v_z, TEST_TOLERANCE);
     /* velocity gradients */
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][0], dv_x_dx, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][1], dv_x_dy, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][2], dv_x_dz, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][0], dv_y_dx, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][1], dv_y_dy, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][2], dv_y_dz, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][0], dv_z_dx, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][1], dv_z_dy, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][2], dv_z_dz, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->div_v, div_v, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->dvds_max, dvds_max, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->xgamma, gamma, FRACTIONAL_ERROR);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][0], dv_x_dx, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][1], dv_x_dy, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][2], dv_x_dz, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][0], dv_y_dx, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][1], dv_y_dy, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][2], dv_y_dz, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][0], dv_z_dx, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][1], dv_z_dy, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][2], dv_z_dz, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->div_v, div_v, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->dvds_max, dvds_max, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->xgamma, gamma, TEST_TOLERANCE);
 
     /* Some things (plasma properties) are stored in plasma cells */
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->rho, rho, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->ne, ne, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->t_e, t_e, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->t_r, t_r, FRACTIONAL_ERROR);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.rho, rho, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.ne, ne, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.t_e, t_e, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.t_r, t_r, TEST_TOLERANCE);
 
     /* Ion abundances are tested in their number density relative to Hydrogen.
      * This is the default output option in windsave2table */
-    const double n_h = rho2nh * plasma_cell->rho;
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->density[0] / (n_h * ele[0].abun), h1, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->density[8] / (n_h * ele[2].abun), c4, FRACTIONAL_ERROR);
+    const double n_h = rho2nh * plasma_cell->state.rho;
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.density[0] / (n_h * ele[0].abun), h1, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.density[8] / (n_h * ele[2].abun), c4, TEST_TOLERANCE);
   }
 
   fclose (fp);
@@ -164,9 +167,9 @@ test_sv_agn_macro_wind (void)
  *
  * @details
  *
- * This uses the data from $PYTHON/source/tests/test_data/define_wind/cv.pf and
- * $PYTHON/source/tests/test_data/define_wind/cv.grid.txt. The latter was created using the Python script in the
- * $PYTHON/source/tests/test_data/define_wind directory.
+ * This uses the data from $SIROCCO/source/tests/test_data/define_wind/cv.pf and
+ * $SIROCCO/source/tests/test_data/define_wind/cv.grid.txt. The latter was created using the Python script in the
+ * $SIROCCO/source/tests/test_data/define_wind directory.
  *
  * ****************************************************************************************************************** */
 
@@ -193,7 +196,7 @@ test_sv_cv_wind (void)
   define_wind ();
 
   /* And now we can compare our created grid to the "ground truth" grid */
-  snprintf (test_data_filename, LINELENGTH, "%s/source/tests/test_data/define_wind/cv.grid.txt", PYTHON_ENV);
+  snprintf (test_data_filename, LINELENGTH, "%s/source/tests/test_data/define_wind/cv.grid.txt", SIROCCO_ENV);
   fp = fopen (test_data_filename, "r");
   if (fp == NULL)
   {
@@ -241,10 +244,10 @@ test_sv_cv_wind (void)
     plasma_cell = &plasmamain[wind_cell->nplasma];
 
     /* cell positions */
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->x[0], x, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->x[2], z, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->xcen[0], xcen, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->xcen[2], zcen, FRACTIONAL_ERROR);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->x[0], x, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->x[2], z, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->xcen[0], xcen, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->xcen[2], zcen, TEST_TOLERANCE);
     CU_ASSERT_EQUAL_FATAL (wind_cell->inwind, inwind);
 
     /* The default behaviour of Python's output tools (e.g. windsave2table) is
@@ -256,38 +259,38 @@ test_sv_cv_wind (void)
     }
 
     /* velocities */
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[0], v_x, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[1], v_y, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[2], v_z, FRACTIONAL_ERROR);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[0], v_x, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[1], v_y, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[2], v_z, TEST_TOLERANCE);
     /* velocity gradients */
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][0], dv_x_dx, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][1], dv_x_dy, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][2], dv_x_dz, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][0], dv_y_dx, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][1], dv_y_dy, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][2], dv_y_dz, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][0], dv_z_dx, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][1], dv_z_dy, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][2], dv_z_dz, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->div_v, div_v, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->dvds_max, dvds_max, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->xgamma, gamma, FRACTIONAL_ERROR);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][0], dv_x_dx, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][1], dv_x_dy, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][2], dv_x_dz, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][0], dv_y_dx, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][1], dv_y_dy, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][2], dv_y_dz, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][0], dv_z_dx, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][1], dv_z_dy, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][2], dv_z_dz, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->div_v, div_v, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->dvds_max, dvds_max, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->xgamma, gamma, TEST_TOLERANCE);
 
     /* Some things (plasma properties) are stored in plasma cells */
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->rho, rho, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->ne, ne, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->t_e, t_e, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->t_r, t_r, FRACTIONAL_ERROR);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.rho, rho, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.ne, ne, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.t_e, t_e, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.t_r, t_r, TEST_TOLERANCE);
 
     /* Ion abundances are tested in their number density relative to Hydrogen.
      * This is the default output option in windsave2table */
-    const double n_h = rho2nh * plasma_cell->rho;
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->density[0] / (n_h * ele[0].abun), h1, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->density[8] / (n_h * ele[2].abun), c4, FRACTIONAL_ERROR);
+    const double n_h = rho2nh * plasma_cell->state.rho;
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.density[0] / (n_h * ele[0].abun), h1, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.density[8] / (n_h * ele[2].abun), c4, TEST_TOLERANCE);
   }
 
   /* For the CV model, we want to save the wind_save to use in another test */
-  snprintf (windsave_filename, LINELENGTH, "%s/source/tests/test_data/define_wind/restart_cv.wind_save", PYTHON_ENV);
+  snprintf (windsave_filename, LINELENGTH, "%s/source/tests/test_data/define_wind/restart_cv.wind_save", SIROCCO_ENV);
   const int err = wind_save (windsave_filename);
   if (err == 0)
   {
@@ -316,7 +319,7 @@ test_shell_wind (void)
   WindPtr wind_cell;
   PlasmaPtr plasma_cell;
 
-  const int init_error = setup_model_grid ("shell", ATOMIC_DATA_DEST);
+  const int init_error = setup_model_grid ("shell", ATOMIC_DATA_DEST_DEVELOPER);
   if (init_error)
   {
     cleanup_model ("shell");
@@ -327,7 +330,7 @@ test_shell_wind (void)
   define_wind ();
 
   /* And now we can compare our created grid to the "ground truth" grid */
-  snprintf (test_data_filename, LINELENGTH, "%s/source/tests/test_data/define_wind/shell.grid.txt", PYTHON_ENV);
+  snprintf (test_data_filename, LINELENGTH, "%s/source/tests/test_data/define_wind/shell.grid.txt", SIROCCO_ENV);
   fp = fopen (test_data_filename, "r");
   if (fp == NULL)
   {
@@ -377,8 +380,8 @@ test_shell_wind (void)
     plasma_cell = &plasmamain[wind_cell->nplasma];
 
     /* cell positions */
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->r, r, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->rcen, rcen, FRACTIONAL_ERROR);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->r, r, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->rcen, rcen, TEST_TOLERANCE);
     CU_ASSERT_EQUAL_FATAL (wind_cell->inwind, inwind);
 
     /* The default behaviour of Python's output tools (e.g. windsave2table) is
@@ -390,33 +393,33 @@ test_shell_wind (void)
     }
 
     /* velocities */
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[0], v_x, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[1], v_y, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[2], v_z, FRACTIONAL_ERROR);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[0], v_x, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[1], v_y, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[2], v_z, TEST_TOLERANCE);
     /* velocity gradients */
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][0], dv_x_dx, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][1], dv_x_dy, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][2], dv_x_dz, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][0], dv_y_dx, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][1], dv_y_dy, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][2], dv_y_dz, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][0], dv_z_dx, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][1], dv_z_dy, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][2], dv_z_dz, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->div_v, div_v, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->dvds_max, dvds_max, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->xgamma, gamma, FRACTIONAL_ERROR);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][0], dv_x_dx, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][1], dv_x_dy, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][2], dv_x_dz, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][0], dv_y_dx, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][1], dv_y_dy, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][2], dv_y_dz, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][0], dv_z_dx, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][1], dv_z_dy, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][2], dv_z_dz, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->div_v, div_v, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->dvds_max, dvds_max, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->xgamma, gamma, TEST_TOLERANCE);
 
     /* Some things (plasma properties) are stored in plasma cells */
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->rho, rho, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->ne, ne, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->t_e, t_e, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->t_r, t_r, FRACTIONAL_ERROR);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.rho, rho, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.ne, ne, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.t_e, t_e, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.t_r, t_r, TEST_TOLERANCE);
 
     /* Ion abundances are tested in their number density relative to Hydrogen.
      * This is the default output option in windsave2table */
-    const double n_h = rho2nh * plasma_cell->rho;
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->density[0] / (n_h * ele[0].abun), h1, FRACTIONAL_ERROR);
+    const double n_h = rho2nh * plasma_cell->state.rho;
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.density[0] / (n_h * ele[0].abun), h1, TEST_TOLERANCE);
   }
 
   fclose (fp);
@@ -452,7 +455,7 @@ test_spherical_star_wind (void)
   define_wind ();
 
   /* And now we can compare our created grid to the "ground truth" grid */
-  snprintf (test_data_filename, LINELENGTH, "%s/source/tests/test_data/define_wind/star.grid.txt", PYTHON_ENV);
+  snprintf (test_data_filename, LINELENGTH, "%s/source/tests/test_data/define_wind/star.grid.txt", SIROCCO_ENV);
   fp = fopen (test_data_filename, "r");
   if (fp == NULL)
   {
@@ -501,8 +504,8 @@ test_spherical_star_wind (void)
     plasma_cell = &plasmamain[wind_cell->nplasma];
 
     /* cell positions */
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->r, r, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->rcen, rcen, FRACTIONAL_ERROR);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->r, r, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->rcen, rcen, TEST_TOLERANCE);
     CU_ASSERT_EQUAL_FATAL (wind_cell->inwind, inwind);
 
     /* The default behaviour of Python's output tools (e.g. windsave2table) is
@@ -514,38 +517,139 @@ test_spherical_star_wind (void)
     }
 
     /* velocities */
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[0], v_x, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[1], v_y, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[2], v_z, FRACTIONAL_ERROR);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[0], v_x, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[1], v_y, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v[2], v_z, TEST_TOLERANCE);
     /* velocity gradients */
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][0], dv_x_dx, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][1], dv_x_dy, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][2], dv_x_dz, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][0], dv_y_dx, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][1], dv_y_dy, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][2], dv_y_dz, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][0], dv_z_dx, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][1], dv_z_dy, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][2], dv_z_dz, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->div_v, div_v, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->dvds_max, dvds_max, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->xgamma, gamma, FRACTIONAL_ERROR);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][0], dv_x_dx, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][1], dv_x_dy, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[0][2], dv_x_dz, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][0], dv_y_dx, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][1], dv_y_dy, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[1][2], dv_y_dz, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][0], dv_z_dx, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][1], dv_z_dy, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->v_grad[2][2], dv_z_dz, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->div_v, div_v, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->dvds_max, dvds_max, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->xgamma, gamma, TEST_TOLERANCE);
 
     /* Some things (plasma properties) are stored in plasma cells */
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->rho, rho, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->ne, ne, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->t_e, t_e, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->t_r, t_r, FRACTIONAL_ERROR);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.rho, rho, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.ne, ne, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.t_e, t_e, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.t_r, t_r, TEST_TOLERANCE);
 
     /* Ion abundances are tested in their number density relative to Hydrogen.
      * This is the default output option in windsave2table */
-    const double n_h = rho2nh * plasma_cell->rho;
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->density[0] / (n_h * ele[0].abun), h1, FRACTIONAL_ERROR);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->density[8] / (n_h * ele[2].abun), c4, FRACTIONAL_ERROR);
+    const double n_h = rho2nh * plasma_cell->state.rho;
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.density[0] / (n_h * ele[0].abun), h1, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.density[8] / (n_h * ele[2].abun), c4, TEST_TOLERANCE);
   }
 
   fclose (fp);
   cleanup_model ("star");
+}
+
+/** *******************************************************************************************************************
+ *
+ * @brief Test that random positions in polar (r-theta) cells are uniform in volume
+ *
+ * @details
+ *
+ * Positions are drawn with `get_random_location` in the cell of the polar CV model nearest the pole, the one nearest
+ * the disk and the innermost one, choosing cells that are entirely in the wind. For a position uniform in the volume of
+ * a cell, (r^3 - rmin^3) / (rmax^3 - rmin^3) and (cos theta - cos theta_max) / (cos theta_min - cos theta_max) are
+ * uniform between 0 and 1, so their means should be 1/2 and their mean squares 1/3.
+ *
+ * ****************************************************************************************************************** */
+
+static void
+test_polar_random_location (void)
+{
+  const int n_sample = 100000;
+  const double tolerance = 5.0 / sqrt (12.0 * n_sample);        /* 5 sigma for the mean of a uniform variable */
+  int n, i, j, k, n_test, nwind;
+  int cells[3];
+  double x[3], r, cos_theta, u_r, u_c;
+  double rmin, rmax, cmin, cmax;
+  double sum_r, sum_rr, sum_c, sum_cc;
+  double zmin, zmax, rlow;
+
+  const int init_error = setup_model_grid ("cv_polar", ATOMIC_DATA_DEST);
+  if (init_error)
+  {
+    cleanup_model ("cv_polar");
+    CU_FAIL_FATAL ("Unable to initialise polar CV model");
+  }
+
+  define_wind ();
+  init_rand (1237);
+
+  /* Find the cells entirely in the wind with the smallest theta, the largest theta and the smallest r */
+  cells[0] = cells[1] = cells[2] = -1;
+  zmin = rlow = VERY_BIG;
+  zmax = -VERY_BIG;
+  for (nwind = zdom[0].nstart; nwind < zdom[0].nstop; ++nwind)
+  {
+    if (wmain[nwind].inwind != W_ALL_INWIND)
+    {
+      continue;
+    }
+    wind_n_to_ij (0, nwind, &i, &j);
+    if (zdom[0].wind_z[j] < zmin)
+    {
+      zmin = zdom[0].wind_z[j];
+      cells[0] = nwind;
+    }
+    if (zdom[0].wind_z[j] > zmax)
+    {
+      zmax = zdom[0].wind_z[j];
+      cells[1] = nwind;
+    }
+    if (zdom[0].wind_x[i] < rlow)
+    {
+      rlow = zdom[0].wind_x[i];
+      cells[2] = nwind;
+    }
+  }
+
+  for (n_test = 0; n_test < 3; ++n_test)
+  {
+    CU_ASSERT_FATAL (cells[n_test] >= 0);
+    nwind = cells[n_test];
+    wind_n_to_ij (0, nwind, &i, &j);
+    rmin = zdom[0].wind_x[i];
+    rmax = zdom[0].wind_x[i + 1];
+    cmin = cos (zdom[0].wind_z[j + 1] / RADIAN);
+    cmax = cos (zdom[0].wind_z[j] / RADIAN);
+
+    sum_r = sum_rr = sum_c = sum_cc = 0.0;
+    for (n = 0; n < n_sample; ++n)
+    {
+      get_random_location (nwind, x);
+      r = 0.0;
+      for (k = 0; k < 3; ++k)
+      {
+        r += x[k] * x[k];
+      }
+      r = sqrt (r);
+      cos_theta = fabs (x[2]) / r;      /* positions are put below the disk half the time */
+      u_r = (r * r * r - rmin * rmin * rmin) / (rmax * rmax * rmax - rmin * rmin * rmin);
+      u_c = (cos_theta - cmin) / (cmax - cmin);
+      sum_r += u_r;
+      sum_rr += u_r * u_r;
+      sum_c += u_c;
+      sum_cc += u_c * u_c;
+    }
+
+    CU_ASSERT_DOUBLE_EQUAL (sum_r / n_sample, 0.5, tolerance);
+    CU_ASSERT_DOUBLE_EQUAL (sum_rr / n_sample, 1.0 / 3.0, tolerance);
+    CU_ASSERT_DOUBLE_EQUAL (sum_c / n_sample, 0.5, tolerance);
+    CU_ASSERT_DOUBLE_EQUAL (sum_cc / n_sample, 1.0 / 3.0, tolerance);
+  }
+
+  cleanup_model ("cv_polar");
 }
 
 /** *******************************************************************************************************************
@@ -591,13 +695,13 @@ suite_init (void)
 {
   struct stat sb;
 
-  /* Find the PYTHON env var and the directory where tests are called. We need
+  /* Find the SIROCCO env var and the directory where tests are called. We need
    * these to create a symbolic link to the atomic data required for the
    * tests */
-  PYTHON_ENV = getenv ("PYTHON");
-  if (PYTHON_ENV == NULL)
+  SIROCCO_ENV = getenv ("SIROCCO");
+  if (SIROCCO_ENV == NULL)
   {
-    fprintf (stderr, "Failed to find PYTHON environment variable\n");
+    fprintf (stderr, "Failed to find SIROCCO environment variable\n");
     return EXIT_FAILURE;
   }
   if (getcwd (TEST_CWD, LINELENGTH) == NULL)
@@ -607,14 +711,35 @@ suite_init (void)
   }
 
   /* Set global variables for atomic data */
-  snprintf (ATOMIC_DATA_TARGET, LINELENGTH, "%s/xdata", PYTHON_ENV);
+  snprintf (ATOMIC_DATA_TARGET, LINELENGTH, "%s/xdata", SIROCCO_ENV);
   if (!(stat (ATOMIC_DATA_TARGET, &sb) == EXIT_SUCCESS && S_ISDIR (sb.st_mode)))
   {
     perror ("Unable to find atomic data directory");
     return EXIT_FAILURE;
   }
-  snprintf (ATOMIC_DATA_DEST, LINELENGTH, "%s/data", TEST_CWD);
+
+  snprintf (ATOMIC_DATA_DEST, 2 * LINELENGTH, "%s/data", TEST_CWD);
   if (symlink (ATOMIC_DATA_TARGET, ATOMIC_DATA_DEST) != EXIT_SUCCESS)
+  {
+    /* If the symlink exists, we'll try not worry about it as if something is
+     * wrong with the atomic data it'll be caught later */
+    if (errno != EEXIST)
+    {
+      perror ("Unable to created symbolic link for atomic data for test case");
+      return EXIT_FAILURE;
+    }
+  }
+
+  /* Set global variables for atomic data for developers */
+  snprintf (ATOMIC_DATA_TARGET_DEVELOPER, LINELENGTH, "%s/zdata", SIROCCO_ENV);
+  if (!(stat (ATOMIC_DATA_TARGET_DEVELOPER, &sb) == EXIT_SUCCESS && S_ISDIR (sb.st_mode)))
+  {
+    perror ("Unable to find atomic data directory");
+    return EXIT_FAILURE;
+  }
+
+  snprintf (ATOMIC_DATA_DEST_DEVELOPER, 2 * LINELENGTH, "%s/zdata", TEST_CWD);
+  if (symlink (ATOMIC_DATA_TARGET_DEVELOPER, ATOMIC_DATA_DEST_DEVELOPER) != EXIT_SUCCESS)
   {
     /* If the symlink exists, we'll try not worry about it as if something is
      * wrong with the atomic data it'll be caught later */
@@ -657,7 +782,8 @@ create_define_wind_test_suite (void)
   if ((CU_add_test (suite, "Shell wind", test_shell_wind) == NULL) ||
       (CU_add_test (suite, "Spherical: Supernova", test_spherical_star_wind) == NULL) ||
       (CU_add_test (suite, "SV: Cataclysmic Variable", test_sv_cv_wind) == NULL) ||
-      (CU_add_test (suite, "SV: AGN Macro", test_sv_agn_macro_wind) == NULL))
+      (CU_add_test (suite, "SV: AGN Macro", test_sv_agn_macro_wind) == NULL) ||
+      (CU_add_test (suite, "Polar: random locations in cells", test_polar_random_location) == NULL))
   {
     fprintf (stderr, "Failed to add tests to `Define Wind` suite\n");
     CU_cleanup_registry ();

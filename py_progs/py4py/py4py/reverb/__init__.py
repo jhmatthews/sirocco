@@ -1,7 +1,5 @@
 """
-Reverberation Mapping module
-
-This contains the type used to create and manipulate reverberation maps from Python output files.
+Contains the class used to create and manipulate reverberation maps from Python output files.
 
 Example:
 
@@ -17,7 +15,7 @@ Example:
 
     Given database queries can take a long time, it is advisable to pickle a TF that has been run
     so you can access it later on. Note, however: Once a TF has been restored from a pickle,
-    you can no longer change the filters and re-run.
+    you can no longer change the filters and re-run::
 
         with open('qso_c4_spectrum_1', 'wb') as file:
             pickle.dump(tf_c4_1, file)
@@ -31,21 +29,23 @@ import astropy.constants as apc  # pylint: disable=E1101
 import time
 import sys
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import sqlalchemy
 import sqlalchemy.ext.declarative
 import sqlalchemy.exc
 import sqlalchemy.orm
 import sqlalchemy.orm.query
+from sqlalchemy.engine import Engine
 import matplotlib
 from astropy import units as u
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Tuple
 
 from py4py.array import calculate_fwhm, calculate_midpoints
 from py4py.physics import keplerian_velocity, doppler_shift_wave, doppler_shift_vel
 
-# Constant used for rescaling data.
-# Probably already exists in apc but I don't want to faff around with units
+
 SECONDS_PER_DAY = 60 * 60 * 24
+"""Constant used for rescaling data, that is probably superfluous and already present in Astropy"""
 
 
 # ==============================================================================
@@ -115,6 +115,7 @@ class TransferFunction:
         self.__dict__.update(state)
         self._unpickled = True
 
+
     def __init__(
                     self, database: sqlalchemy.engine.Connection, filename: str,
                     continuum: float, wave_bins: int = None, delay_bins: int = None,
@@ -125,29 +126,32 @@ class TransferFunction:
         Initialises the TF, optionally by templating off another TF.
 
         Sets up all the basic properties of the TF that are required to create
-        it. It must be '.run()' to query the DB before it can itself be queried.
+        it. It must be `.run()` to query the DB before it can itself be queried.
         If templating, it applies all the same filters that were applied to the
         template TF, unless explicitly told not to. Filters don't overwrite!
-        They stack. So you can't simply call '.line()' to change the line the TF
+        They stack. So you can't simply call `.line()` to change the line the TF
         corresponds to if its template was a different line, unless you specify
         that the template was of a different line.
 
         Arguments:
             database (sqlalchemy.engine.Connection):
-                                The database to be queried for this TF.
-            filename (string):  The root filename for plots created for this TF.
-            continuum (float):  The continuum value associated with this TF.
-            wave_bins (int):    Number of wavelength/velocity bins.
-            delay_bins (int):   Number of delay time bins.
+                The database to be queried for this TF.
+            filename (string):
+                The root filename for plots created for this TF.
+            continuum (float):
+                The continuum value associated with this TF. Central source + disk luminosity.
+            wave_bins (int):
+                Number of wavelength/velocity bins.
+            delay_bins (int):
+                Number of delay time bins.
             template (TransferFunction):
-                                Other TF to copy all filter settings from. Will
-                                match delay, wave and velocity bins exactly.
+                Other TF to copy all filter settings from.
+                Will match delay, wave and velocity bins exactly.
             template_different_line (bool):
-                                Is this TF going to share delay & velocity bins
-                                but have different wavelength bins?
+                Is this TF going to share delay & velocity bins but have different wavelength bins?
             template_different_spectrum (bool):
-                                Is this TF going to share all specified bins but
-                                be taken on photons from a different observer.
+                Is this TF going to share all specified bins but
+                be taken on photons from a different observer.
 
         Todo:
             Consider making it impossible to apply filters after calling run().
@@ -419,7 +423,7 @@ class TransferFunction:
             self._query = self._query.filter(Photon.ResonantScatters == scat_min)
         return self
 
-    def filter(self, *args):
+    def filter(self, *args) -> 'TransferFunction':
         """
         Apply a SQLalchemy filter directly to the content.
 
@@ -514,7 +518,9 @@ class TransferFunction:
 
         return calculate_fwhm(midpoints, np.sum(self._emissivity, 0))
 
-    def delay(self, response: bool = False, threshold: float = 0, bounds: float = None, days: bool = False):
+    def delay(
+            self, response: bool = False, threshold: float = 0, bounds: float = None, days: bool = False
+    ) -> Union[float, Tuple[float, float, float]]:
         """
         Calculates the centroid delay for the current data
 
@@ -522,10 +528,11 @@ class TransferFunction:
             response (bool): 
                 Whether or not to calculate the delay from the response
             threshold (float): 
-                Exclude all bins with value < threshold
+                Exclude all bins with value < the threshold fraction of the peak value.
+                Standard value used in the reverb papers was 0.8.
             bounds (float): 
-                Return the fractional bounds (i.e. bounds=0.25,
-                the function will return [0.5, 0.25, 0.75]). Not implemented.
+                Return the fractional bounds (i.e. `bounds=0.25`,
+                the function will return `[0.5, 0.25, 0.75]`). Not implemented.
             days (bool): 
                 Whether to return the delay in days or seconds
 
@@ -878,8 +885,10 @@ class TransferFunction:
             self, log: bool = False, normalised: bool = False, rescaled: bool = False, velocity: bool = False,
             name: str = None, days: bool = True, response_map=False, keplerian: dict = None,
             dynamic_range: int = None, rms: bool = False, show: bool = False,
-            max_delay: Optional[float] = None, format: str = '.eps'
-    ) -> 'TransferFunction':
+            max_delay: Optional[float] = None,
+            format: str = '.eps',
+            return_figure: bool = False,
+    ) -> Union['TransferFunction', Figure]:
         """
         Takes the data gathered by calling 'run' and outputs a plot
 
@@ -904,7 +913,7 @@ class TransferFunction:
                 be overlaid on the plot. Arguments include
                 angle (float) - Angle of disk to the observer,
                 mass (float) - Mass of the central object in M_sol,
-                radius (Tuple(float, float)) - Inner and outer disk radii,
+                radius (Tuple(float, float)) - Inner and outer disk radii, in $r_{ISCO}$.
                 include_minimum_velocity - Whether or not to include the outer disk velocity profile
                 (default no).
             dynamic_range (Optional[int]):
@@ -920,6 +929,8 @@ class TransferFunction:
                 Whether or not to display the plot to screen.
             format (str):
                 The output file format. .eps by default.
+            return_figure:
+                If true, return the figure instead of platting it.
 
         Returns:
             TransferFunction: Self, for chaining outputs
@@ -1216,17 +1227,21 @@ class TransferFunction:
             fig.show()
 
         plt.close(fig)
-        return self
+
+        if return_figure:
+            return fig
+        else:
+            return self
 
 
 # ==============================================================================
-def open_database(file_root: str, user: str = None, password: str = None, batch_size: int = 25000):
+def open_database(file_root: str, user: str = None, password: str = None, batch_size: int = 25000) -> Engine:
     """
     Open or create a SQL database
 
     Will open a SQLite DB if one already exists, otherwise will create one from
     file. Note, though, that if the process is interrupted the code cannot
-    intelligently resume- you must delete the half-written DB!
+    intelligently resume - you must delete the half-written DB!
 
     Args:
         file_root (string): 
@@ -1241,13 +1256,15 @@ def open_database(file_root: str, user: str = None, password: str = None, batch_
             out-of-memory errors.
 
     Returns:
-        sqlalchemy.engine.Connection:  Connection to the database opened
+        Connection to the database opened
     """
 
     print("Opening database '{}'...".format(file_root))
 
     try:
-        db_engine = sqlalchemy.create_engine("sqlite:///{}.db".format(file_root))
+        db_engine = sqlalchemy.create_engine(
+            f"sqlite:///{file_root}.db"
+        )
     except sqlalchemy.exc.SQLAlchemyError as e:
         print(e)
         sys.exit(1)
@@ -1262,6 +1279,7 @@ def open_database(file_root: str, user: str = None, password: str = None, batch_
         session.query(Photon.Weight).first()
         # If so, we go with what we've found.
         print("Found existing filled photon database '{}'".format(file_root))
+
     except sqlalchemy.exc.SQLAlchemyError:
         # If not, we populate from the delay dump file. This bit is legacy!
         print("No existing filled photon database, reading from file '{}.delay_dump'".format(file_root))
@@ -1280,17 +1298,23 @@ def open_database(file_root: str, user: str = None, password: str = None, batch_
                 print("Malformed line: '{}'".format(line))
                 continue
 
-            if len(values) != 12:
-                # There should be 13 values per line in our base formatting!
+            if len(values) != 14:
+                # There should be 14 values per line in our base formatting!
                 print("Incorrect number of values in line: '{}'".format(line))
                 continue
 
             # Add the photo using the values. Some must be modified here; ideally, this would be done in Python.
-            session.add(Photon(Wavelength=values[1], Weight=values[2], X=values[3], Y=values[4], Z=values[5],
-                               ContinuumScatters=int(values[6]-values[7]), ResonantScatters=int(values[7]),
-                               Delay=values[8],
-                               Spectrum=int(values[9]), Origin=int(values[10] % 10), Resonance=int(values[11]),
-                               Origin_matom=(values[10] > 9)))
+            session.add(
+                Photon(
+                    Wavelength=values[2], Weight=values[3],
+                    X=values[4], Y=values[5], Z=values[6],
+                    ContinuumScatters=int(values[7]-values[8]), ResonantScatters=int(values[8]),
+                    Delay=values[9],
+                    Spectrum=int(values[10]), Origin=int(values[11] % 10),
+                    Resonance=int(values[12]), LineResonance=int(values[13]),
+                    Origin_matom=(values[11] > 9)
+                )
+            )
             added += 1
             if added > batch_size:
                 # We commit in batches in order to avoid out-of-memory errors
@@ -1307,7 +1331,7 @@ def open_database(file_root: str, user: str = None, password: str = None, batch_
 
 
 Base = sqlalchemy.ext.declarative.declarative_base()
-
+"""Base class declared dynamically to bind to SQLalchemy"""
 
 class Spectrum(Base):
     """
@@ -1340,7 +1364,7 @@ class Photon(Base):
     SQLalchemy class for a photon. Why are all the properties capitalised?
     Changing them to lowercase as would make sense breaks backwards compatibility.
 
-    # Todo: Change to lower case.
+    # ToDo: Change to lower case.
     """
     __tablename__ = "Photons"
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
@@ -1355,8 +1379,12 @@ class Photon(Base):
     Spectrum = sqlalchemy.Column(sqlalchemy.Integer)
     Origin = sqlalchemy.Column(sqlalchemy.Integer)
     Resonance = sqlalchemy.Column(sqlalchemy.Integer)
+    LineResonance = sqlalchemy.Column(sqlalchemy.Integer)
     Origin_matom = sqlalchemy.Column(sqlalchemy.Boolean)
 
 
-kep_sey = {"angle": 40, "mass": 1e7, "radius": [50, 2000]}  # The default Keplerian outline settings for the Seyfert
-kep_qso = {"angle": 40, "mass": 1e9, "radius": [50, 20000]}  # The default Keplerian outline settings for the QSO
+kep_sey = {"angle": 40, "mass": 1e7, "radius": [50, 2000]}
+"""The default Keplerian outline settings for the Seyfert model"""
+
+kep_qso = {"angle": 40, "mass": 1e9, "radius": [50, 20000]}
+"""The default Keplerian outline settings for the QSO model"""

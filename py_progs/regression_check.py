@@ -1,12 +1,7 @@
 #!/usr/bin/env python 
 
 '''
-                    Space Telescope Science Institute
-
-Synopsis:  
-
-Compare two regression runs, highligting the differences
-between them
+Compare two regression runs, highligting the differences between them
 
 
 Command line usage (if any):
@@ -200,26 +195,33 @@ def doit(run1='py_180809',run2='',outputfile='check.txt'):
     pf1=glob('%s/*.out.pf' % run1)
     pf2=glob('%s/*.out.pf' % run2)
 
-    # print(pf1)
-    # print(pf2)
+    # Fall back to .spec files if .out.pf files are missing
+    if len(pf1)==0:
+        pf1=glob('%s/*.spec' % run1)
+        ext1='.spec'
+    else:
+        ext1='.out.pf'
+    if len(pf2)==0:
+        pf2=glob('%s/*.spec' % run2)
+        ext2='.spec'
+    else:
+        ext2='.out.pf'
 
     name1=[]
     root1=[]
     for one in pf1:
-        x=one.replace('.out.pf','')
+        x=one.replace(ext1,'')
         root1.append(x)
         x=x.split('/')
         name1.append(x[1])
-    # print(name1)
 
     name2=[]
     root2=[]
     for one in pf2:
-        x=one.replace('.out.pf','')
+        x=one.replace(ext2,'')
         root2.append(x)
         x=x.split('/')
         name2.append(x[1])
-    # print(name2)
 
 
     table1=Table([name1,root1],names=['name','root1'])
@@ -325,8 +327,7 @@ def get_other_directory(run1):
     the regression directory that was most recently created that is not
     run1
     '''
-    x=glob('py*')
-    # x=glob('*/')
+    x=glob('py*')+glob('sirocco*')
     dirs=[]
     modtime=[]
     for one in x:
@@ -335,15 +336,20 @@ def get_other_directory(run1):
             dirs.append(one)
             modtime.append(os.path.getmtime(one))
 
-    # print(dirs)
-    # print(modtime)
 
     dirs=numpy.array(dirs)
     modtime=numpy.array(modtime)
     iorder=numpy.argsort(modtime)
 
-    run2=dirs[iorder[len(dirs)-1]]
-    return run2
+    print('xx',dirs)
+
+
+    if len(dirs)>0:
+        run2=dirs[iorder[len(dirs)-1]]
+        return run2
+    else:
+        print('Could not find a second set of tests for a comparison')
+        return ''
 
         
 
@@ -371,8 +377,8 @@ def steer(argv):
 
     if run2=='':
         run2=get_other_directory(run1)
-
-
+        if run2=='':
+            return
 
     # Check that we have everthing we need and then run the check
 
@@ -382,6 +388,7 @@ def steer(argv):
     else:
         print('Not able to parse input line:',''.join(argv))
 
+    return
 
 
 
@@ -392,8 +399,6 @@ def steer(argv):
 if __name__ == "__main__":
     import sys
     if len(sys.argv)>1:
-        # doit(int(sys.argv[1]))
-        # doit(sys.argv[1])
         steer(sys.argv)
     else:
         print (__doc__)

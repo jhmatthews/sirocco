@@ -1,22 +1,24 @@
 #!/usr/bin/env python 
 
 '''
-                    Space Telescope Science Institute
+This routine runs a set of models.
 
-Synopsis:  
-
-This routine runs a set of models.  Each model is run in
-single processor mode, so the parallelism here is job parallel. 
-
+Each model is run in single processor mode, so the parallelism here is job parallel.
 
 
 Command line usage (if any):
 
-    usage: run_many.py -jobs x -np y filename
+    usage::
 
-    where -njobs is the number of jobs to run simultaneously
-          -np is the number of processors per job
-          filename is a list of the .pf files to run
+        run_many.py -jobs x -np y filename
+
+    `-njobs`
+        is the number of jobs to run simultaneously
+    `-np`
+        is the number of processors per job
+    `filename`
+        is a list of the .pf files to run
+
 
 Description:  
 
@@ -35,7 +37,7 @@ Notes:
                                        
 History:
 
-190319 ksl Coding begun
+    190319 ksl Coding begun
 
 '''
 
@@ -60,9 +62,7 @@ def read_file(filename,char=''):
     History:
     
     110729    ksl    Added optional delimiters
-    141209    ksl    Reinstalled in my standard startup
-            script so there was flexibility to
-            read any ascii file
+    141209    ksl    Reinstalled in my standard startup script so there was flexibility to read any ascii file
     '''
 
     try:

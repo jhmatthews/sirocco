@@ -15,8 +15,8 @@
  * We assume all of the data, positions, velocities and importantly
  * densities are given at the grid points of the imported model.
  *
- * We then map these models into the structures that Python uses.
- * Most of the mapping is one-to-one, but Python wants the densities
+ * We then map these models into the structures that Sirocco uses.
+ * Most of the mapping is one-to-one, but Sirocco wants the densities
  * to be a the cell centers and not at the corners.
  *
  ***********************************************************/
@@ -26,7 +26,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -48,8 +48,7 @@
  **********************************************************/
 
 int
-import_wind (ndom)
-     int ndom;
+import_wind (int ndom)
 {
   char filename[LINELENGTH];
 
@@ -63,9 +62,7 @@ import_wind (ndom)
 }
 
 int
-import_wind2 (ndom, filename)
-     int ndom;
-     char *filename;
+import_wind2 (int ndom, char *filename)
 {
 
   calloc_import (zdom[ndom].coord_type, ndom);
@@ -115,8 +112,7 @@ import_wind2 (ndom, filename)
  **********************************************************/
 
 int
-import_set_wind_boundaries (ndom)
-     int ndom;
+import_set_wind_boundaries (int ndom)
 {
   if (zdom[ndom].coord_type == SPHERICAL)
   {
@@ -144,7 +140,7 @@ import_set_wind_boundaries (ndom)
 
 /**********************************************************/
 /** 
- * @brief      Make the Python grid 
+ * @brief      Make the Sirocco grid 
  *
  * @param [in] WindPtr  w  The entire wind structure
  * @param [in] int  ndom   The domain for the imported model
@@ -206,9 +202,7 @@ import_make_grid (int ndom, WindPtr w)
  **********************************************************/
 
 double
-import_velocity (ndom, x, v)
-     int ndom;
-     double *x, *v;
+import_velocity (int ndom, double *x, double *v)
 {
   double speed = 0.0;
 
@@ -252,15 +246,13 @@ import_velocity (ndom, x, v)
  * ### Notes ###
  * The routine is used to map densities from an imported model 
  * where we assume that the density is given at the grid points.
- * In Python, we want map the grid points to the edges of wind cells,
+ * In Sirocco, we want map the grid points to the edges of wind cells,
  * but we expect the densities to be given at the centers of the cells.
  *
  **********************************************************/
 
 double
-import_rho (ndom, x)
-     int ndom;
-     double *x;
+import_rho (int ndom, double *x)
 {
   double rho = 0.0;
 

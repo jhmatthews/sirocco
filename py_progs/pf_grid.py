@@ -1,21 +1,21 @@
 #!/usr/bin/env python 
 
 '''
-                    Space Telescope Science Institute
+This is a program that is designed to expand a .pf file into a grid of .pf files.
 
-
-Synopsis:  
-    This is a program that is designed to expand a .pf file into a grid of .pf files.
 
 Usage:
-    pf_grid.py base.pf  
+
+    Use::
+
+        pf_grid.py base.pf
 
     where base.pf is a correctly formatted parameter file, with variables that one
     wishes to grid indicated by ?
 
 Description:  
 
-    This program was written for creating grids of models with  Python
+    This program was written for creating grids of models with  
     python, although it should work with any .pf file in the case where one
     wants to run a grid of models.  As an example this should be a reasonable way
     to do much of the setup work for runing a bunch of ISM calculations.
@@ -29,33 +29,34 @@ Description:
     will ask the user to give the values of each of the variables to grid. 
 
     The format of the inputs is very specific, and not particularly user-friendly! 
-    (The lines are read with the input or in Python 3 the raw_input command in python, 
+    (The lines are read with the input or using the raw_input command in python, 
     the scripting language'.  
     
     The two possibities that are supported by the program are:
     
-        a list format which means one must enclose everything in [], e.g.
-            [14,27,32]
-        which would say that for this variable you want values of 14, 27, and 32.
+    #. a list format which means one must enclose everything in [], e.g. [14,27,32]
+       which would say that for this variable you want values of 14, 27, and 32.
     
-        a special format to create a logarithminc grid of variables, e.g.
-            log_ints(xmin,xmax,n)
-        where xmin and xmax are the minimum and maximum values of the variable in 
-        question and n is the number of variables.  Note that you enter the
-        actual values of xmin and xmax and not the log of this.  For example:
-            log_ints(1.e16.,1.e18.,3)
-        will end up produciing a list with variables [1.e16,1.e17,1.e18]
+    #. a special format to create a logarithminc grid of variables, e.g. log_ints(xmin,xmax,n)
+       where xmin and xmax are the minimum and maximum values of the variable in
+       question and n is the number of variables.  Note that you enter the
+       actual values of xmin and xmax and not the log of this.  For example::
 
-        Note also that this input is treated within the routine as a function,
-        and so here the inputs have to be enclosed in parentheses.
+            log_ints(1.e16.,1.e18.,3)
+
+       will end up produciing a list with variables [1.e16,1.e17,1.e18]
+
+       Note also that this input is treated within the routine as a function,
+       and so here the inputs have to be enclosed in parentheses.
 
 
 Returns:
+
     The program produces a lot of files:
 
     a file which lists what was varied and the values for them.  The name of this file
     is the same as basename, with a .ls extensition attached, e.g vwhyi.ls
-    This is intended for use with a fitting program
+    This is intended for use with a fitting program::
 
         # Variable Disk.mdot(msol/yr)
         # Variable Wind.mdot(msol/yr)
@@ -65,8 +66,9 @@ Returns:
         ... 
     
     a file which can run python for the grid, one model after another.  This has the prefix
-    Run_ and the remainder is the basename, e.g something like, Run_vwhyi.  It begins 
-    something like
+    `Run_` and the remainder is the basename, e.g something like, `Run_vwhyi`.  It begins
+    something like::
+
         #!/usr/bin/env bash
         py vwhyi_0000
         py vwhyi_0001
@@ -78,16 +80,19 @@ Returns:
     A number of .pf files, that are like the original pf files, but now the $ have been
     replaced with the variables associated with the grid.
 
-
 Notes:
+
     If the program finds .pf files that seems to have been created earlier, it will ask 
     you if you want to delete them
                                        
 History:
-0709    ksl Coded and debugged
-1701    ksl Updated for Python3.  It should be backward compatible.  I have partially
-            but not completely updated the style to the way I would write this program
-            today.
+
+    0709    ksl
+        Coded and debugged
+    1701    ksl
+        Updated for python3.  It should be backward compatible.  I have partially
+        but not completely updated the style to the way I would write this program
+        today.
 
 '''
 

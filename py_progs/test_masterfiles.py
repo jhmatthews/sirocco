@@ -1,20 +1,19 @@
 #!/usr/bin/env python 
 '''
-	University of Cambridge -- JM -- October 2019
+Test the masterfiles specified in the arrays all point to the right files.
 
-				test_masterfiles
+needs python to be compiled.
 
-Synopsis:
-	test the masterfiles specified in the arrays all point to the right files.
-	needs python to be compiled.
 Usage:
-	test_masterfiles.py [PYTHON VERSION]
+	test_masterfiles.py [SIROCCO VERSION]
 '''
 import py_read_output as rd 
 import subprocess, os, sys
 
 # set env variable
-PYTHON = os.environ["PYTHON"]
+# Do not call this when we're on ReadTheDocs
+if not os.environ.get('READTHEDOCS'):
+	SIROCCO = os.environ["SIROCCO"]
 
 # change these if you want to test different files. These are all in data/ as of October 2019
 macro_files = ['h20', 'h10_hetop_lohe1_standard80', 'h10_standard80', 'h10_hetop_standard80', 'h20_hetop_standard80']
@@ -34,7 +33,7 @@ def run_file(pf_template, masterfile, version=""):
 	rd.write_pf("_tmp.pf", pf)
 
 	# run process
-	process = subprocess.run("{}/bin/py{} -i _tmp.pf".format(PYTHON, version), shell=True, stdout=subprocess.PIPE)
+	process = subprocess.run("{}/bin/py{} -i _tmp.pf".format(SIROCCO, version), shell=True, stdout=subprocess.PIPE)
 
 	subprocess.run("/bin/rm -f _tmp.sig _tmp.out.pf logfile _tmp.out.pf.old _tmp.pf", shell=True, stdout=subprocess.PIPE)
 	subprocess.run("/bin/rm -rf diag__tmp", shell=True, stdout=subprocess.PIPE)
@@ -61,8 +60,8 @@ def run_test(VERSION):
 	run the test. 
 	'''
 
-	macro_template = rd.read_pf("{}/examples/extended/cv_macro_benchmark.pf".format(PYTHON))
-	std_template = rd.read_pf("{}/examples/basic/cv_standard.pf".format(PYTHON))
+	macro_template = rd.read_pf("{}/examples/extended/cv_macro_benchmark.pf".format(SIROCCO))
+	std_template = rd.read_pf("{}/examples/basic/cv_standard.pf".format(SIROCCO))
 
 	subprocess.run("Setup_Py_Dir")
 

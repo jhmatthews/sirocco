@@ -1,23 +1,21 @@
 #!/usr/bin/env python 
-
 '''
-                    Space Telescope Science Institute
-
-Synopsis:  
-
 Plot the emergent spectrum from the log_spec_tot file
 
 
 Command line usage (if any):
 
-    usage: plot_tot.py [-smooth 11] rootname
+    usage::
 
-    where 
-        rootname is the rootname of the files in the run
+        plot_tot.py [-smooth 11] rootname
 
-        -smooth is an opticnal parameter indicating how
-            much smooth of the orignnal spectrum is to 
-            be done.  The default is 11 bins
+
+    rootname:
+        is the rootname of the files in the run
+    `-smooth`:
+        is an opticnal parameter indicating how
+        much smooth of the orignnal spectrum is to
+        be done.  The default is 11 bins
 
 
 Description:  
@@ -31,8 +29,10 @@ Notes:
                                        
 History:
 
-130620    ksl    Coding begun
-141125    ksl    Updated to use astropy.io
+    130620    ksl
+        Coding begun
+    141125    ksl
+        Updated to use astropy.io
 
 '''
 
@@ -40,7 +40,7 @@ import sys
 import numpy
 import pylab
 from astropy.io import ascii
-from scipy.signal import boxcar
+from scipy.signal.windows import boxcar
 from scipy.signal import convolve
 
 
@@ -70,9 +70,11 @@ def doit(rootname='sphere',smooth=21,fig_no=2):
     Plot the spectra contained in the spec_tot 
     file
 
-    141125    ksl    Updated for new formats which use astropy
-    191210  ksl Modified so that what is ploted is nuL_nu, and 
-                did a better job at setting limits for the plot
+    141125    ksl
+        Updated for new formats which use astropy
+    191210  ksl
+        Modified so that what is ploted is nuL_nu, and
+        did a better job at setting limits for the plot
     '''
     # Make sure we only have the rootname
 

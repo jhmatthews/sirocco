@@ -1,6 +1,4 @@
 """
-Reverb timeseries import file
-
 Functions for importing data used by CARAMEL and MEMEcho
 """
 import sys
@@ -20,7 +18,7 @@ import matplotlib.pyplot as plt
 from typing import Optional, Tuple, Union, List
 
 
-def read_spectra_times(filename: str, time_units: Unit = None, time_name: str = 'MJD') -> Table:
+def read_spectra_times(filename: str, time_units: Unit = None, time_name: str = 'MJD') -> QTable:
     """
     Imports a ASCII list of spectrum times.
 
@@ -30,7 +28,7 @@ def read_spectra_times(filename: str, time_units: Unit = None, time_name: str = 
         time_name (str): The name of the time column
 
     Returns:
-        QTable: Single-column table of time in given units
+        Single-column table of time in given units
     """
     table = Table.read(filename, format='ascii', names=['time'])
     table['time'].unit = time_units
@@ -171,6 +169,7 @@ def read_spectrum(
         value_units (Optional[Unit]): The units the values are in.
         value_name (Optional[str]): The name of the value units, for plotting.
         rebin_to (Optional[int]): Whether the spectrum should be rebinned, and if so to how many bins
+
     Returns:
         Table:  Table of input file. Key columns are 'wave', 'value' and 'error'
         poly1d: A function describing the background continuum

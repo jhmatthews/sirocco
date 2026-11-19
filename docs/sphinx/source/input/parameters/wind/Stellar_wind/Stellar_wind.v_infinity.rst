@@ -1,8 +1,10 @@
 Stellar_wind.v_infinity
 =======================
-The velocity at large distance of a stellar wind described in terms
-of the Casters and Larmers equation
-v(r)=v_o + (v_inf - v_o) (1+R_s/r)**beta
+A parameter controlling the velocity of a stellar wind at large distances from the central object. Described in terms
+of the Casters and Larmers equation,
+
+.. math:: 
+  v(r) = v_0 + (v_\infty - v_0) * (1 - R_s/r)^\beta.
 
 Type
   Double
@@ -14,10 +16,10 @@ Values
   Greater than 0
 
 File
-  `stellar_wind.c <https://github.com/agnwinds/python/blob/master/source/stellar_wind.c>`_
+  `stellar_wind.c <https://github.com/sirocco-rt/sirocco/blob/master/source/stellar_wind.c>`_
 
 
 Parent(s)
-  * :ref:`Wind.type`: star
+  * :ref:`Wind.type`: ``star``
 
 

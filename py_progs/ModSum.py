@@ -1,12 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 '''
-                    Space Telescope Science Institute
-
-Synopsis:  
-
-Create a summary of the differences between various .pf files
-in a directory
+Create a summary of the differences between various .pf files in a directory
 
 
 Command line usage (if any):

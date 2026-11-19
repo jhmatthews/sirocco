@@ -1,10 +1,6 @@
 #!/usr/bin/env python 
 
 '''
-                    Space Telescope Science Institute
-
-Synopsis:  
-
 A python version of kpar
 
 
@@ -22,7 +18,8 @@ Notes:
                                        
 History:
 
-160704 ksl Coding begun
+    160704 ksl
+        Coding begun
 
 '''
 
@@ -41,8 +38,10 @@ def read_file(filename,char=''):
 
     History:
     
-    110729    ksl    Added optional delimiters
-    141209    ksl    Reinstalled in my standard startup
+        110729    ksl
+            Added optional delimiters
+        141209    ksl
+            Reinstalled in my standard startup
             script so there was flexibility to
             read any ascii file
     '''

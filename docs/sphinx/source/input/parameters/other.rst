@@ -1,9 +1,8 @@
-#####
-Other
-#####
+#########################
+Others and Diagnostics
+#########################
 
-.. todo::
-   Fill in
+Possible parameter options linked to the advanced diagnostic tools and other adhoc options of the model. Some parameters may not be available depending on model selected.
 
 .. toctree::
    :glob:

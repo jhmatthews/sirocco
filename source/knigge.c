@@ -7,7 +7,7 @@
  * @brief  Routines needed to define a KWD wind
  *
  * The routines here are all that are needed to define a KWD-type
- * wind within Python.  Inputs are gathered, and the any values
+ * wind within Sirocco.  Inputs are gathered, and the any values
  * such as the nomalization needed to convert a global to a local
  * mass loss rate.  Functions are provided to calculated the density
  * and velocity of the wind at any point.
@@ -28,7 +28,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /// This is a variable required to do the integration of local mdot in KWD
@@ -47,7 +47,7 @@ double kn_lambda;
  *
  * ###Notes###
  *
- * The KWD model implemenented in Python follows that of KWD97 (ApJ,486,445), with
+ * The KWD model implemenented in Sirocco follows that of KWD97 (ApJ,486,445), with
  * some modifications.  
  * 
  * * We allow  the wind to start
@@ -62,7 +62,7 @@ double kn_lambda;
  *
  * There is confusion in various papers concerning whether to use d or d/dmin.  In KWD95, d/dmin was
  * used but in later papers, e.g KD97 d in WD radii was used.   This is more natural and is used in
- * Python.
+ * Sirocco.
  *
  * To repeat, kn_dratio is the distance to the focus point in stellar radii!
  *
@@ -71,8 +71,7 @@ double kn_lambda;
  **********************************************************/
 
 int
-get_knigge_wind_params (ndom)
-     int ndom;
+get_knigge_wind_params (int ndom)
 {
   double dmin;
   double rmin, rmax;
@@ -193,9 +192,7 @@ get_knigge_wind_params (ndom)
  **********************************************************/
 
 double
-kn_velocity (ndom, x, v)
-     int ndom;
-     double x[], v[];
+kn_velocity (int ndom, double x[], double v[])
 {
   double r, rzero, theta;
   double ldist, zzz, v_escape, vl;
@@ -315,7 +312,7 @@ At this point we have calculated the velocity in the xz plane, which
 is identical to the statement that we have calculated it in cylindrical coordinates.
 We now project back to xyz coordinates if necessary.
 
-In practice, the current version of python currently should never need to carry out
+In practice, the current version of sirocco currently should never need to carry out
 this projection.  However, it is needed, if we were to move to full 3d calculation and for certain
 test programs.
 
@@ -346,9 +343,7 @@ test programs.
  **********************************************************/
 
 double
-kn_rho (ndom, x)
-     int ndom;
-     double x[];
+kn_rho (int ndom, double x[])
 {
   double r, rzero;
   double dd;
@@ -429,8 +424,7 @@ kn_rho (ndom, x)
  **********************************************************/
 
 double
-kn_vzero (r)
-     double r;
+kn_vzero (double r)
 {
   double t;
   double ratio, v;
@@ -501,9 +495,7 @@ kn_wind_mdot_integral (double r, void *params)
  **********************************************************/
 
 double
-kn_rho_zero (ndom, r)
-     double r;
-     int ndom;
+kn_rho_zero (int ndom, double r)
 {
   double t;
   double x, ratio;

@@ -1,6 +1,7 @@
 Stellar_wind.radmax
 ===================
-Multi-line description, must keep indentation.
+
+The outermost edge of a stellar wind. 
 
 Type
   Double
@@ -12,10 +13,10 @@ Values
   Greater than or equal to :ref:`Stellar_wind.radmin`
 
 File
-  `stellar_wind.c <https://github.com/agnwinds/python/blob/master/source/stellar_wind.c>`_
+  `stellar_wind.c <https://github.com/sirocco-rt/sirocco/blob/master/source/stellar_wind.c>`_
 
 
 Parent(s)
-  * :ref:`Wind.type`: star
+  * :ref:`Wind.type`: ``star``
 
 

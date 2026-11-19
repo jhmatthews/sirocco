@@ -1,0 +1,10 @@
+name: Diag.r
+description: |
+  Multi-line description, must keep indentation.
+type: Double
+unit: co.radius
+values: Condition e.g. greater than 0 or list e.g. [1, 2, 5]
+parent:
+  parameter: Condition e.g. greater than 0 or list e.g. [1, 2, 5]
+file: diag.c
+advanced: true

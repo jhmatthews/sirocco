@@ -24,7 +24,7 @@ Spectrum_cycles                            1
 Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,fixed,matrix_bb,matrix_pow,matrix_est)                 matrix_bb
 Line_transfer(pure_abs,pure_scat,sing_scat,escape_prob,thermal_trapping,macro_atoms_escape_prob,macro_atoms_thermal_trapping) macro_atoms_thermal_trapping
 Matom_transition_mode(mc_jumps,matrix)               matrix
-Atomic_data                                data/h20.dat
+Atomic_data                                zdata/h20.dat
 Surface.reflection.or.absorption(reflect,absorb,thermalized.rerad)               absorb
 Wind_heating.extra_processes(none,adiabatic,nonthermal,both)                 none
 

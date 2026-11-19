@@ -2,7 +2,6 @@ Description
 ###########
 
 This directory contains python scripts for use with the C code python.
-You will need to run `write_docs.py` from that directory to generate this documentation.
 
 The basic python modules required can be found in `requirements.txt`.
 

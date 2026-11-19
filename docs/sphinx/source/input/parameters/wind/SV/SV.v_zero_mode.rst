@@ -1,24 +1,26 @@
 SV.v_zero_mode
 ==============
-Multi-line description, must keep indentation.
+
+Option for how to set the wind velocity at the base of the wind. To be fixed or determined from the speed of sound in the wind.
+The values for both these modes are set by :ref:`SV.v_zero`.
 
 Type
   Enumerator
 
 Values
   fixed
-    Multi-line description, must keep indentation.
+    A fixed speed for the initial velocity of the wind.
 
   sound_speed
-    Multi-line description, must keep indentation.
+    The initial velocity of the wind corresponds to the speed of sound in the wind.
 
 
 File
-  `sv.c <https://github.com/agnwinds/python/blob/master/source/sv.c>`_
+  `sv.c <https://github.com/sirocco-rt/sirocco/blob/master/source/sv.c>`_
 
 
 Parent(s)
-  * :ref:`Wind.type`: SV
+  * :ref:`Wind.type`: ``SV``
 
 
 Child(ren)

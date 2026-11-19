@@ -1,7 +1,8 @@
 Central_object.bremsstrahlung_temp
 ==================================
-The temperature T in bremstrahlung SED of the form
-$L_\nu=\nu^{\alpha}e^{-h\nu/kT}$
+
+The temperature T for the bremsstrahlung spectral energy distribution in the form of
+:math:`L_\nu=\nu^{\alpha}e^{-h\nu/kT}``
 
 Type
   Double
@@ -13,7 +14,7 @@ Values
   Greater than 0
 
 File
-  `setup_star_bh.c <https://github.com/agnwinds/python/blob/master/source/setup_star_bh.c>`_
+  `setup_star_bh.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup_star_bh.c>`_
 
 
 Parent(s)

@@ -2,9 +2,7 @@ Homologous
 ==========
 
 
-.. todo::
-   Fill in
-
+All parameters that define :ref:`The Homologous wind model`.
 
 .. toctree::
    :glob:

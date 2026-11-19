@@ -15,7 +15,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 
@@ -57,13 +57,11 @@
  **********************************************************/
 
 double
-teff (x)
-     double x;
+teff (double x)
 {
   double q = 0;
   double theat, r;
   double temp;
-  double pow ();
   int kkk;
 
 
@@ -161,8 +159,7 @@ teff (x)
  **********************************************************/
 
 double
-geff (x)
-     double x;
+geff (double x)
 {
   double q;
   double r;
@@ -232,9 +229,7 @@ double north[] = { 0.0, 0.0, 1.0 };
  **********************************************************/
 
 double
-vdisk (x, v)
-     double x[];
-     double v[];
+vdisk (double x[], double v[])
 {
   double xhold[3];
   double r, speed;
@@ -280,8 +275,7 @@ vdisk (x, v)
  **********************************************************/
 
 double
-zdisk (r)
-     double r;
+zdisk (double r)
 {
   double z;
   z = geo.disk_z0 * pow (r / geo.disk_rad_max, geo.disk_z1) * geo.disk_rad_max;
@@ -362,10 +356,7 @@ struct plane diskplane, disktop, diskbottom;
  **********************************************************/
 
 double
-ds_to_disk (p, allow_negative, hit)
-     struct photon *p;
-     int allow_negative;
-     int *hit;
+ds_to_disk (struct photon *p, int allow_negative, int *hit)
 {
 
   /*
@@ -405,7 +396,7 @@ ds_to_disk (p, allow_negative, hit)
 
   /* Begin the calculation for the case of a FLAT disk */
 
-  s_diskplane = ds_to_plane (&diskplane, p);
+  s_diskplane = ds_to_plane (&diskplane, p, FALSE);
   stuff_phot (p, &phit);
   move_phot (&phit, s_diskplane);
   r_diskplane = sqrt (phit.x[0] * phit.x[0] + phit.x[1] * phit.x[1]);
@@ -480,11 +471,11 @@ ds_to_disk (p, allow_negative, hit)
 
   r_phot = sqrt (p->x[0] * p->x[0] + p->x[1] * p->x[1]);
 
-  s_top = ds_to_plane (&disktop, p);
+  s_top = ds_to_plane (&disktop, p, FALSE);
   stuff_phot (p, &phit);
   move_phot (&phit, s_top);
 
-  s_bot = ds_to_plane (&diskbottom, p);
+  s_bot = ds_to_plane (&diskbottom, p, FALSE);
   stuff_phot (p, &phit);
   move_phot (&phit, s_bot);
 
@@ -969,14 +960,15 @@ disk_height (double s, void *params)
  *
  **********************************************************/
 
-double disk_colour_correction(double t)
+double
+disk_colour_correction (double t)
 {
   double fcol;
   fcol = 1.0;
 
   if (geo.colour_correction == FCOL_OFF)
   {
-    Error("trying to apply colour correction when it is turned off! Exiting.\n");
+    Error ("trying to apply colour correction when it is turned off! Exiting.\n");
     Exit (0);
   }
   /* apply the Done et al. 2012 colour correction */
@@ -988,15 +980,15 @@ double disk_colour_correction(double t)
     {
       fcol = 2.7;
     }
-    else 
+    else
     {
-      fcol = pow(t / 3.0e4, 0.82);
+      fcol = pow (t / 3.0e4, 0.82);
     }
   }
-  else 
+  else
   {
     Error ("Did not understand colour correction mode. Setting fcol to 1");
-    fcol = 1.0; 
+    fcol = 1.0;
   }
 
   return (fcol);
