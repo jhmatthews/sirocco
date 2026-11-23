@@ -1,10 +1,6 @@
 #h20_hetop_standard-2.0: h20_hetop_standard80 plus the He I n=2 couplings missing from he_top
-#(he_top_lines_coll.dat, he_top_upsilon_coll.dat; collision strengths from CHIANTI he_1).
-#Without these the metastable 1s2s 3S level has no route to the ground state or the singlets,
-#which makes macro-atom models far too cool when He is mostly neutral.
-#This is a standard atomic data set for a 20 level hydrogen model and 20 level helium atom
-#and lines/continua of other elements from the usual standard 73 set.
-#It be treated with or without the full macro atom formalism for hydrogen and helium only.
+# and extra collision strengths for hydrogen from Ly alpha to delta. 
+#This is a standard atomic data set for a 20 level hydrogen model and topbase He model atom. 
 #first macro atom data is read in
 data/atomic_macro/h20_hetop_standard80_elem_ions.dat
 data/atomic_macro/h20_levels.dat
@@ -31,8 +27,13 @@ data/atomic/levels_ver_2.dat
 data/atomic/lines_linked_ver_2.dat
 #
 # And this next is for the collision strength data - new
+# h20 upsilon_coll includes collision strengths for Ly alpha to delta from CHIANTI 
+#(he_top_lines_coll.dat, he_top_upsilon_coll.dat; collision strengths from CHIANTI he_1).
+#Without these the metastable 1s2s 3S level has no route to the ground state or the singlets,
+#which makes macro-atom models far too cool when He is mostly neutral.
 #
 data/atomic/ver_upsilon_linked.dat
+data/atomic_macro/h20_upsilon_coll.dat
 data/atomic_macro/he_top_upsilon_coll.dat
 #
 data/atomic/excited.dat
