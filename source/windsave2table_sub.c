@@ -586,7 +586,7 @@ create_heat_table (int ndom, char rootname[])
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.4e ", c[n][i]);
+        sprintf (one_value, "%9.8e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -624,7 +624,7 @@ create_heat_table (int ndom, char rootname[])
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.4e ", c[n][i]);
+        sprintf (one_value, "%9.8e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
