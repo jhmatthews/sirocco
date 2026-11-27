@@ -10,6 +10,8 @@ on:
       - "main"
 env:
   SIROCCO: ${{ github.workspace }}
+  OMPI_MCA_osc: ^ucx
+
 jobs:
   build_and_test:
     name: Build Sirocco and run tests
@@ -83,6 +85,13 @@ jobs:
         $SIROCCO/bin/sirocco -f -v 1 balmer_test
         python $SIROCCO/py_progs/balmer_decrement.py balmer_test
 
+    - name: Running ionization test case
+      run: |
+        mkdir -p $SIROCCO/examples/gh-workflow/ion_test
+        cd $SIROCCO/examples/gh-workflow/ion_test
+        python $SIROCCO/py_progs/Test/ion_test.py
+
+
     - name: Running MPI macro-atom model with and without shared memory
       run: |
         cd $SIROCCO/examples/gh-workflow/
@@ -118,8 +127,8 @@ jobs:
     - name: Checking the MPI runs are bitwise identical
       run: |
         cd $SIROCCO/examples/gh-workflow/
-        python $SIROCCO/py_progs/compare_runs.py mpi_check_shm mpi_check_noshm
-        python $SIROCCO/py_progs/compare_runs.py mpi_check_shm mpi_check_shm2
+        python $SIROCCO/py_progs/Test/compare_runs.py mpi_check_shm mpi_check_noshm
+        python $SIROCCO/py_progs/Test/compare_runs.py mpi_check_shm mpi_check_shm2
 
     - name: Checking Sirocco still compiles without MPI
       run: |
