@@ -10,7 +10,7 @@
 #
 
 # This is the sirocco version which should be a single string without spaces.
-VERSION = 2.0-bug1219x
+VERSION = 2.0-dev
 
 #MPICC is now default compiler
 CC = mpicc
